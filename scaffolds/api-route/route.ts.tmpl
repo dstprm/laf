@@ -1,0 +1,22 @@
+export async function POST(req: Request) {
+    try {
+        const body = await req.json();
+
+        // TODO: Validate input
+        // TODO: Perform action (DB, external calls, etc.)
+
+        return Response.json({ success: true, data: {} }, { status: 201 });
+    } catch (error) {
+        return Response.json({ success: false, error: "Unable to process request" }, { status: 400 });
+    }
+}
+
+export async function GET() {
+    try {
+        // TODO: Fetch data
+        return Response.json({ success: true, data: [] });
+    } catch (error) {
+        return Response.json({ success: false, error: "Unable to fetch data" }, { status: 500 });
+    }
+}
+

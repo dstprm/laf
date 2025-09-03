@@ -1,0 +1,19 @@
+.dashboard-sidebar-items svg.lucide {
+  color: var(--ui-icon);
+}
+
+.dashboard-sidebar-items.dashboard-sidebar-items-active {
+  background: var(--ui-surface-active);
+}
+
+.dashboard-sidebar-items.dashboard-sidebar-items-active svg.lucide {
+  color: var(--primary);
+}
+
+.dashboard-sidebar-items:hover {
+  background: var(--ui-surface-hover);
+}
+
+.dashboard-sidebar-items:hover svg.lucide {
+  color: var(--primary);
+}

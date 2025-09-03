@@ -1,0 +1,13 @@
+export async function POST(req: Request) {
+    try {
+        const payload = await req.text();
+        const signature = req.headers.get("svix-signature") || "";
+
+        // TODO: Verify signature and process payload
+
+        return new Response(null, { status: 200 });
+    } catch (error) {
+        return new Response("Webhook error", { status: 400 });
+    }
+}
+

@@ -1,0 +1,63 @@
+.featured-card-badge {
+  position: relative;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-weight: 600;
+  border: 1px solid hsl(var(--primary)) !important;
+}
+
+.featured-card-badge::before {
+  content: '';
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 15%,
+    rgba(255, 248, 0, 0.6) 50%,
+    rgba(255, 255, 255, 0) 85%
+  );
+  position: absolute;
+  left: 8px;
+  top: -1px;
+  width: 48px;
+  height: 1px;
+}
+
+.footer-border {
+  position: relative;
+}
+.footer-border::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - 124px);
+  width: 248px;
+  height: 1px;
+}
+
+.featured-price-title {
+  position: relative;
+}
+.featured-price-title::before {
+  content: '';
+  position: absolute;
+  left: 44px;
+  top: -7px;
+  height: 17px;
+  width: 296px;
+  border-radius: 296px;
+  opacity: 0.2;
+  background: hsl(var(--highlight-yellow-soft));
+  filter: blur(32px);
+}
+
+.featured-price-title::after {
+  content: '';
+  width: 196px;
+  height: 4px;
+  position: absolute;
+  left: 94px;
+  top: -2px;
+  border-radius: 196px;
+  opacity: 0.5;
+  background: hsl(var(--highlight-blue));
+  filter: blur(12px);
+}

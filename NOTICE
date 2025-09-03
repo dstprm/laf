@@ -1,0 +1,19 @@
+Ronin SpA Modifications and Attribution
+
+This product includes software developed by Paddle.com Market Limited
+and other contributors, originally distributed as the "Paddle Next.js Starter Kit".
+
+- Original work: PaddleHQ/paddle-nextjs-starter-kit
+- Copyright (c) 2024 Paddle.com Market Limited
+- Licensed under the Apache License, Version 2.0 (the "License").
+
+Modifications by Ronin SpA:
+- Copyright (c) 2025 Ronin SpA
+- Changes include: project restructuring, additional components, AI context docs,
+  configuration updates, and other enhancements.
+
+You may not use the original work or these modifications except in compliance
+with the Apache License, Version 2.0. A copy of the License is included in the
+LICENSE file and available at: http://www.apache.org/licenses/LICENSE-2.0
+
+This NOTICE file is for attribution only and does not modify the License.

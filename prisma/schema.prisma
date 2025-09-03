@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
+}
+
+model User {
+    id                String    @id @default(cuid())
+    clerkUserId       String    @unique @map("clerk_user_id")
+    email             String    @unique
+    firstName         String?   @map("first_name")
+    lastName          String?   @map("last_name")
+    avatar            String?
+    isAdmin           Boolean   @default(false) @map("is_admin")
+    overrideTier      String?   @map("override_tier")
+    overrideExpiresAt DateTime? @map("override_expires_at") @db.Timestamptz(6)
+    createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    // Relations
+    customer Customer?
+
+    @@map("users")
+}
+
+model Customer {
+    id                String    @id @default(cuid())
+    paddleCustomerId  String    @unique @map("paddle_customer_id")
+    userId            String    @unique @map("user_id")
+    currentTier       String?   @map("current_tier") // tracks the current plan tier (starter, pro, advanced)
+    overrideTier      String?   @map("override_tier")
+    overrideExpiresAt DateTime? @map("override_expires_at") @db.Timestamptz(6)
+    createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    // Relations
+    user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+    subscriptions Subscription[]
+    payments      Payment[]
+
+    @@map("customers")
+}
+
+model Subscription {
+    subscriptionId     String   @id @map("subscription_id")
+    subscriptionStatus String   @map("subscription_status")
+    priceId            String?  @map("price_id")
+    productId          String?  @map("product_id")
+    scheduledChange    String?  @map("scheduled_change")
+    customerId         String   @map("customer_id")
+    createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    // Relations
+    customer Customer @relation(fields: [customerId], references: [id])
+
+    @@map("subscriptions")
+}
+
+/// Payments captured from Paddle webhooks for analytics
+///
+/// Design goals:
+/// - Resilience: `Payment` rows persist even if a local `Customer` is deleted.
+/// - Traceability: Always store `paddleCustomerId` alongside optional local `customerId`.
+/// - Aggregation: Keep amounts normalized (float in major units) for fast SQL group-bys.
+model Payment {
+    /// Internal identifier
+    id                  String   @id @default(cuid())
+    /// Paddle transaction id (immutable unique natural key)
+    paddleTransactionId String   @unique @map("paddle_transaction_id")
+    /// Paddle customer id (stored regardless of local user existence)
+    paddleCustomerId    String   @map("paddle_customer_id")
+    /// Optional link to local customer (set null if local customer is deleted)
+    customerId          String?  @map("customer_id")
+    /// Optional Paddle subscription id
+    subscriptionId      String?  @map("subscription_id")
+    /// Gross amount in major units (includes tax)
+    amount              Float
+    /// Ex-tax amount in major units (subtotal)
+    subtotal            Float    @default(0)
+    /// Tax amount in major units
+    tax                 Float    @default(0)
+    /// ISO currency code, e.g., USD, EUR
+    currency            String
+    /// Payment status (e.g., completed)
+    status              String
+    /// Creation timestamp (from our system time)
+    createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    /// Update timestamp (from our system time)
+    updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    // Relations
+    /// Optional relation to local customer. Set to null if the local record is removed.
+    customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+    @@map("payments")
+}
+
+/// Contact requests submitted via the public contact form
+model ContactRequest {
+    id        String   @id @default(cuid())
+    name      String
+    email     String
+    subject   String?
+    message   String
+    source    String? // where the form was submitted from, e.g., "home" or "/contact"
+    userAgent String?
+    ipAddress String?  @map("ip_address")
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+    @@index([email])
+    @@map("contact_requests")
+}

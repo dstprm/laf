@@ -1,0 +1,23 @@
+{
+  "entities": ["User", "Customer", "Subscription", "Payment", "ContactRequest"],
+  "auth": "Clerk",
+  "database": "Prisma",
+  "payments": "Paddle",
+  "emails": [
+    "welcome",
+    "payment_success",
+    "payment_failed",
+    "plan_change",
+    "plan_cancellation",
+    "plan_resume",
+    "contact_notification"
+  ],
+  "apiRoot": "src/app/api",
+  "uiRoot": "src/app/(dashboard)",
+  "helpers": {
+    "paddle": "src/utils/paddle",
+    "email": "src/utils/email",
+    "database": "src/utils/database",
+    "lib": "src/lib"
+  }
+}

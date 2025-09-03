@@ -1,0 +1,22 @@
+import { Section } from './section';
+export function Stats() {
+  const stats = [
+    { value: '5 min', label: 'to first run' },
+    { value: '10+', label: 'ready-made pages' },
+    { value: '100%', label: 'TypeScript' },
+    { value: '0', label: 'vendor lock-in' },
+  ];
+
+  return (
+    <Section muted>
+      <div className="grid grid-cols-2 gap-4 sm:gap-6 rounded-lg border border-border bg-background/50 p-6 sm:p-8 text-center md:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.label} className="">
+            <div className="text-2xl sm:text-3xl font-semibold md:text-4xl">{s.value}</div>
+            <div className="mt-1 text-[11px] sm:text-xs tracking-wide text-muted-foreground">{s.label}</div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
