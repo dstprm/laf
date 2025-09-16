@@ -2,7 +2,6 @@
 
 import React, { useMemo, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { IndustryCountrySelector } from '../valuation/components/IndustryCountrySelector';
 import { useModelStore } from '../valuation/store/modelStore';
 import { betasStatic } from '../valuation/betasStatic';
 import { countryRiskPremiumStatic } from '../valuation/countryRiskPremiumStatic';
@@ -52,9 +51,20 @@ export default function FreeValuationPage() {
   const [advCapexPct, setAdvCapexPct] = useState<string>('');
   const [advNwcPct, setAdvNwcPct] = useState<string>('');
   const [advDaPct, setAdvDaPct] = useState<string>('');
-  const [advTaxRatePct, setAdvTaxRatePct] = useState<string>('');
-  const [advTerminalMetric, setAdvTerminalMetric] = useState<'ebitda' | 'revenue' | 'ebit' | 'netIncome'>('ebitda');
-  const [advTerminalMultiple, setAdvTerminalMultiple] = useState<string>('10');
+  // Advanced sequential UI state
+  // EBITDA mode: constant, per year list, or ramp (start->target)
+  const [ebitdaMode, setEbitdaMode] = useState<'constant' | 'perYear' | 'ramp'>('ramp');
+  const [ebitdaConstant, setEbitdaConstant] = useState<string>('');
+  const [ebitdaPerYear, setEbitdaPerYear] = useState<string>('');
+  const [capexMethod, setCapexMethod] = useState<'percentOfRevenue' | 'direct'>('percentOfRevenue');
+  const [capexDirect, setCapexDirect] = useState<string>('');
+  const [nwcMethod, setNwcMethod] = useState<'percentOfRevenue' | 'direct'>('percentOfRevenue');
+  const [nwcDirect, setNwcDirect] = useState<string>('');
+  const [daMethod, setDaMethod] = useState<'percentOfRevenue' | 'direct'>('percentOfRevenue');
+  const [daDirect, setDaDirect] = useState<string>('');
+  const [taxesMethod, setTaxesMethod] = useState<'percentOfEBIT' | 'direct'>('percentOfEBIT');
+  const [taxesPct, setTaxesPct] = useState<string>('');
+  const [taxesDirect, setTaxesDirect] = useState<string>('');
 
   const scenarios: Scenario[] = useMemo(() => {
     const baseMargin = parseFloat(ebitdaMarginPct || '0');
@@ -194,24 +204,21 @@ export default function FreeValuationPage() {
       return null;
     };
 
+    const AdvBuildDirectArray = (years: number, csv: string): number[] => {
+      const parts = csv
+        .split(/[\,\s]+/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map(Number);
+      const arr: number[] = [];
+      for (let i = 0; i < years; i++) {
+        arr.push(parts[i] ?? 0);
+      }
+      return arr;
+    };
+
     const computeEVForScenarioAdvanced = (growthDelta: number, marginDelta: number): number => {
       updatePeriods({ numberOfYears: advYears, startYear: new Date().getFullYear() });
-
-      updateRiskProfile({
-        selectedIndustry: industry,
-        selectedCountry: country,
-        unleveredBeta: industryData?.unleveredBeta ?? 0,
-        leveredBeta: industryData
-          ? industryData.unleveredBeta * (1 + (1 - (countryData?.corporateTaxRate ?? 0)) * (industryData.dERatio ?? 0))
-          : 0,
-        equityRiskPremium: countryData?.equityRiskPremium ?? 0,
-        countryRiskPremium: countryData?.countryRiskPremium ?? 0,
-        deRatio: industryData?.dERatio ?? 0,
-        adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
-        companySpread: model.riskProfile?.companySpread ?? 0.05,
-        riskFreeRate: model.riskProfile?.riskFreeRate ?? 0.0444,
-        corporateTaxRate: countryData?.corporateTaxRate ?? model.riskProfile?.corporateTaxRate ?? 0.25,
-      });
 
       if (growthMode === 'uniform') {
         const g = parseFloat(advUniformGrowth || '0') + growthDelta;
@@ -248,9 +255,24 @@ export default function FreeValuationPage() {
         }
       }
 
-      const startM = parseFloat(advEbitdaStart || '0');
-      const targetM = parseFloat(advEbitdaTarget || advEbitdaStart || '0');
-      const marginArr = buildMarginArray(startM, targetM, advYears, marginDelta);
+      let marginArr: number[] = [];
+      if (ebitdaMode === 'constant') {
+        const m = parseFloat(ebitdaConstant || '0') + marginDelta;
+        marginArr = Array.from({ length: advYears }, () => m);
+      } else if (ebitdaMode === 'perYear') {
+        const parts = ebitdaPerYear
+          .split(/[\,\s]+/)
+          .map((p) => p.trim())
+          .filter(Boolean)
+          .map(Number);
+        marginArr = Array.from({ length: advYears }, (_, i) =>
+          i < parts.length ? (parts[i] || 0) + marginDelta : (parts[parts.length - 1] || 0) + marginDelta,
+        );
+      } else {
+        const startM = parseFloat(advEbitdaStart || '0');
+        const targetM = parseFloat(advEbitdaTarget || advEbitdaStart || '0');
+        marginArr = buildMarginArray(startM, targetM, advYears, marginDelta);
+      }
       const individualPercents: { [k: number]: number } = {};
       for (let i = 0; i < advYears; i++) {
         individualPercents[i] = Math.max(0, 100 - (marginArr[i] || 0));
@@ -260,31 +282,40 @@ export default function FreeValuationPage() {
         consolidated: { inputMethod: 'percentOfRevenue', percentMethod: 'individual', individualPercents },
       });
 
-      updateCapex({
-        inputMethod: 'percentOfRevenue',
-        percentMethod: 'uniform',
-        percentOfRevenue: parseFloat(advCapexPct || '0'),
-      });
-      updateNetWorkingCapital({
-        inputMethod: 'percentOfRevenue',
-        percentMethod: 'uniform',
-        percentOfRevenue: parseFloat(advNwcPct || '0'),
-      });
-      updateDA({
-        inputMethod: 'percentOfRevenue',
-        percentMethod: 'uniform',
-        percentOfRevenue: parseFloat(advDaPct || '0'),
-      });
+      if (capexMethod === 'direct') {
+        updateCapex({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, capexDirect) });
+      } else {
+        updateCapex({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'uniform',
+          percentOfRevenue: parseFloat(advCapexPct || '0'),
+        });
+      }
+      if (nwcMethod === 'direct') {
+        updateNetWorkingCapital({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, nwcDirect) });
+      } else {
+        updateNetWorkingCapital({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'uniform',
+          percentOfRevenue: parseFloat(advNwcPct || '0'),
+        });
+      }
+      if (daMethod === 'direct') {
+        updateDA({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, daDirect) });
+      } else {
+        updateDA({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'uniform',
+          percentOfRevenue: parseFloat(advDaPct || '0'),
+        });
+      }
 
-      const taxPct =
-        advTaxRatePct.trim() !== '' ? parseFloat(advTaxRatePct) : (countryData?.corporateTaxRate ?? 0.25) * 100;
-      updateTaxes({ inputMethod: 'percentOfEBIT', percentMethod: 'uniform', percentOfEBIT: taxPct });
-
-      updateTerminalValue({
-        method: 'multiples',
-        multipleMetric: advTerminalMetric,
-        multipleValue: parseFloat(advTerminalMultiple || '10'),
-      });
+      if (taxesMethod === 'direct') {
+        updateTaxes({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, taxesDirect) });
+      } else {
+        const taxPct = taxesPct.trim() !== '' ? parseFloat(taxesPct) : 0;
+        updateTaxes({ inputMethod: 'percentOfEBIT', percentMethod: 'uniform', percentOfEBIT: taxPct });
+      }
 
       calculateFinancials();
       return useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
@@ -493,8 +524,6 @@ export default function FreeValuationPage() {
 
           <TabsContent value="advanced">
             <form onSubmit={handleSubmitAdvanced} className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
-              <IndustryCountrySelector className="" />
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Last year&#39;s revenue (USD)</label>
@@ -624,40 +653,35 @@ export default function FreeValuationPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tax rate (% of EBIT)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={advTaxRatePct}
-                    onChange={(e) => setAdvTaxRatePct(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    placeholder="Leave blank to use country"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Terminal metric</label>
-                  <select
-                    value={advTerminalMetric}
-                    onChange={(e) =>
-                      setAdvTerminalMetric(e.target.value as 'ebitda' | 'revenue' | 'ebit' | 'netIncome')
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="ebitda">EBITDA</option>
-                    <option value="revenue">Revenue</option>
-                    <option value="ebit">EBIT</option>
-                    <option value="netIncome">Net Income</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Terminal multiple (x)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={advTerminalMultiple}
-                    onChange={(e) => setAdvTerminalMultiple(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Taxes</label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={taxesMethod}
+                      onChange={(e) => setTaxesMethod(e.target.value as 'percentOfEBIT' | 'direct')}
+                      className="px-2 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="percentOfEBIT">% of EBIT</option>
+                      <option value="direct">Direct</option>
+                    </select>
+                    {taxesMethod === 'percentOfEBIT' ? (
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={taxesPct}
+                        onChange={(e) => setTaxesPct(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="Tax % of EBIT"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={taxesDirect}
+                        onChange={(e) => setTaxesDirect(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="Direct values CSV e.g. 10,12,14"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
 
