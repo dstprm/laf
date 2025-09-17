@@ -45,7 +45,7 @@ export default function FreeValuationPage() {
   const [advYears, setAdvYears] = useState<number>(5);
   const [growthMode, setGrowthMode] = useState<'uniform' | 'perYear'>('uniform');
   const [advUniformGrowth, setAdvUniformGrowth] = useState<string>('');
-  const [advPerYearGrowth, setAdvPerYearGrowth] = useState<string>('');
+  // deprecated CSV state kept earlier; replaced by per-year inputs
   const [advEbitdaStart, setAdvEbitdaStart] = useState<string>('');
   const [advEbitdaTarget, setAdvEbitdaTarget] = useState<string>('');
   const [advCapexPct, setAdvCapexPct] = useState<string>('');
@@ -53,30 +53,78 @@ export default function FreeValuationPage() {
   const [advDaPct, setAdvDaPct] = useState<string>('');
   // Advanced sequential UI state
   // EBITDA mode: per year list, or ramp (start->target)
-  const [ebitdaPerYear, setEbitdaPerYear] = useState<string>('');
+  // deprecated CSV state kept earlier; replaced by per-year inputs
   const [capexMethod, setCapexMethod] = useState<'percentOfRevenue' | 'direct'>('percentOfRevenue');
-  const [capexDirect, setCapexDirect] = useState<string>('');
+  // deprecated CSV state kept earlier; replaced by per-year inputs
   const [nwcMethod, setNwcMethod] = useState<'percentOfRevenue' | 'direct'>('percentOfRevenue');
-  const [nwcDirect, setNwcDirect] = useState<string>('');
+  // deprecated CSV state kept earlier; replaced by per-year inputs
   const [daMethod, setDaMethod] = useState<'percentOfRevenue' | 'direct'>('percentOfRevenue');
-  const [daDirect, setDaDirect] = useState<string>('');
+  // deprecated CSV state kept earlier; replaced by per-year inputs
   const [taxesMethod, setTaxesMethod] = useState<'percentOfEBIT' | 'direct'>('percentOfEBIT');
   const [taxesPct, setTaxesPct] = useState<string>('');
-  const [taxesDirect, setTaxesDirect] = useState<string>('');
+  // deprecated CSV state kept earlier; replaced by per-year inputs
   // New advanced sequential flow and flexible options
   const [advStep, setAdvStep] = useState<number>(1);
   const [advRevenueInputMethod, setAdvRevenueInputMethod] = useState<'growth' | 'direct'>('growth');
-  const [advRevenueDirect, setAdvRevenueDirect] = useState<string>('');
+  // deprecated CSV state kept earlier; replaced by per-year inputs
   const [advLTG, setAdvLTG] = useState<string>('');
   const [ebitdaInputType, setEbitdaInputType] = useState<'percent' | 'direct'>('percent');
   const [ebitdaPctMode, setEbitdaPctMode] = useState<'uniform' | 'perYear' | 'ramp'>('ramp');
   const [advEbitdaUniformPct, setAdvEbitdaUniformPct] = useState<string>('');
   const [capexPercentMode, setCapexPercentMode] = useState<'uniform' | 'individual'>('uniform');
-  const [capexPercentsCSV, setCapexPercentsCSV] = useState<string>('');
+  // deprecated CSV state kept earlier; replaced by per-year inputs
   const [nwcPercentMode, setNwcPercentMode] = useState<'uniform' | 'individual'>('uniform');
-  const [nwcPercentsCSV, setNwcPercentsCSV] = useState<string>('');
+  // deprecated CSV state kept earlier; replaced by per-year inputs
   const [daPercentMode, setDaPercentMode] = useState<'uniform' | 'individual'>('uniform');
-  const [daPercentsCSV, setDaPercentsCSV] = useState<string>('');
+  // deprecated CSV state kept earlier; replaced by per-year inputs
+
+  // Per-year arrays (UI-friendly alternative to CSV)
+  const [revenueDirectList, setRevenueDirectList] = useState<string[]>(Array.from({ length: advYears }, () => ''));
+  const [growthPerYearList, setGrowthPerYearList] = useState<string[]>(
+    Array.from({ length: Math.max(advYears - 1, 1) }, () => ''),
+  );
+  const [ebitdaPercentPerYearList, setEbitdaPercentPerYearList] = useState<string[]>(
+    Array.from({ length: advYears }, () => ''),
+  );
+  const [ebitdaDirectList, setEbitdaDirectList] = useState<string[]>(Array.from({ length: advYears }, () => ''));
+  const [capexPercentsList, setCapexPercentsList] = useState<string[]>(Array.from({ length: advYears }, () => ''));
+  const [nwcPercentsList, setNwcPercentsList] = useState<string[]>(Array.from({ length: advYears }, () => ''));
+  const [daPercentsList, setDaPercentsList] = useState<string[]>(Array.from({ length: advYears }, () => ''));
+  const [taxesDirectList, setTaxesDirectList] = useState<string[]>(Array.from({ length: advYears }, () => ''));
+  const [capexDirectList, setCapexDirectList] = useState<string[]>(Array.from({ length: advYears }, () => ''));
+  const [nwcDirectList, setNwcDirectList] = useState<string[]>(Array.from({ length: advYears }, () => ''));
+  const [daDirectList, setDaDirectList] = useState<string[]>(Array.from({ length: advYears }, () => ''));
+
+  React.useEffect(() => {
+    setRevenueDirectList((prev) => Array.from({ length: advYears }, (_, i) => prev[i] ?? ''));
+    setGrowthPerYearList((prev) => Array.from({ length: Math.max(advYears - 1, 1) }, (_, i) => prev[i] ?? ''));
+    setEbitdaPercentPerYearList((prev) => Array.from({ length: advYears }, (_, i) => prev[i] ?? ''));
+    setEbitdaDirectList((prev) => Array.from({ length: advYears }, (_, i) => prev[i] ?? ''));
+    setCapexPercentsList((prev) => Array.from({ length: advYears }, (_, i) => prev[i] ?? ''));
+    setNwcPercentsList((prev) => Array.from({ length: advYears }, (_, i) => prev[i] ?? ''));
+    setDaPercentsList((prev) => Array.from({ length: advYears }, (_, i) => prev[i] ?? ''));
+    setTaxesDirectList((prev) => Array.from({ length: advYears }, (_, i) => prev[i] ?? ''));
+    setCapexDirectList((prev) => Array.from({ length: advYears }, (_, i) => prev[i] ?? ''));
+    setNwcDirectList((prev) => Array.from({ length: advYears }, (_, i) => prev[i] ?? ''));
+    setDaDirectList((prev) => Array.from({ length: advYears }, (_, i) => prev[i] ?? ''));
+  }, [advYears]);
+
+  // Helpers to build arrays/maps from per-year lists
+  const buildArrayFromList = (years: number, list: string[]): number[] => {
+    const arr: number[] = [];
+    for (let i = 0; i < years; i++) {
+      const v = parseFloat((list[i] || '').trim());
+      arr.push(Number.isFinite(v) ? v : 0);
+    }
+    return arr;
+  };
+  const buildIndividualPercentsMap = (years: number, list: string[]): { [k: number]: number } => {
+    const arr = buildArrayFromList(years, list);
+    const map: { [k: number]: number } = {};
+    for (let i = 0; i < years; i++) map[i] = arr[i] ?? 0;
+    return map;
+  };
+  // intentionally not used directly after simplifying compute path
 
   const scenarios: Scenario[] = useMemo(() => {
     const baseMargin = parseFloat(ebitdaMarginPct || '0');
@@ -205,35 +253,9 @@ export default function FreeValuationPage() {
     };
 
     const parsePerYearGrowth = (): number[] | null => {
-      const parts = advPerYearGrowth
-        .split(/[\,\s]+/)
-        .map((p) => p.trim())
-        .filter(Boolean)
-        .map((p) => Number(p));
-      if (parts.length >= advYears - 1 && parts.every((n) => !Number.isNaN(n))) {
-        return parts.slice(0, advYears - 1);
-      }
+      const arr = buildArrayFromList(Math.max(advYears - 1, 1), growthPerYearList);
+      if (arr.length >= advYears - 1) return arr.slice(0, advYears - 1);
       return null;
-    };
-
-    const AdvBuildDirectArray = (years: number, csv: string): number[] => {
-      const parts = csv
-        .split(/[\,\s]+/)
-        .map((p) => p.trim())
-        .filter(Boolean)
-        .map(Number);
-      const arr: number[] = [];
-      for (let i = 0; i < years; i++) {
-        arr.push(parts[i] ?? 0);
-      }
-      return arr;
-    };
-
-    const AdvBuildIndividualPercents = (years: number, csv: string): { [k: number]: number } => {
-      const values = AdvBuildDirectArray(years, csv);
-      const map: { [k: number]: number } = {};
-      for (let i = 0; i < years; i++) map[i] = values[i] ?? 0;
-      return map;
     };
 
     const computeEVForScenarioAdvanced = (growthDelta: number, marginDelta: number): number => {
@@ -293,7 +315,7 @@ export default function FreeValuationPage() {
           }
         }
       } else {
-        const yearlyValues = AdvBuildDirectArray(advYears, advRevenueDirect);
+        const yearlyValues = buildArrayFromList(advYears, revenueDirectList);
         updateRevenue({ inputType: 'consolidated', consolidated: { inputMethod: 'direct', yearlyValues } });
       }
 
@@ -308,11 +330,7 @@ export default function FreeValuationPage() {
           const m = (advEbitdaUniformPct.trim() !== '' ? parseFloat(advEbitdaUniformPct) : 0) + marginDelta;
           marginArr = Array.from({ length: advYears }, () => m);
         } else if (ebitdaPctMode === 'perYear') {
-          const parts = ebitdaPerYear
-            .split(/[\,\s]+/)
-            .map((p) => p.trim())
-            .filter(Boolean)
-            .map(Number);
+          const parts = buildArrayFromList(advYears, ebitdaPercentPerYearList);
           marginArr = Array.from({ length: advYears }, (_, i) =>
             i < parts.length ? (parts[i] || 0) + marginDelta : (parts[parts.length - 1] || 0) + marginDelta,
           );
@@ -339,7 +357,7 @@ export default function FreeValuationPage() {
 
       // CAPEX
       if (capexMethod === 'direct') {
-        updateCapex({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, capexDirect) });
+        updateCapex({ inputMethod: 'direct', yearlyValues: buildArrayFromList(advYears, capexPercentsList) });
       } else if (capexPercentMode === 'uniform') {
         updateCapex({
           inputMethod: 'percentOfRevenue',
@@ -350,13 +368,13 @@ export default function FreeValuationPage() {
         updateCapex({
           inputMethod: 'percentOfRevenue',
           percentMethod: 'individual',
-          individualPercents: AdvBuildIndividualPercents(advYears, capexPercentsCSV),
+          individualPercents: buildIndividualPercentsMap(advYears, capexPercentsList),
         });
       }
 
       // NWC
       if (nwcMethod === 'direct') {
-        updateNetWorkingCapital({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, nwcDirect) });
+        updateNetWorkingCapital({ inputMethod: 'direct', yearlyValues: buildArrayFromList(advYears, nwcPercentsList) });
       } else if (nwcPercentMode === 'uniform') {
         updateNetWorkingCapital({
           inputMethod: 'percentOfRevenue',
@@ -367,13 +385,13 @@ export default function FreeValuationPage() {
         updateNetWorkingCapital({
           inputMethod: 'percentOfRevenue',
           percentMethod: 'individual',
-          individualPercents: AdvBuildIndividualPercents(advYears, nwcPercentsCSV),
+          individualPercents: buildIndividualPercentsMap(advYears, nwcPercentsList),
         });
       }
 
       // D&A
       if (daMethod === 'direct') {
-        updateDA({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, daDirect) });
+        updateDA({ inputMethod: 'direct', yearlyValues: buildArrayFromList(advYears, daPercentsList) });
       } else if (daPercentMode === 'uniform') {
         updateDA({
           inputMethod: 'percentOfRevenue',
@@ -384,13 +402,13 @@ export default function FreeValuationPage() {
         updateDA({
           inputMethod: 'percentOfRevenue',
           percentMethod: 'individual',
-          individualPercents: AdvBuildIndividualPercents(advYears, daPercentsCSV),
+          individualPercents: buildIndividualPercentsMap(advYears, daPercentsList),
         });
       }
 
       // Taxes
       if (taxesMethod === 'direct') {
-        updateTaxes({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, taxesDirect) });
+        updateTaxes({ inputMethod: 'direct', yearlyValues: buildArrayFromList(advYears, taxesDirectList) });
       } else {
         const taxPct = taxesPct.trim() !== '' ? parseFloat(taxesPct) : 0;
         updateTaxes({ inputMethod: 'percentOfEBIT', percentMethod: 'uniform', percentOfEBIT: taxPct });
@@ -402,7 +420,7 @@ export default function FreeValuationPage() {
       if (ebitdaInputType === 'direct') {
         const state = useModelStore.getState();
         const currentRevenue = state.calculatedFinancials.revenue;
-        const targetEbitda = AdvBuildDirectArray(advYears, ebitdaPerYear);
+        const targetEbitda = buildArrayFromList(advYears, ebitdaDirectList);
         const opexValues = currentRevenue.map((rev, i) => Math.max(0, (rev || 0) - (targetEbitda[i] || 0)));
         updateOpEx({ inputType: 'consolidated', consolidated: { inputMethod: 'direct', yearlyValues: opexValues } });
         calculateFinancials();
@@ -713,21 +731,30 @@ export default function FreeValuationPage() {
                     </div>
                   ) : (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Revenues CSV (length {advYears})
-                      </label>
-                      <input
-                        type="text"
-                        value={advRevenueDirect}
-                        onChange={(e) => setAdvRevenueDirect(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="e.g. 100, 110, 121, 133"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Revenues per year:</label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {revenueDirectList.map((val, idx) => (
+                          <div key={idx} className="flex flex-col">
+                            <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={val}
+                              onChange={(e) => {
+                                const next = [...revenueDirectList];
+                                next[idx] = e.target.value;
+                                setRevenueDirectList(next);
+                              }}
+                              className="px-2 py-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
                 {advRevenueInputMethod === 'growth' && (
-                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="mt-3 grid grid-cols-1 gap-4">
                     {growthMode === 'uniform' ? (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Uniform growth (%/yr)</label>
@@ -741,16 +768,27 @@ export default function FreeValuationPage() {
                       </div>
                     ) : (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Per-year growth list (length {advYears - 1})
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Per-year growth rates (%):
                         </label>
-                        <input
-                          type="text"
-                          value={advPerYearGrowth}
-                          onChange={(e) => setAdvPerYearGrowth(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          placeholder="e.g. 10, 9, 8, 7"
-                        />
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {growthPerYearList.map((val, idx) => (
+                            <div key={idx} className="flex flex-col">
+                              <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={val}
+                                onChange={(e) => {
+                                  const next = [...growthPerYearList];
+                                  next[idx] = e.target.value;
+                                  setGrowthPerYearList(next);
+                                }}
+                                className="px-2 py-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                     <div>
@@ -794,8 +832,9 @@ export default function FreeValuationPage() {
                       advRevenueInputMethod === 'growth'
                         ? (growthMode === 'uniform'
                             ? advUniformGrowth.trim() === ''
-                            : advPerYearGrowth.trim() === '') || advLTG.trim() === ''
-                        : advRevenueDirect.trim() === '' || advLTG.trim() === ''
+                            : growthPerYearList.slice(0, Math.max(advYears - 1, 1)).some((v) => v.trim() === '')) ||
+                          advLTG.trim() === ''
+                        : revenueDirectList.slice(0, advYears).some((v) => v.trim() === '') || advLTG.trim() === ''
                     }
                     onClick={() => setAdvStep(3)}
                   >
@@ -836,16 +875,25 @@ export default function FreeValuationPage() {
                     </div>
                   ) : (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        EBITDA CSV (length {advYears})
-                      </label>
-                      <input
-                        type="text"
-                        value={ebitdaPerYear}
-                        onChange={(e) => setEbitdaPerYear(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="e.g. 15, 18, 22, 27"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">EBITDA per year:</label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {ebitdaDirectList.map((val, idx) => (
+                          <div key={idx} className="flex flex-col">
+                            <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={val}
+                              onChange={(e) => {
+                                const next = [...ebitdaDirectList];
+                                next[idx] = e.target.value;
+                                setEbitdaDirectList(next);
+                              }}
+                              className="px-2 py-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -899,16 +947,27 @@ export default function FreeValuationPage() {
                     )}
                     {ebitdaPctMode === 'perYear' && (
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Per-year EBITDA margins (%) CSV (length {advYears})
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          EBITDA margin (%) per year:
                         </label>
-                        <input
-                          type="text"
-                          value={ebitdaPerYear}
-                          onChange={(e) => setEbitdaPerYear(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          placeholder="e.g. 20, 22, 24, 25"
-                        />
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                          {ebitdaPercentPerYearList.map((val, idx) => (
+                            <div key={idx} className="flex flex-col">
+                              <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={val}
+                                onChange={(e) => {
+                                  const next = [...ebitdaPercentPerYearList];
+                                  next[idx] = e.target.value;
+                                  setEbitdaPercentPerYearList(next);
+                                }}
+                                className="px-2 py-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -930,8 +989,8 @@ export default function FreeValuationPage() {
                           ? advEbitdaUniformPct.trim() === ''
                           : ebitdaPctMode === 'ramp'
                             ? advEbitdaStart.trim() === '' || advEbitdaTarget.trim() === ''
-                            : ebitdaPerYear.trim() === ''
-                        : ebitdaPerYear.trim() === ''
+                            : ebitdaPercentPerYearList.slice(0, advYears).some((v) => v.trim() === '')
+                        : ebitdaDirectList.slice(0, advYears).some((v) => v.trim() === '')
                     }
                     onClick={() => setAdvStep(4)}
                   >
@@ -968,7 +1027,7 @@ export default function FreeValuationPage() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         >
                           <option value="uniform">Uniform</option>
-                          <option value="individual">Each year (CSV)</option>
+                          <option value="individual">Each year</option>
                         </select>
                       </div>
                       {capexPercentMode === 'uniform' ? (
@@ -984,31 +1043,51 @@ export default function FreeValuationPage() {
                         </div>
                       ) : (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            CAPEX percents CSV (length {advYears})
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            CAPEX percents per year:
                           </label>
-                          <input
-                            type="text"
-                            value={capexPercentsCSV}
-                            onChange={(e) => setCapexPercentsCSV(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="e.g. 5, 5, 4, 4"
-                          />
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            {capexPercentsList.map((val, idx) => (
+                              <div key={idx} className="flex flex-col">
+                                <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={val}
+                                  onChange={(e) => {
+                                    const next = [...capexPercentsList];
+                                    next[idx] = e.target.value;
+                                    setCapexPercentsList(next);
+                                  }}
+                                  className="px-2 py-2 border border-gray-300 rounded-md"
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </>
                   ) : (
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        CAPEX direct CSV (length {advYears})
-                      </label>
-                      <input
-                        type="text"
-                        value={capexDirect}
-                        onChange={(e) => setCapexDirect(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="e.g. 8, 9, 10, 10"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">CAPEX direct per year:</label>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        {capexDirectList.map((val, idx) => (
+                          <div key={idx} className="flex flex-col">
+                            <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={val}
+                              onChange={(e) => {
+                                const next = [...capexDirectList];
+                                next[idx] = e.target.value;
+                                setCapexDirectList(next);
+                              }}
+                              className="px-2 py-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1036,7 +1115,7 @@ export default function FreeValuationPage() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         >
                           <option value="uniform">Uniform</option>
-                          <option value="individual">Each year (CSV)</option>
+                          <option value="individual">Each year</option>
                         </select>
                       </div>
                       {nwcPercentMode === 'uniform' ? (
@@ -1052,31 +1131,49 @@ export default function FreeValuationPage() {
                         </div>
                       ) : (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            NWC percents CSV (length {advYears})
-                          </label>
-                          <input
-                            type="text"
-                            value={nwcPercentsCSV}
-                            onChange={(e) => setNwcPercentsCSV(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="e.g. 2, 2, 1.5, 1.5"
-                          />
+                          <label className="block text-sm font-medium text-gray-700 mb-2">NWC percents per year:</label>
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            {nwcPercentsList.map((val, idx) => (
+                              <div key={idx} className="flex flex-col">
+                                <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={val}
+                                  onChange={(e) => {
+                                    const next = [...nwcPercentsList];
+                                    next[idx] = e.target.value;
+                                    setNwcPercentsList(next);
+                                  }}
+                                  className="px-2 py-2 border border-gray-300 rounded-md"
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </>
                   ) : (
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        NWC direct CSV (length {advYears})
-                      </label>
-                      <input
-                        type="text"
-                        value={nwcDirect}
-                        onChange={(e) => setNwcDirect(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="e.g. 1, 2, 3, 3"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">NWC direct per year:</label>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        {nwcDirectList.map((val, idx) => (
+                          <div key={idx} className="flex flex-col">
+                            <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={val}
+                              onChange={(e) => {
+                                const next = [...nwcDirectList];
+                                next[idx] = e.target.value;
+                                setNwcDirectList(next);
+                              }}
+                              className="px-2 py-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1104,7 +1201,7 @@ export default function FreeValuationPage() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         >
                           <option value="uniform">Uniform</option>
-                          <option value="individual">Each year (CSV)</option>
+                          <option value="individual">Each year</option>
                         </select>
                       </div>
                       {daPercentMode === 'uniform' ? (
@@ -1120,31 +1217,49 @@ export default function FreeValuationPage() {
                         </div>
                       ) : (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            D&A percents CSV (length {advYears})
-                          </label>
-                          <input
-                            type="text"
-                            value={daPercentsCSV}
-                            onChange={(e) => setDaPercentsCSV(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="e.g. 3, 3, 2.5, 2"
-                          />
+                          <label className="block text-sm font-medium text-gray-700 mb-2">D&A percents per year:</label>
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            {daPercentsList.map((val, idx) => (
+                              <div key={idx} className="flex flex-col">
+                                <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={val}
+                                  onChange={(e) => {
+                                    const next = [...daPercentsList];
+                                    next[idx] = e.target.value;
+                                    setDaPercentsList(next);
+                                  }}
+                                  className="px-2 py-2 border border-gray-300 rounded-md"
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </>
                   ) : (
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        D&A direct CSV (length {advYears})
-                      </label>
-                      <input
-                        type="text"
-                        value={daDirect}
-                        onChange={(e) => setDaDirect(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="e.g. 4, 4, 5, 5"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">D&A direct per year:</label>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        {daDirectList.map((val, idx) => (
+                          <div key={idx} className="flex flex-col">
+                            <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={val}
+                              onChange={(e) => {
+                                const next = [...daDirectList];
+                                next[idx] = e.target.value;
+                                setDaDirectList(next);
+                              }}
+                              className="px-2 py-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1199,16 +1314,25 @@ export default function FreeValuationPage() {
                       </div>
                     ) : (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Taxes direct CSV (length {advYears})
-                        </label>
-                        <input
-                          type="text"
-                          value={taxesDirect}
-                          onChange={(e) => setTaxesDirect(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          placeholder="e.g. 0, 0, 5, 7"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Taxes direct per year:</label>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                          {taxesDirectList.map((val, idx) => (
+                            <div key={idx} className="flex flex-col">
+                              <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={val}
+                                onChange={(e) => {
+                                  const next = [...taxesDirectList];
+                                  next[idx] = e.target.value;
+                                  setTaxesDirectList(next);
+                                }}
+                                className="px-2 py-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
