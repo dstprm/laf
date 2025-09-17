@@ -52,9 +52,7 @@ export default function FreeValuationPage() {
   const [advNwcPct, setAdvNwcPct] = useState<string>('');
   const [advDaPct, setAdvDaPct] = useState<string>('');
   // Advanced sequential UI state
-  // EBITDA mode: constant, per year list, or ramp (start->target)
-  const [ebitdaMode, setEbitdaMode] = useState<'constant' | 'perYear' | 'ramp'>('ramp');
-  const [ebitdaConstant, setEbitdaConstant] = useState<string>('');
+  // EBITDA mode: per year list, or ramp (start->target)
   const [ebitdaPerYear, setEbitdaPerYear] = useState<string>('');
   const [capexMethod, setCapexMethod] = useState<'percentOfRevenue' | 'direct'>('percentOfRevenue');
   const [capexDirect, setCapexDirect] = useState<string>('');
@@ -65,6 +63,20 @@ export default function FreeValuationPage() {
   const [taxesMethod, setTaxesMethod] = useState<'percentOfEBIT' | 'direct'>('percentOfEBIT');
   const [taxesPct, setTaxesPct] = useState<string>('');
   const [taxesDirect, setTaxesDirect] = useState<string>('');
+  // New advanced sequential flow and flexible options
+  const [advStep, setAdvStep] = useState<number>(1);
+  const [advRevenueInputMethod, setAdvRevenueInputMethod] = useState<'growth' | 'direct'>('growth');
+  const [advRevenueDirect, setAdvRevenueDirect] = useState<string>('');
+  const [advLTG, setAdvLTG] = useState<string>('');
+  const [ebitdaInputType, setEbitdaInputType] = useState<'percent' | 'direct'>('percent');
+  const [ebitdaPctMode, setEbitdaPctMode] = useState<'uniform' | 'perYear' | 'ramp'>('ramp');
+  const [advEbitdaUniformPct, setAdvEbitdaUniformPct] = useState<string>('');
+  const [capexPercentMode, setCapexPercentMode] = useState<'uniform' | 'individual'>('uniform');
+  const [capexPercentsCSV, setCapexPercentsCSV] = useState<string>('');
+  const [nwcPercentMode, setNwcPercentMode] = useState<'uniform' | 'individual'>('uniform');
+  const [nwcPercentsCSV, setNwcPercentsCSV] = useState<string>('');
+  const [daPercentMode, setDaPercentMode] = useState<'uniform' | 'individual'>('uniform');
+  const [daPercentsCSV, setDaPercentsCSV] = useState<string>('');
 
   const scenarios: Scenario[] = useMemo(() => {
     const baseMargin = parseFloat(ebitdaMarginPct || '0');
@@ -169,14 +181,14 @@ export default function FreeValuationPage() {
   const handleSubmitAdvanced = (e: React.FormEvent) => {
     e.preventDefault();
     const revenue0 = parseFloat(lastYearRevenue || '0');
-    if (!industry || !country || !(revenue0 > 0) || advYears < 2) {
+    if (!(revenue0 > 0) || advYears < 2) {
       setResults(null);
       return;
     }
 
     setResults(null);
     setIsCalculating(true);
-    setStep(4);
+    setAdvStep(5);
 
     const industryData = betasStatic[industry as keyof typeof betasStatic];
     const countryData = countryRiskPremiumStatic[country as keyof typeof countryRiskPremiumStatic];
@@ -217,99 +229,166 @@ export default function FreeValuationPage() {
       return arr;
     };
 
+    const AdvBuildIndividualPercents = (years: number, csv: string): { [k: number]: number } => {
+      const values = AdvBuildDirectArray(years, csv);
+      const map: { [k: number]: number } = {};
+      for (let i = 0; i < years; i++) map[i] = values[i] ?? 0;
+      return map;
+    };
+
     const computeEVForScenarioAdvanced = (growthDelta: number, marginDelta: number): number => {
+      // Optional: update risk profile if industry/country selected
+      if (industry || country) {
+        updateRiskProfile({
+          selectedIndustry: industry || null,
+          selectedCountry: country || null,
+          unleveredBeta: industryData?.unleveredBeta ?? 0,
+          leveredBeta: industryData
+            ? industryData.unleveredBeta *
+              (1 + (1 - (countryData?.corporateTaxRate ?? 0)) * (industryData.dERatio ?? 0))
+            : 0,
+          equityRiskPremium: countryData?.equityRiskPremium ?? 0,
+          countryRiskPremium: countryData?.countryRiskPremium ?? 0,
+          deRatio: industryData?.dERatio ?? 0,
+          adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
+        });
+      }
+
       updatePeriods({ numberOfYears: advYears, startYear: new Date().getFullYear() });
 
-      if (growthMode === 'uniform') {
-        const g = parseFloat(advUniformGrowth || '0') + growthDelta;
-        updateRevenue({
-          inputType: 'consolidated',
-          consolidated: { inputMethod: 'growth', growthMethod: 'uniform', baseValue: revenue0, growthRate: g },
-        });
-      } else {
-        const arr = parsePerYearGrowth();
-        if (arr) {
-          const individualGrowthRates: { [k: number]: number } = {};
-          for (let i = 1; i < advYears; i++) {
-            individualGrowthRates[i] = (arr[i - 1] ?? 0) + growthDelta;
-          }
+      // Revenue
+      if (advRevenueInputMethod === 'growth') {
+        if (growthMode === 'uniform') {
+          const g = (advUniformGrowth.trim() !== '' ? parseFloat(advUniformGrowth) : 0) + growthDelta;
           updateRevenue({
             inputType: 'consolidated',
-            consolidated: {
-              inputMethod: 'growth',
-              growthMethod: 'individual',
-              baseValue: revenue0,
-              individualGrowthRates,
-            },
+            consolidated: { inputMethod: 'growth', growthMethod: 'uniform', baseValue: revenue0, growthRate: g },
           });
         } else {
-          updateRevenue({
-            inputType: 'consolidated',
-            consolidated: {
-              inputMethod: 'growth',
-              growthMethod: 'uniform',
-              baseValue: revenue0,
-              growthRate: growthDelta,
-            },
-          });
+          const arr = parsePerYearGrowth();
+          if (arr) {
+            const individualGrowthRates: { [k: number]: number } = {};
+            for (let i = 1; i < advYears; i++) {
+              individualGrowthRates[i] = (arr[i - 1] ?? 0) + growthDelta;
+            }
+            updateRevenue({
+              inputType: 'consolidated',
+              consolidated: {
+                inputMethod: 'growth',
+                growthMethod: 'individual',
+                baseValue: revenue0,
+                individualGrowthRates,
+              },
+            });
+          } else {
+            updateRevenue({
+              inputType: 'consolidated',
+              consolidated: {
+                inputMethod: 'growth',
+                growthMethod: 'uniform',
+                baseValue: revenue0,
+                growthRate: growthDelta,
+              },
+            });
+          }
         }
-      }
-
-      let marginArr: number[] = [];
-      if (ebitdaMode === 'constant') {
-        const m = parseFloat(ebitdaConstant || '0') + marginDelta;
-        marginArr = Array.from({ length: advYears }, () => m);
-      } else if (ebitdaMode === 'perYear') {
-        const parts = ebitdaPerYear
-          .split(/[\,\s]+/)
-          .map((p) => p.trim())
-          .filter(Boolean)
-          .map(Number);
-        marginArr = Array.from({ length: advYears }, (_, i) =>
-          i < parts.length ? (parts[i] || 0) + marginDelta : (parts[parts.length - 1] || 0) + marginDelta,
-        );
       } else {
-        const startM = parseFloat(advEbitdaStart || '0');
-        const targetM = parseFloat(advEbitdaTarget || advEbitdaStart || '0');
-        marginArr = buildMarginArray(startM, targetM, advYears, marginDelta);
+        const yearlyValues = AdvBuildDirectArray(advYears, advRevenueDirect);
+        updateRevenue({ inputType: 'consolidated', consolidated: { inputMethod: 'direct', yearlyValues } });
       }
-      const individualPercents: { [k: number]: number } = {};
-      for (let i = 0; i < advYears; i++) {
-        individualPercents[i] = Math.max(0, 100 - (marginArr[i] || 0));
-      }
-      updateOpEx({
-        inputType: 'consolidated',
-        consolidated: { inputMethod: 'percentOfRevenue', percentMethod: 'individual', individualPercents },
-      });
 
+      // Terminal value with long-term growth
+      const ltg = advLTG.trim() !== '' ? parseFloat(advLTG) : 0;
+      updateTerminalValue({ method: 'growth', growthRate: ltg });
+
+      // EBITDA via OpEx
+      if (ebitdaInputType === 'percent') {
+        let marginArr: number[] = [];
+        if (ebitdaPctMode === 'uniform') {
+          const m = (advEbitdaUniformPct.trim() !== '' ? parseFloat(advEbitdaUniformPct) : 0) + marginDelta;
+          marginArr = Array.from({ length: advYears }, () => m);
+        } else if (ebitdaPctMode === 'perYear') {
+          const parts = ebitdaPerYear
+            .split(/[\,\s]+/)
+            .map((p) => p.trim())
+            .filter(Boolean)
+            .map(Number);
+          marginArr = Array.from({ length: advYears }, (_, i) =>
+            i < parts.length ? (parts[i] || 0) + marginDelta : (parts[parts.length - 1] || 0) + marginDelta,
+          );
+        } else {
+          const startM = parseFloat(advEbitdaStart || '0');
+          const targetM = parseFloat(advEbitdaTarget || advEbitdaStart || '0');
+          marginArr = buildMarginArray(startM, targetM, advYears, marginDelta);
+        }
+        const individualPercents: { [k: number]: number } = {};
+        for (let i = 0; i < advYears; i++) {
+          individualPercents[i] = Math.max(0, 100 - (marginArr[i] || 0));
+        }
+        updateOpEx({
+          inputType: 'consolidated',
+          consolidated: { inputMethod: 'percentOfRevenue', percentMethod: 'individual', individualPercents },
+        });
+      } else {
+        // Direct EBITDA -> set OpEx after we have revenue values
+        updateOpEx({
+          inputType: 'consolidated',
+          consolidated: { inputMethod: 'direct', yearlyValues: Array(advYears).fill(0) },
+        });
+      }
+
+      // CAPEX
       if (capexMethod === 'direct') {
         updateCapex({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, capexDirect) });
-      } else {
+      } else if (capexPercentMode === 'uniform') {
         updateCapex({
           inputMethod: 'percentOfRevenue',
           percentMethod: 'uniform',
           percentOfRevenue: parseFloat(advCapexPct || '0'),
         });
+      } else {
+        updateCapex({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'individual',
+          individualPercents: AdvBuildIndividualPercents(advYears, capexPercentsCSV),
+        });
       }
+
+      // NWC
       if (nwcMethod === 'direct') {
         updateNetWorkingCapital({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, nwcDirect) });
-      } else {
+      } else if (nwcPercentMode === 'uniform') {
         updateNetWorkingCapital({
           inputMethod: 'percentOfRevenue',
           percentMethod: 'uniform',
           percentOfRevenue: parseFloat(advNwcPct || '0'),
         });
+      } else {
+        updateNetWorkingCapital({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'individual',
+          individualPercents: AdvBuildIndividualPercents(advYears, nwcPercentsCSV),
+        });
       }
+
+      // D&A
       if (daMethod === 'direct') {
         updateDA({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, daDirect) });
-      } else {
+      } else if (daPercentMode === 'uniform') {
         updateDA({
           inputMethod: 'percentOfRevenue',
           percentMethod: 'uniform',
           percentOfRevenue: parseFloat(advDaPct || '0'),
         });
+      } else {
+        updateDA({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'individual',
+          individualPercents: AdvBuildIndividualPercents(advYears, daPercentsCSV),
+        });
       }
 
+      // Taxes
       if (taxesMethod === 'direct') {
         updateTaxes({ inputMethod: 'direct', yearlyValues: AdvBuildDirectArray(advYears, taxesDirect) });
       } else {
@@ -318,6 +397,17 @@ export default function FreeValuationPage() {
       }
 
       calculateFinancials();
+
+      // Adjust OpEx if using direct EBITDA
+      if (ebitdaInputType === 'direct') {
+        const state = useModelStore.getState();
+        const currentRevenue = state.calculatedFinancials.revenue;
+        const targetEbitda = AdvBuildDirectArray(advYears, ebitdaPerYear);
+        const opexValues = currentRevenue.map((rev, i) => Math.max(0, (rev || 0) - (targetEbitda[i] || 0)));
+        updateOpEx({ inputType: 'consolidated', consolidated: { inputMethod: 'direct', yearlyValues: opexValues } });
+        calculateFinancials();
+      }
+
       return useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
     };
 
@@ -330,22 +420,44 @@ export default function FreeValuationPage() {
           id: 'bear',
           name: 'Low',
           enterpriseValue: lowEV,
-          ebitdaMarginPct: Math.max(0, parseFloat(advEbitdaStart || '0') - 5),
-          revenueGrowthPct: growthMode === 'uniform' ? parseFloat(advUniformGrowth || '0') - 5 : 0,
+          ebitdaMarginPct:
+            ebitdaInputType === 'percent'
+              ? ebitdaPctMode === 'uniform'
+                ? Math.max(0, (parseFloat(advEbitdaUniformPct || '0') || 0) - 5)
+                : Math.max(0, parseFloat(advEbitdaStart || '0') - 5)
+              : 0,
+          revenueGrowthPct:
+            advRevenueInputMethod === 'growth' && growthMode === 'uniform'
+              ? (parseFloat(advUniformGrowth || '0') || 0) - 5
+              : 0,
         },
         {
           id: 'base',
           name: 'Base',
           enterpriseValue: baseEV,
-          ebitdaMarginPct: parseFloat(advEbitdaStart || '0'),
-          revenueGrowthPct: growthMode === 'uniform' ? parseFloat(advUniformGrowth || '0') : 0,
+          ebitdaMarginPct:
+            ebitdaInputType === 'percent'
+              ? ebitdaPctMode === 'uniform'
+                ? parseFloat(advEbitdaUniformPct || '0')
+                : parseFloat(advEbitdaStart || '0')
+              : 0,
+          revenueGrowthPct:
+            advRevenueInputMethod === 'growth' && growthMode === 'uniform' ? parseFloat(advUniformGrowth || '0') : 0,
         },
         {
           id: 'bull',
           name: 'High',
           enterpriseValue: highEV,
-          ebitdaMarginPct: parseFloat(advEbitdaStart || '0') + 5,
-          revenueGrowthPct: growthMode === 'uniform' ? parseFloat(advUniformGrowth || '0') + 5 : 0,
+          ebitdaMarginPct:
+            ebitdaInputType === 'percent'
+              ? ebitdaPctMode === 'uniform'
+                ? (parseFloat(advEbitdaUniformPct || '0') || 0) + 5
+                : parseFloat(advEbitdaStart || '0') + 5
+              : 0,
+          revenueGrowthPct:
+            advRevenueInputMethod === 'growth' && growthMode === 'uniform'
+              ? (parseFloat(advUniformGrowth || '0') || 0) + 5
+              : 0,
         },
       ]);
       setIsCalculating(false);
@@ -523,176 +635,601 @@ export default function FreeValuationPage() {
           </TabsContent>
 
           <TabsContent value="advanced">
-            <form onSubmit={handleSubmitAdvanced} className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Last year&#39;s revenue (USD)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={lastYearRevenue}
-                    onChange={(e) => setLastYearRevenue(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Forecast years</label>
-                  <select
-                    value={advYears}
-                    onChange={(e) => setAdvYears(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    {[3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Growth mode</label>
-                  <select
-                    value={growthMode}
-                    onChange={(e) => setGrowthMode(e.target.value as 'uniform' | 'perYear')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="uniform">Uniform growth (%/yr)</option>
-                    <option value="perYear">Per-year growth list</option>
-                  </select>
-                </div>
-                {growthMode === 'uniform' ? (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Uniform growth (%/yr)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={advUniformGrowth}
-                      onChange={(e) => setAdvUniformGrowth(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                ) : (
+            <form onSubmit={handleSubmitAdvanced} className="bg-white border border-gray-200 rounded-lg p-4 space-y-6">
+              {/* Step 1: Revenue */}
+              <div
+                className={`transition-all duration-500 ease-out ${advStep >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'} ${advStep >= 1 ? '' : 'pointer-events-none'}`}
+              >
+                <div className="mb-2 text-sm font-medium text-gray-700">1. Revenue</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Per-year growth rates (%), comma or space separated (length {advYears - 1})
+                      Last year&#39;s revenue (USD)
                     </label>
                     <input
-                      type="text"
-                      value={advPerYearGrowth}
-                      onChange={(e) => setAdvPerYearGrowth(e.target.value)}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={lastYearRevenue}
+                      onChange={(e) => setLastYearRevenue(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      placeholder="e.g. 10, 9, 8, 7"
                     />
                   </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">EBITDA margin start (%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={advEbitdaStart}
-                    onChange={(e) => setAdvEbitdaStart(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">EBITDA margin target (%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={advEbitdaTarget}
-                    onChange={(e) => setAdvEbitdaTarget(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">CAPEX (% of revenue)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={advCapexPct}
-                    onChange={(e) => setAdvCapexPct(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">NWC (% of revenue)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={advNwcPct}
-                    onChange={(e) => setAdvNwcPct(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">D&A (% of revenue)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={advDaPct}
-                    onChange={(e) => setAdvDaPct(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Taxes</label>
-                  <div className="flex items-center gap-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Forecast years</label>
                     <select
-                      value={taxesMethod}
-                      onChange={(e) => setTaxesMethod(e.target.value as 'percentOfEBIT' | 'direct')}
-                      className="px-2 py-2 border border-gray-300 rounded-md"
+                      value={advYears}
+                      onChange={(e) => setAdvYears(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
-                      <option value="percentOfEBIT">% of EBIT</option>
-                      <option value="direct">Direct</option>
+                      {[3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
                     </select>
-                    {taxesMethod === 'percentOfEBIT' ? (
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    type="button"
+                    className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                    disabled={!(parseFloat(lastYearRevenue || '0') > 0) || advYears < 2}
+                    onClick={() => setAdvStep(2)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 2: Revenue growth / direct and LTG */}
+              <div
+                className={`transition-all duration-500 ease-out ${advStep >= 2 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+              >
+                <div className="mb-2 text-sm font-medium text-gray-700">2. Revenue growth</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Input method</label>
+                    <select
+                      value={advRevenueInputMethod}
+                      onChange={(e) => setAdvRevenueInputMethod(e.target.value as 'growth' | 'direct')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="growth">Growth based</option>
+                      <option value="direct">Direct revenue per year</option>
+                    </select>
+                  </div>
+                  {advRevenueInputMethod === 'growth' ? (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Growth mode</label>
+                      <select
+                        value={growthMode}
+                        onChange={(e) => setGrowthMode(e.target.value as 'uniform' | 'perYear')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="uniform">Uniform (%/yr)</option>
+                        <option value="perYear">Per-year list</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Revenues CSV (length {advYears})
+                      </label>
+                      <input
+                        type="text"
+                        value={advRevenueDirect}
+                        onChange={(e) => setAdvRevenueDirect(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="e.g. 100, 110, 121, 133"
+                      />
+                    </div>
+                  )}
+                </div>
+                {advRevenueInputMethod === 'growth' && (
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {growthMode === 'uniform' ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Uniform growth (%/yr)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={advUniformGrowth}
+                          onChange={(e) => setAdvUniformGrowth(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Per-year growth list (length {advYears - 1})
+                        </label>
+                        <input
+                          type="text"
+                          value={advPerYearGrowth}
+                          onChange={(e) => setAdvPerYearGrowth(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="e.g. 10, 9, 8, 7"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Long-term growth (%)</label>
                       <input
                         type="number"
                         step="0.1"
-                        value={taxesPct}
-                        onChange={(e) => setTaxesPct(e.target.value)}
+                        value={advLTG}
+                        onChange={(e) => setAdvLTG(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="Tax % of EBIT"
+                        placeholder="e.g. 2.5"
                       />
-                    ) : (
-                      <input
-                        type="text"
-                        value={taxesDirect}
-                        onChange={(e) => setTaxesDirect(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="Direct values CSV e.g. 10,12,14"
-                      />
-                    )}
+                    </div>
                   </div>
+                )}
+                {advRevenueInputMethod === 'direct' && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Long-term growth (%)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={advLTG}
+                      onChange={(e) => setAdvLTG(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="e.g. 2.5"
+                    />
+                  </div>
+                )}
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    type="button"
+                    className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+                    onClick={() => setAdvStep(1)}
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                    disabled={
+                      advRevenueInputMethod === 'growth'
+                        ? (growthMode === 'uniform'
+                            ? advUniformGrowth.trim() === ''
+                            : advPerYearGrowth.trim() === '') || advLTG.trim() === ''
+                        : advRevenueDirect.trim() === '' || advLTG.trim() === ''
+                    }
+                    onClick={() => setAdvStep(3)}
+                  >
+                    Next
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-                  disabled={isCalculating}
-                >
-                  Estimate
-                </button>
+              {/* Step 3: EBITDA */}
+              <div
+                className={`transition-all duration-500 ease-out ${advStep >= 3 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+              >
+                <div className="mb-2 text-sm font-medium text-gray-700">3. EBITDA</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Input type</label>
+                    <select
+                      value={ebitdaInputType}
+                      onChange={(e) => setEbitdaInputType(e.target.value as 'percent' | 'direct')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="percent">% EBITDA</option>
+                      <option value="direct">Direct EBITDA per year</option>
+                    </select>
+                  </div>
+                  {ebitdaInputType === 'percent' ? (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">% mode</label>
+                      <select
+                        value={ebitdaPctMode}
+                        onChange={(e) => setEbitdaPctMode(e.target.value as 'uniform' | 'perYear' | 'ramp')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="uniform">Uniform</option>
+                        <option value="ramp">Start → Target</option>
+                        <option value="perYear">Per-year list</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        EBITDA CSV (length {advYears})
+                      </label>
+                      <input
+                        type="text"
+                        value={ebitdaPerYear}
+                        onChange={(e) => setEbitdaPerYear(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="e.g. 15, 18, 22, 27"
+                      />
+                    </div>
+                  )}
+                </div>
+                {ebitdaInputType === 'percent' && (
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {ebitdaPctMode === 'uniform' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">EBITDA margin (%)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          value={advEbitdaUniformPct}
+                          onChange={(e) => setAdvEbitdaUniformPct(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                    )}
+                    {ebitdaPctMode === 'ramp' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Start EBITDA margin (%)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value={advEbitdaStart}
+                            onChange={(e) => setAdvEbitdaStart(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Target EBITDA margin (%)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value={advEbitdaTarget}
+                            onChange={(e) => setAdvEbitdaTarget(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
+                      </>
+                    )}
+                    {ebitdaPctMode === 'perYear' && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Per-year EBITDA margins (%) CSV (length {advYears})
+                        </label>
+                        <input
+                          type="text"
+                          value={ebitdaPerYear}
+                          onChange={(e) => setEbitdaPerYear(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="e.g. 20, 22, 24, 25"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    type="button"
+                    className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+                    onClick={() => setAdvStep(2)}
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                    disabled={
+                      ebitdaInputType === 'percent'
+                        ? ebitdaPctMode === 'uniform'
+                          ? advEbitdaUniformPct.trim() === ''
+                          : ebitdaPctMode === 'ramp'
+                            ? advEbitdaStart.trim() === '' || advEbitdaTarget.trim() === ''
+                            : ebitdaPerYear.trim() === ''
+                        : ebitdaPerYear.trim() === ''
+                    }
+                    onClick={() => setAdvStep(4)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 4: Others */}
+              <div
+                className={`transition-all duration-500 ease-out ${advStep >= 4 ? 'opacity-100 translate-y-0 max-h-[2000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+              >
+                <div className="mb-2 text-sm font-medium text-gray-700">4. Others</div>
+                {/* CAPEX */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CAPEX method</label>
+                    <select
+                      value={capexMethod}
+                      onChange={(e) => setCapexMethod(e.target.value as 'percentOfRevenue' | 'direct')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="percentOfRevenue">% of revenue</option>
+                      <option value="direct">Direct</option>
+                    </select>
+                  </div>
+                  {capexMethod === 'percentOfRevenue' ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Percent mode</label>
+                        <select
+                          value={capexPercentMode}
+                          onChange={(e) => setCapexPercentMode(e.target.value as 'uniform' | 'individual')}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="uniform">Uniform</option>
+                          <option value="individual">Each year (CSV)</option>
+                        </select>
+                      </div>
+                      {capexPercentMode === 'uniform' ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">CAPEX (% of revenue)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={advCapexPct}
+                            onChange={(e) => setAdvCapexPct(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            CAPEX percents CSV (length {advYears})
+                          </label>
+                          <input
+                            type="text"
+                            value={capexPercentsCSV}
+                            onChange={(e) => setCapexPercentsCSV(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            placeholder="e.g. 5, 5, 4, 4"
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        CAPEX direct CSV (length {advYears})
+                      </label>
+                      <input
+                        type="text"
+                        value={capexDirect}
+                        onChange={(e) => setCapexDirect(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="e.g. 8, 9, 10, 10"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* NWC */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">NWC method</label>
+                    <select
+                      value={nwcMethod}
+                      onChange={(e) => setNwcMethod(e.target.value as 'percentOfRevenue' | 'direct')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="percentOfRevenue">% of revenue</option>
+                      <option value="direct">Direct</option>
+                    </select>
+                  </div>
+                  {nwcMethod === 'percentOfRevenue' ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Percent mode</label>
+                        <select
+                          value={nwcPercentMode}
+                          onChange={(e) => setNwcPercentMode(e.target.value as 'uniform' | 'individual')}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="uniform">Uniform</option>
+                          <option value="individual">Each year (CSV)</option>
+                        </select>
+                      </div>
+                      {nwcPercentMode === 'uniform' ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">NWC (% of revenue)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={advNwcPct}
+                            onChange={(e) => setAdvNwcPct(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            NWC percents CSV (length {advYears})
+                          </label>
+                          <input
+                            type="text"
+                            value={nwcPercentsCSV}
+                            onChange={(e) => setNwcPercentsCSV(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            placeholder="e.g. 2, 2, 1.5, 1.5"
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        NWC direct CSV (length {advYears})
+                      </label>
+                      <input
+                        type="text"
+                        value={nwcDirect}
+                        onChange={(e) => setNwcDirect(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="e.g. 1, 2, 3, 3"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* D&A */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">D&A method</label>
+                    <select
+                      value={daMethod}
+                      onChange={(e) => setDaMethod(e.target.value as 'percentOfRevenue' | 'direct')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="percentOfRevenue">% of revenue</option>
+                      <option value="direct">Direct</option>
+                    </select>
+                  </div>
+                  {daMethod === 'percentOfRevenue' ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Percent mode</label>
+                        <select
+                          value={daPercentMode}
+                          onChange={(e) => setDaPercentMode(e.target.value as 'uniform' | 'individual')}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="uniform">Uniform</option>
+                          <option value="individual">Each year (CSV)</option>
+                        </select>
+                      </div>
+                      {daPercentMode === 'uniform' ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">D&A (% of revenue)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={advDaPct}
+                            onChange={(e) => setAdvDaPct(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            D&A percents CSV (length {advYears})
+                          </label>
+                          <input
+                            type="text"
+                            value={daPercentsCSV}
+                            onChange={(e) => setDaPercentsCSV(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            placeholder="e.g. 3, 3, 2.5, 2"
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        D&A direct CSV (length {advYears})
+                      </label>
+                      <input
+                        type="text"
+                        value={daDirect}
+                        onChange={(e) => setDaDirect(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        placeholder="e.g. 4, 4, 5, 5"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    type="button"
+                    className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+                    onClick={() => setAdvStep(3)}
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    className="px-3 py-2 bg-blue-600 text-white rounded-md"
+                    onClick={() => setAdvStep(5)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 5: Taxes */}
+              <div
+                className={`transition-all duration-500 ease-out ${advStep >= 5 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+              >
+                <div className="mb-2 text-sm font-medium text-gray-700">5. Taxes</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
+                    <select
+                      value={taxesMethod}
+                      onChange={(e) => setTaxesMethod(e.target.value as 'percentOfEBIT' | 'direct')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="percentOfEBIT">% of EBIT</option>
+                      <option value="direct">Direct per year</option>
+                    </select>
+                  </div>
+                  <div>
+                    {taxesMethod === 'percentOfEBIT' ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tax % of EBIT</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={taxesPct}
+                          onChange={(e) => setTaxesPct(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="e.g. 25"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Taxes direct CSV (length {advYears})
+                        </label>
+                        <input
+                          type="text"
+                          value={taxesDirect}
+                          onChange={(e) => setTaxesDirect(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="e.g. 0, 0, 5, 7"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    type="button"
+                    className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+                    onClick={() => setAdvStep(4)}
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                    disabled={isCalculating}
+                  >
+                    Estimate
+                  </button>
+                </div>
               </div>
             </form>
 
