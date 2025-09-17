@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.28.1",
+    "@heroicons/react": "^2.1.4",
     "@paddle/paddle-js": "^1.4.2",
     "@paddle/paddle-node-sdk": "^3.0.0",
     "@prisma/client": "^6.13.0",
