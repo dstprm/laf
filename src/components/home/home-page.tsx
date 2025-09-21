@@ -34,21 +34,6 @@ export function HomePage() {
         <FeaturesSection />
         <HowItWorks />
         <Stats />
-        <section id="pricing" className="scroll-mt-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8 py-14 sm:py-16 md:py-20">
-            <div className="text-center">
-              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight md:text-5xl">
-                Simple, transparent pricing
-              </h2>
-              <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground">
-                Choose a plan that grows with you.
-              </p>
-            </div>
-            <div className="mt-8 sm:mt-10">
-              <Pricing country={country} />
-            </div>
-          </div>
-        </section>
         <Testimonials />
         <Faq />
         <ContactSection />

@@ -94,16 +94,13 @@ export default function Header({ user }: Props) {
         </div>
         <div className="hidden md:flex items-center justify-center gap-6 text-sm text-muted-foreground">
           <Link href={hrefFor('features')} className="hover:text-foreground">
-            Features
+            Características
           </Link>
           <Link href={hrefFor('how-it-works')} className="hover:text-foreground">
-            How it works
-          </Link>
-          <Link href={hrefFor('pricing')} className="hover:text-foreground">
-            Pricing
+            Cómo funciona
           </Link>
           <Link href={hrefFor('faq')} className="hover:text-foreground">
-            FAQ
+            Preguntas frecuentes
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end">
@@ -111,13 +108,13 @@ export default function Header({ user }: Props) {
             <LightDarkToggle />
             {user?.id ? (
               <Button variant={'secondary'} asChild={true}>
-                <Link href={'/dashboard'}>Dashboard</Link>
+                <Link href={'/dashboard'}>Panel</Link>
               </Button>
             ) : (
               <Button asChild={true} variant={'secondary'}>
                 {/* If you want to use the login page, uncomment the following line and comment out the SignInButton */}
                 {/* <Link href={'/login'}>Sign in</Link> */}
-                <SignInButton mode="modal">Sign in</SignInButton>
+                <SignInButton mode="modal">Iniciar sesión</SignInButton>
               </Button>
             )}
           </div>
@@ -130,7 +127,7 @@ export default function Header({ user }: Props) {
               </SheetTrigger>
               <SheetContent side="right" className="w-full sm:max-w-xs" onCloseAutoFocus={(e) => e.preventDefault()}>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Menu</span>
+                  <span className="text-sm font-medium">Menú</span>
                   <LightDarkToggle />
                 </div>
                 <div className="mt-6 grid gap-2 text-sm">
@@ -139,7 +136,7 @@ export default function Header({ user }: Props) {
                       href={hrefFor('features')}
                       className="rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground"
                     >
-                      Features
+                      Características
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
@@ -147,15 +144,7 @@ export default function Header({ user }: Props) {
                       href={hrefFor('how-it-works')}
                       className="rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground"
                     >
-                      How it works
-                    </Link>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Link
-                      href={hrefFor('pricing')}
-                      className="rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground"
-                    >
-                      Pricing
+                      Cómo funciona
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
@@ -163,7 +152,7 @@ export default function Header({ user }: Props) {
                       href={hrefFor('faq')}
                       className="rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground"
                     >
-                      FAQ
+                      Preguntas frecuentes
                     </Link>
                   </SheetClose>
                 </div>
@@ -171,7 +160,7 @@ export default function Header({ user }: Props) {
                   {user?.id ? (
                     <SheetClose asChild>
                       <Button className="w-full" asChild>
-                        <Link href={'/dashboard'}>Dashboard</Link>
+                        <Link href={'/dashboard'}>Panel</Link>
                       </Button>
                     </SheetClose>
                   ) : (
@@ -179,7 +168,7 @@ export default function Header({ user }: Props) {
                       <Button className="w-full" asChild>
                         {/* If you want to use the login page, uncomment the following line and comment out the SignInButton */}
                         {/* <Link href={'/login'}>Sign in</Link> */}
-                        <SignInButton mode="modal">Sign in</SignInButton>
+                        <SignInButton mode="modal">Iniciar sesión</SignInButton>
                       </Button>
                     </SheetClose>
                   )}

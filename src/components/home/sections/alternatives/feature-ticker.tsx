@@ -1,19 +1,18 @@
 import { cn } from '@/lib/utils';
 
 const items = [
-  'Global tax/VAT (Paddle)',
-  'AI-ready context',
-  'Auth (Clerk)',
-  'Transactional emails (Resend)',
-  'Webhooks',
-  'Prisma ORM',
-  'Basic analytics',
-  'Admin dashboard',
-  'TypeScript everywhere',
-  'Light/Dark themes',
-  'Tiered features',
-  'Basic security',
-  'Built for modern building',
+  'DCF y múltiplos',
+  'Comparables por industria',
+  'Datos actualizados',
+  'Prima de riesgo país',
+  'Rango de valoración',
+  'Informe exportable',
+  'Supuestos claros',
+  'Sensibilidad',
+  'Gratis por ahora',
+  'Modo oscuro/claro',
+  'Hecho para founders',
+  'Listo en minutos',
 ];
 
 interface SectionProps {
