@@ -73,9 +73,9 @@ export default function Header({ user }: Props) {
   return (
     <nav
       className={cn(
-        'sticky top-0 z-50 transition-transform duration-300',
+        'sticky top-0 z-50 transition-all duration-300',
         isHidden ? '-translate-y-full' : 'translate-y-0',
-        isStuck ? 'backdrop-blur bg-background/70 border-b border-border' : 'bg-transparent',
+        isStuck ? 'backdrop-blur-md bg-background/80 border-b border-border' : 'backdrop-blur-sm bg-transparent',
       )}
     >
       <div
@@ -92,17 +92,34 @@ export default function Header({ user }: Props) {
             </>
           </Link>
         </div>
-        <div className="hidden md:flex items-center justify-center gap-6 text-sm text-muted-foreground">
-          <Link href={hrefFor('features')} className="hover:text-foreground">
+        <div
+          className={cn(
+            'hidden md:flex items-center justify-center gap-6 text-sm transition-colors',
+            isStuck ? 'text-muted-foreground' : 'text-white/90',
+          )}
+        >
+          <Link
+            href={hrefFor('features')}
+            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+          >
             Características
           </Link>
-          <Link href={hrefFor('services')} className="hover:text-foreground">
+          <Link
+            href={hrefFor('services')}
+            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+          >
             Servicios
           </Link>
-          <Link href={hrefFor('how-it-works')} className="hover:text-foreground">
+          <Link
+            href={hrefFor('how-it-works')}
+            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+          >
             Cómo funciona
           </Link>
-          <Link href={hrefFor('faq')} className="hover:text-foreground">
+          <Link
+            href={hrefFor('faq')}
+            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+          >
             FAQ
           </Link>
         </div>

@@ -21,6 +21,10 @@
 *.pem
 .idea
 
+# large video files
+/public/videos/*.mp4
+/public/videos/*.webm
+
 # debug
 npm-debug.log*
 yarn-debug.log*
