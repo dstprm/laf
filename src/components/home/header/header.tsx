@@ -96,11 +96,14 @@ export default function Header({ user }: Props) {
           <Link href={hrefFor('features')} className="hover:text-foreground">
             Características
           </Link>
+          <Link href={hrefFor('services')} className="hover:text-foreground">
+            Servicios
+          </Link>
           <Link href={hrefFor('how-it-works')} className="hover:text-foreground">
             Cómo funciona
           </Link>
           <Link href={hrefFor('faq')} className="hover:text-foreground">
-            Preguntas frecuentes
+            FAQ
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end">
@@ -141,6 +144,14 @@ export default function Header({ user }: Props) {
                   </SheetClose>
                   <SheetClose asChild>
                     <Link
+                      href={hrefFor('services')}
+                      className="rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground"
+                    >
+                      Servicios
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link
                       href={hrefFor('how-it-works')}
                       className="rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground"
                     >
@@ -152,7 +163,7 @@ export default function Header({ user }: Props) {
                       href={hrefFor('faq')}
                       className="rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground"
                     >
-                      Preguntas frecuentes
+                      FAQ
                     </Link>
                   </SheetClose>
                 </div>

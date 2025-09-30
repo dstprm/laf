@@ -16,13 +16,15 @@ export function Cta() {
         />
         <div className="mx-auto max-w-2xl">
           <h3 className="text-2xl font-semibold md:text-4xl">Listo para valuar tu empresa</h3>
-          <p className="mt-3 text-muted-foreground">Gratis, en minutos y con un informe listo para compartir.</p>
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <Button asChild={true}>
-              <Link href="/free-valuation">Comenzar ahora</Link>
+          <p className="mt-3 text-muted-foreground">
+            Comienza gratis en minutos o solicita una valuación profesional personalizada.
+          </p>
+          <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
+            <Button asChild={true} size="lg">
+              <Link href="/free-valuation">Valuación Gratuita</Link>
             </Button>
-            <Button variant="secondary" asChild={true}>
-              <Link href="#how-it-works">Cómo funciona</Link>
+            <Button variant="secondary" asChild={true} size="lg">
+              <Link href="#professional-valuation">Valuación Profesional</Link>
             </Button>
           </div>
         </div>

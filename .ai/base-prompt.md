@@ -43,4 +43,4 @@ AI tips
 
 [Project-specific business description]
 
-- This project is the initial version of an AI enabled investment bank like offdeal.io. For now, the only thing i am offering is the free valuation module. I want it to have just a landing page, dashboard and free-valuation tool. I wish however for it to have a very clear value proposition of just the company valuation tool (for now).
+- This project is the initial version of an AI enabled investment bank like offdeal.io. For now, the only thing i am offering is the free valuation module, and the idea is that people who want to contact us can get a professional paid valuation. I want it to have just a landing page, dashboard and free-valuation tool. I wish however for it to have a very clear value proposition of just the company valuation tool (for now).

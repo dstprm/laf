@@ -4,8 +4,8 @@ import { Section } from './section';
 export function FeaturesSection() {
   const features = [
     {
-      title: 'Múltiples métodos',
-      description: 'DCF, múltiplos, comparables y prima de riesgo país. Mezclamos enfoques para mayor precisión.',
+      title: 'Método DCF robusto',
+      description: 'Valuación gratuita basada en flujos descontados. Valuación profesional con múltiples metodologías.',
       icon: ShieldCheck,
     },
     {
@@ -38,8 +38,10 @@ export function FeaturesSection() {
   return (
     <Section id="features" muted>
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">¿Por qué nuestra valuación?</h2>
-        <p className="mt-4 text-muted-foreground">Precisión, claridad y velocidad en un solo lugar.</p>
+        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">¿Por qué elegirnos?</h2>
+        <p className="mt-4 text-muted-foreground">
+          Somos tu socio especializado en valuación de empresas. Precisión, experiencia y claridad en cada análisis.
+        </p>
       </div>
       <div className="mt-12 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {features.map((f) => (

@@ -16,6 +16,7 @@ import { Faq } from '@/components/home/sections/faq';
 import { Cta } from '@/components/home/sections/cta';
 import { ContactSection } from '@/components/home/sections/contact';
 import { FeatureTicker } from '@/components/home/sections/alternatives/feature-ticker';
+import { ServiceComparison } from '@/components/home/sections/service-comparison';
 
 import { Footer } from '@/components/home/footer/footer';
 
@@ -32,6 +33,7 @@ export function HomePage() {
         <FeatureTicker />
         <Brands />
         <FeaturesSection />
+        <ServiceComparison />
         <HowItWorks />
         <Stats />
         <Testimonials />
