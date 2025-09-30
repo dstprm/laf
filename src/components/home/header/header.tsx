@@ -131,10 +131,13 @@ export default function Header({ user }: Props) {
                 <Link href={'/dashboard'}>Panel</Link>
               </Button>
             ) : (
-              <Button asChild={true} variant={'secondary'}>
+              <Button
+                asChild={true}
+                className={cn('transition-colors', isStuck ? '' : 'bg-white text-black hover:bg-white/90')}
+              >
                 {/* If you want to use the login page, uncomment the following line and comment out the SignInButton */}
                 {/* <Link href={'/login'}>Sign in</Link> */}
-                <SignInButton mode="modal">Iniciar sesión</SignInButton>
+                <SignInButton mode="modal">Comenzar</SignInButton>
               </Button>
             )}
           </div>
