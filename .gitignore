@@ -22,7 +22,6 @@
 .idea
 
 # large video files
-/public/videos/*.mp4
 /public/videos/*.webm
 
 # debug

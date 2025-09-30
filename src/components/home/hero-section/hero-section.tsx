@@ -8,6 +8,7 @@ const VIDEOS = [
   '/videos/tech-office.mp4', // Smallest first (9MB) for faster initial load
   '/videos/business-meeting.mp4', // 20MB
   '/videos/meeting.mp4', // 28MB
+  'videos/solar.mp4',
 ];
 
 export function HeroSection() {
