@@ -73,9 +73,9 @@ export default function Header({ user }: Props) {
   return (
     <nav
       className={cn(
-        'sticky top-0 z-50 transition-all duration-300',
+        'sticky top-0 z-50 transition-all duration-300 border-b',
         isHidden ? '-translate-y-full' : 'translate-y-0',
-        isStuck ? 'backdrop-blur-md bg-background/80 border-b border-border' : 'backdrop-blur-sm bg-transparent',
+        isStuck ? 'backdrop-blur-md bg-background/80 border-border' : 'backdrop-blur-sm bg-black/10 border-white/10',
       )}
     >
       <div
