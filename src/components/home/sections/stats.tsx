@@ -1,10 +1,10 @@
 import { Section } from './section';
 export function Stats() {
   const stats = [
-    { value: '5 min', label: 'to first run' },
-    { value: '10+', label: 'ready-made pages' },
-    { value: '100%', label: 'TypeScript' },
-    { value: '0', label: 'vendor lock-in' },
+    { value: '5 min', label: 'hasta tu primera valuación' },
+    { value: '3+', label: 'métodos de valuación' },
+    { value: '100%', label: 'gratis ahora' },
+    { value: '1', label: 'informe listo para compartir' },
   ];
 
   return (

@@ -10,18 +10,18 @@ export function Footer() {
         }
       >
         <div className={'flex justify-center items-center gap-2'}>
-          <span className={'text-sm leading-[14px]'}>SaaS Template</span>
+          <span className={'text-sm leading-[14px]'}>LAF</span>
           <span>·</span>
           <a href="/terms" className="hover:underline">
-            Terms
+            Términos
           </a>
           <span>·</span>
           <a href="/privacy" className="hover:underline">
-            Privacy
+            Privacidad
           </a>
           <span>·</span>
           <a href="/contact" className="hover:underline">
-            Contact
+            Contacto
           </a>
         </div>
       </div>

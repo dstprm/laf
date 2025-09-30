@@ -1,37 +1,124 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useEffect, useRef, useState } from 'react';
+
+const VIDEOS = [
+  '/videos/tech-office.mp4', // Smallest first (9MB) for faster initial load
+  '/videos/business-meeting.mp4', // 20MB
+  '/videos/meeting.mp4', // 28MB
+  'videos/solar.mp4',
+];
 
 export function HeroSection() {
+  const video1Ref = useRef<HTMLVideoElement>(null);
+  const video2Ref = useRef<HTMLVideoElement>(null);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [activeVideo, setActiveVideo] = useState<1 | 2>(1);
+
+  useEffect(() => {
+    const currentRef = activeVideo === 1 ? video1Ref : video2Ref;
+    const nextRef = activeVideo === 1 ? video2Ref : video1Ref;
+    const video = currentRef.current;
+
+    if (!video) return;
+
+    const handleVideoEnd = () => {
+      const nextIndex = (currentVideoIndex + 1) % VIDEOS.length;
+
+      // Preload next video
+      if (nextRef.current) {
+        nextRef.current.src = VIDEOS[nextIndex];
+        nextRef.current.load();
+
+        // Start playing next video and fade in
+        nextRef.current.play().then(() => {
+          setActiveVideo(activeVideo === 1 ? 2 : 1);
+          setCurrentVideoIndex(nextIndex);
+        });
+      }
+    };
+
+    video.addEventListener('ended', handleVideoEnd);
+    video.play().catch((err) => console.log('Video autoplay prevented:', err));
+
+    return () => {
+      video.removeEventListener('ended', handleVideoEnd);
+    };
+  }, [currentVideoIndex, activeVideo]);
+
   return (
-    <section className={'mx-auto mt-14 md:mt-16 mb-6 md:mb-8 flex items-center justify-between px-4 sm:px-6 md:px-8'}>
-      <div className={'mx-auto w-full max-w-7xl text-center'}>
-        <p className="mx-auto mb-4 inline-flex rounded-full border border-border/80 bg-background/60 px-3 py-1 text-xs font-medium tracking-wide text-muted-foreground backdrop-blur">
-          Next.js SaaS Template
+    <section
+      className={
+        'relative mx-auto min-h-[75vh] flex items-center justify-center px-4 sm:px-6 md:px-8 -mt-20 pt-28 pb-16'
+      }
+    >
+      {/* Video Background with crossfade - extends behind navbar */}
+      <div className="absolute inset-0 top-0 -z-10 overflow-hidden">
+        {/* Video 1 */}
+        <video
+          ref={video1Ref}
+          muted
+          playsInline
+          preload="auto"
+          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ${
+            activeVideo === 1 ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <source src={VIDEOS[0]} type="video/mp4" />
+        </video>
+
+        {/* Video 2 */}
+        <video
+          ref={video2Ref}
+          muted
+          playsInline
+          preload="none"
+          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ${
+            activeVideo === 2 ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <source src={VIDEOS[1]} type="video/mp4" />
+        </video>
+
+        {/* Darker overlay for better contrast - similar to OffDeal */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/70 to-black/75" />
+      </div>
+
+      <div className={'mx-auto w-full max-w-5xl text-center'}>
+        <p className="mx-auto mb-5 inline-flex rounded-full border border-white/20 bg-white/5 px-3.5 py-1.5 text-xs font-medium tracking-wide text-white/80 backdrop-blur-sm">
+          Tu socio experto en valuación de empresas
         </p>
-        <h1 className={'text-[42px] leading-[46px] md:text-[72px] md:leading-[78px] tracking-[-1.6px] font-medium'}>
-          Start here, then make it yours.
-          <br />
-          Replace this copy with your product pitch.
-        </h1>
-        <p
+        <h1
           className={
-            'mx-auto mt-5 max-w-2xl text-[18px] leading-[27px] md:text-[20px] md:leading-[30px] text-muted-foreground'
+            'text-[48px] leading-[52px] md:text-[68px] md:leading-[76px] tracking-[-2px] font-bold text-white drop-shadow-2xl mb-6'
           }
         >
-          This is a starter hero. Update the headline, subtext, and CTAs to match your product positioning. Checkout the
-          docs (http://localhost:3000/docs) for more information.
+          Valuaciones profesionales
+          <br />
+          para decisiones inteligentes.
+        </h1>
+        <p
+          className={'mx-auto max-w-2xl text-[17px] leading-[26px] md:text-[19px] md:leading-[30px] text-white/85 mb-8'}
+        >
+          Obtén una valuación profesional de tu empresa con métodos DCF y múltiplos, o solicita un análisis exhaustivo
+          personalizado.
         </p>
 
-        <div className="mt-8 flex items-center justify-center gap-3">
-          <Button asChild={true}>
-            <Link href="/signup">Start free</Link>
+        <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
+          <Button asChild={true} size="lg" className="h-12 px-8 text-base font-semibold">
+            <Link href="/free-valuation">Valuación Gratuita</Link>
           </Button>
-          <Button variant="secondary" asChild={true}>
-            <Link href="#pricing">View pricing</Link>
+          <Button
+            variant="outline"
+            asChild={true}
+            size="lg"
+            className="h-12 px-8 text-base font-semibold bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
+          >
+            <Link href="#professional-valuation">Valuación Profesional</Link>
           </Button>
         </div>
-
-        <div className="mt-6 text-xs text-muted-foreground">Tip: Link primary CTA to your signup or onboarding.</div>
       </div>
     </section>
   );

@@ -4,28 +4,36 @@ import { Section } from './section';
 export function Faq() {
   const faqs = [
     {
-      q: 'How do I change the pricing?',
-      a: 'Update Paddle product IDs in your pricing constants and dashboard. The UI is already wired to display prices.',
+      q: '¿La valuación gratuita es realmente gratis?',
+      a: 'Sí, completamente gratis. La herramienta de valuación automatizada no tiene costo y puedes usarla cuantas veces quieras.',
     },
     {
-      q: 'Where do I edit the home page copy?',
-      a: 'Edit components under src/components/home/. Hero, features, and CTA are designed to be easy to change.',
+      q: '¿Cuál es la diferencia entre la valuación gratuita y la profesional?',
+      a: 'La valuación gratuita usa cálculos automatizados basados en DCF para darte un rango orientativo en minutos. La valuación profesional incluye múltiples metodologías (DCF, múltiplos, comparables), análisis personalizado por expertos, modelos financieros detallados, due diligence completo y presentaciones ejecutivas para inversionistas.',
     },
     {
-      q: 'How do I wire emails?',
-      a: 'Set Resend API keys and adjust the email components in src/components/emails/*.',
+      q: '¿Qué tan precisa es la valuación gratuita?',
+      a: 'Usamos el método DCF estándar con datos recientes de tasas y betas por industria. Es un rango orientativo excelente para conversaciones iniciales y decisiones estratégicas. Para procesos críticos como fundraising o M&A que requieren múltiples metodologías, recomendamos la valuación profesional.',
     },
     {
-      q: 'Can I customize the UI?',
-      a: 'Yes. Use the theme system and UI components to match your brand. Start by adjusting the theme settings.',
+      q: '¿Cuánto cuesta una valuación profesional?',
+      a: 'El costo depende de la complejidad del análisis, tamaño de la empresa y necesidades específicas. Contáctanos para recibir una propuesta personalizada sin compromiso.',
+    },
+    {
+      q: '¿Puedo exportar el resultado?',
+      a: 'Sí. Ambas opciones incluyen informes descargables: la gratuita genera un PDF con supuestos clave y rango de valoración; la profesional incluye documentos completos y presentaciones ejecutivas.',
+    },
+    {
+      q: '¿Necesito crear una cuenta?',
+      a: 'Puedes probar la valuación gratuita sin registrarte. Crear una cuenta te permite guardar y comparar tus valuaciones, y facilita el seguimiento de tu solicitud de valuación profesional.',
     },
   ];
 
   return (
     <Section id="faq" className="max-w-3xl">
       <div className="text-center">
-        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">FAQ</h2>
-        <p className="mt-4 text-muted-foreground">Quick answers for customizing this template.</p>
+        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">Preguntas frecuentes</h2>
+        <p className="mt-4 text-muted-foreground">Todo lo que necesitas saber sobre nuestros servicios.</p>
       </div>
       <Accordion type="single" collapsible className="mt-8 sm:mt-10 w-full">
         {faqs.map((f, idx) => (

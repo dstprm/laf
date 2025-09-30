@@ -73,9 +73,9 @@ export default function Header({ user }: Props) {
   return (
     <nav
       className={cn(
-        'sticky top-0 z-50 transition-transform duration-300',
+        'sticky top-0 z-50 transition-all duration-300 border-b',
         isHidden ? '-translate-y-full' : 'translate-y-0',
-        isStuck ? 'backdrop-blur bg-background/70 border-b border-border' : 'bg-transparent',
+        isStuck ? 'backdrop-blur-md bg-background/80 border-border' : 'backdrop-blur-sm bg-black/10 border-white/10',
       )}
     >
       <div
@@ -92,17 +92,34 @@ export default function Header({ user }: Props) {
             </>
           </Link>
         </div>
-        <div className="hidden md:flex items-center justify-center gap-6 text-sm text-muted-foreground">
-          <Link href={hrefFor('features')} className="hover:text-foreground">
-            Features
+        <div
+          className={cn(
+            'hidden md:flex items-center justify-center gap-6 text-sm transition-colors',
+            isStuck ? 'text-muted-foreground' : 'text-white/90',
+          )}
+        >
+          <Link
+            href={hrefFor('features')}
+            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+          >
+            Características
           </Link>
-          <Link href={hrefFor('how-it-works')} className="hover:text-foreground">
-            How it works
+          <Link
+            href={hrefFor('services')}
+            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+          >
+            Servicios
           </Link>
-          <Link href={hrefFor('pricing')} className="hover:text-foreground">
-            Pricing
+          <Link
+            href={hrefFor('how-it-works')}
+            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+          >
+            Cómo funciona
           </Link>
-          <Link href={hrefFor('faq')} className="hover:text-foreground">
+          <Link
+            href={hrefFor('faq')}
+            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+          >
             FAQ
           </Link>
         </div>
@@ -111,13 +128,16 @@ export default function Header({ user }: Props) {
             <LightDarkToggle />
             {user?.id ? (
               <Button variant={'secondary'} asChild={true}>
-                <Link href={'/dashboard'}>Dashboard</Link>
+                <Link href={'/dashboard'}>Panel</Link>
               </Button>
             ) : (
-              <Button asChild={true} variant={'secondary'}>
+              <Button
+                asChild={true}
+                className={cn('transition-colors', isStuck ? '' : 'bg-white text-black hover:bg-white/90')}
+              >
                 {/* If you want to use the login page, uncomment the following line and comment out the SignInButton */}
                 {/* <Link href={'/login'}>Sign in</Link> */}
-                <SignInButton mode="modal">Sign in</SignInButton>
+                <SignInButton mode="modal">Comenzar</SignInButton>
               </Button>
             )}
           </div>
@@ -130,7 +150,7 @@ export default function Header({ user }: Props) {
               </SheetTrigger>
               <SheetContent side="right" className="w-full sm:max-w-xs" onCloseAutoFocus={(e) => e.preventDefault()}>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Menu</span>
+                  <span className="text-sm font-medium">Menú</span>
                   <LightDarkToggle />
                 </div>
                 <div className="mt-6 grid gap-2 text-sm">
@@ -139,7 +159,15 @@ export default function Header({ user }: Props) {
                       href={hrefFor('features')}
                       className="rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground"
                     >
-                      Features
+                      Características
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link
+                      href={hrefFor('services')}
+                      className="rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground"
+                    >
+                      Servicios
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
@@ -147,15 +175,7 @@ export default function Header({ user }: Props) {
                       href={hrefFor('how-it-works')}
                       className="rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground"
                     >
-                      How it works
-                    </Link>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Link
-                      href={hrefFor('pricing')}
-                      className="rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground"
-                    >
-                      Pricing
+                      Cómo funciona
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
@@ -171,7 +191,7 @@ export default function Header({ user }: Props) {
                   {user?.id ? (
                     <SheetClose asChild>
                       <Button className="w-full" asChild>
-                        <Link href={'/dashboard'}>Dashboard</Link>
+                        <Link href={'/dashboard'}>Panel</Link>
                       </Button>
                     </SheetClose>
                   ) : (
@@ -179,7 +199,7 @@ export default function Header({ user }: Props) {
                       <Button className="w-full" asChild>
                         {/* If you want to use the login page, uncomment the following line and comment out the SignInButton */}
                         {/* <Link href={'/login'}>Sign in</Link> */}
-                        <SignInButton mode="modal">Sign in</SignInButton>
+                        <SignInButton mode="modal">Iniciar sesión</SignInButton>
                       </Button>
                     </SheetClose>
                   )}

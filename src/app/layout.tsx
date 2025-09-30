@@ -8,15 +8,15 @@ import { ThemeProvider } from '@/contexts/theme-context';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'SaaS Template',
-  description: 'A modern SaaS template with authentication and billing',
+  title: 'LAF — Valuación de empresas con IA',
+  description: 'Valora tu empresa en minutos con DCF, múltiplos y comparables. Gratis y listo para compartir.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={'min-h-full'}>
+      <html lang="es" className={'min-h-full'}>
         <body className={inter.className}>
           <ThemeProvider simpleMode={true}>
             {children}

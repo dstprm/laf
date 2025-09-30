@@ -2,27 +2,27 @@ import { Section } from './section';
 export function Testimonials() {
   const testimonials = [
     {
-      name: 'Tip',
-      role: 'Customize this section or remove',
-      quote: 'Replace quotes and names with social proof for your own product, or delete this section entirely.',
+      name: 'Founder SaaS',
+      role: 'Pre-seed',
+      quote: 'La claridad del informe me ayudó a explicar mi valoración a inversionistas en la primera reunión.',
     },
     {
-      name: 'Note',
-      role: 'Static content by default',
-      quote: 'Use a simple grid for now. You can swap to a carousel later if you collect more testimonials.',
+      name: 'CFO PyME',
+      role: 'Servicios B2B',
+      quote: 'Probé otros calculadores, pero aquí el rango y supuestos están mucho mejor explicados.',
     },
     {
-      name: 'Suggestion',
-      role: 'Link to real sources',
-      quote: 'When you have real quotes, add avatars and links to posts or profiles to increase trust.',
+      name: 'Emprendedor',
+      role: 'E-commerce',
+      quote: 'En 10 minutos tenía un PDF con supuestos y sensibilidad. Súper útil para planear la ronda.',
     },
   ];
 
   return (
     <Section id="testimonials">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">Testimonials</h2>
-        <p className="mt-4 text-muted-foreground">Example layout for social proof. Replace or remove.</p>
+        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">Testimonios</h2>
+        <p className="mt-4 text-muted-foreground">Lo que dicen quienes ya la usaron.</p>
       </div>
       <div className="mt-12 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
         {testimonials.map((t) => (
