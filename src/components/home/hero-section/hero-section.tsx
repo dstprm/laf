@@ -4,19 +4,39 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useEffect, useRef, useState } from 'react';
 
-const VIDEOS = ['/videos/business-meeting.mp4', '/videos/tech-office.mp4', '/videos/meeting.mp4'];
+const VIDEOS = [
+  '/videos/tech-office.mp4', // Smallest first (9MB) for faster initial load
+  '/videos/business-meeting.mp4', // 20MB
+  '/videos/meeting.mp4', // 28MB
+];
 
 export function HeroSection() {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const video1Ref = useRef<HTMLVideoElement>(null);
+  const video2Ref = useRef<HTMLVideoElement>(null);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [activeVideo, setActiveVideo] = useState<1 | 2>(1);
 
   useEffect(() => {
-    const video = videoRef.current;
+    const currentRef = activeVideo === 1 ? video1Ref : video2Ref;
+    const nextRef = activeVideo === 1 ? video2Ref : video1Ref;
+    const video = currentRef.current;
+
     if (!video) return;
 
     const handleVideoEnd = () => {
-      // Move to next video when current one ends
-      setCurrentVideoIndex((prevIndex) => (prevIndex + 1) % VIDEOS.length);
+      const nextIndex = (currentVideoIndex + 1) % VIDEOS.length;
+
+      // Preload next video
+      if (nextRef.current) {
+        nextRef.current.src = VIDEOS[nextIndex];
+        nextRef.current.load();
+
+        // Start playing next video and fade in
+        nextRef.current.play().then(() => {
+          setActiveVideo(activeVideo === 1 ? 2 : 1);
+          setCurrentVideoIndex(nextIndex);
+        });
+      }
     };
 
     video.addEventListener('ended', handleVideoEnd);
@@ -25,7 +45,7 @@ export function HeroSection() {
     return () => {
       video.removeEventListener('ended', handleVideoEnd);
     };
-  }, [currentVideoIndex]);
+  }, [currentVideoIndex, activeVideo]);
 
   return (
     <section
@@ -33,18 +53,34 @@ export function HeroSection() {
         'relative mx-auto min-h-[75vh] flex items-center justify-center px-4 sm:px-6 md:px-8 -mt-20 pt-28 pb-16'
       }
     >
-      {/* Video Background - extends behind navbar */}
+      {/* Video Background with crossfade - extends behind navbar */}
       <div className="absolute inset-0 top-0 -z-10 overflow-hidden">
+        {/* Video 1 */}
         <video
-          ref={videoRef}
-          key={currentVideoIndex}
-          autoPlay
+          ref={video1Ref}
           muted
           playsInline
-          className="absolute top-0 left-0 w-full h-full object-cover"
+          preload="auto"
+          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ${
+            activeVideo === 1 ? 'opacity-100' : 'opacity-0'
+          }`}
         >
-          <source src={VIDEOS[currentVideoIndex]} type="video/mp4" />
+          <source src={VIDEOS[0]} type="video/mp4" />
         </video>
+
+        {/* Video 2 */}
+        <video
+          ref={video2Ref}
+          muted
+          playsInline
+          preload="none"
+          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ${
+            activeVideo === 2 ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <source src={VIDEOS[1]} type="video/mp4" />
+        </video>
+
         {/* Darker overlay for better contrast - similar to OffDeal */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/70 to-black/75" />
       </div>
