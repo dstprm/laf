@@ -83,14 +83,14 @@ export default function Header({ user }: Props) {
       <div
         className={cn(
           'mx-auto max-w-7xl relative px-4 sm:px-6 md:px-8 flex items-center justify-between',
-          isStuck ? 'py-2 md:py-3' : 'py-[14px] md:py-[18px]',
+          isStuck ? 'py-1 md:py-1.5' : 'py-2 md:py-2.5',
         )}
       >
         <div className="flex flex-1 items-center justify-start">
           <Link className="flex items-center" href={'/'}>
             <>
-              <Image className="block dark:hidden" src="/logo.svg" width={180} height={42} alt="Ready to SaaS" />
-              <Image className="hidden dark:block" src="/logo-dark.svg" width={180} height={42} alt="Ready to SaaS" />
+              <Image className="block dark:hidden" src="/logo.svg" width={140} height={32} alt="Ready to SaaS" />
+              <Image className="hidden dark:block" src="/logo-dark.svg" width={140} height={32} alt="Ready to SaaS" />
             </>
           </Link>
         </div>

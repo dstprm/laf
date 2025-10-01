@@ -13,6 +13,8 @@ import { PhoneCountryCodeSelect } from '@/components/shared/phone-country-code-s
 import { useToast } from '@/components/ui/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
+import Header from '@/components/home/header/header';
+import { useUserInfo } from '@/hooks/useUserInfo';
 
 type Scenario = {
   id: string;
@@ -41,6 +43,7 @@ export default function FreeValuationPage() {
   const countries = useMemo(() => Object.keys(countryRiskPremiumStatic), []);
   const { toast } = useToast();
   const router = useRouter();
+  const { user: headerUser } = useUserInfo();
 
   const [industry, setIndustry] = useState<string>('');
   const [country, setCountry] = useState<string>('');
@@ -734,437 +737,407 @@ export default function FreeValuationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <h1 className="text-2xl font-bold text-gray-900">Valuation</h1>
-            <p className="mt-1 text-gray-600">Quick or advanced enterprise value estimate</p>
+    <>
+      {/* Add a sentinel div for the header's sticky behavior */}
+      <div id="nav-sentinel" className="absolute top-0 h-px w-full" />
+      <Header user={headerUser} />
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="py-6">
+              <h1 className="text-2xl font-bold text-gray-900">Valuation</h1>
+              <p className="mt-1 text-gray-600">Quick or advanced enterprise value estimate</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'simple' | 'advanced')}>
-          <TabsList>
-            <TabsTrigger value="simple">Simple</TabsTrigger>
-            <TabsTrigger value="advanced">Advanced</TabsTrigger>
-          </TabsList>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'simple' | 'advanced')}>
+            <TabsList>
+              <TabsTrigger value="simple">Simple</TabsTrigger>
+              <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="simple">
-            <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
-              {/* Business Information Section */}
-              <div className="border-b border-gray-200 pb-4 mb-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Business Information (Optional)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                    <input
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="e.g. Acme Corp"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                    <input
-                      type="url"
-                      value={companyWebsite}
-                      onChange={(e) => setCompanyWebsite(e.target.value)}
-                      placeholder="e.g. www.example.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Contact</label>
-                    <div className="flex gap-2">
-                      <PhoneCountryCodeSelect
-                        value={phoneCountryCode}
-                        onChange={setPhoneCountryCode}
-                        className="w-28"
-                      />
+            <TabsContent value="simple">
+              <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+                {/* Business Information Section */}
+                <div className="border-b border-gray-200 pb-4 mb-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Business Information (Optional)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
                       <input
-                        type="tel"
-                        value={companyPhone}
-                        onChange={(e) => setCompanyPhone(e.target.value)}
-                        placeholder="234 567 8900"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                        type="text"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder="e.g. Acme Corp"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       />
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
-                  <select
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">Select...</option>
-                    {industries.map((i) => (
-                      <option key={i} value={i}>
-                        {i}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                  <select
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">Select...</option>
-                    {countries.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div
-                  className={`transition-all duration-500 ease-out ${step >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    What was last year&#39;s revenue (USD)?
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={lastYearRevenue}
-                      onChange={(e) => setLastYearRevenue(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                    <button
-                      type="button"
-                      className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-                      disabled={!(parseFloat(lastYearRevenue || '0') > 0)}
-                      onClick={() => setStep(2)}
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  className={`transition-all duration-500 ease-out ${step >= 2 ? 'opacity-100 translate-y-0 max-h-40' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    What is expected revenue growth (%/yr)?
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={revenueGrowthPct}
-                      onChange={(e) => setRevenueGrowthPct(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                    <button
-                      type="button"
-                      className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-                      disabled={revenueGrowthPct.trim() === ''}
-                      onClick={() => setStep(3)}
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  className={`transition-all duration-500 ease-out ${step >= 3 ? 'opacity-100 translate-y-0 max-h-40' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-1">What is the EBITDA margin (%)?</label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={ebitdaMarginPct}
-                      onChange={(e) => setEbitdaMarginPct(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                    <button
-                      type="submit"
-                      className="px-3 py-2 bg-green-600 text-white rounded-md disabled:opacity-50"
-                      disabled={ebitdaMarginPct.trim() === '' || isCalculating}
-                    >
-                      Estimate
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </form>
-
-            {isCalculating && (
-              <div className="mt-4">
-                <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg p-4">
-                  <svg className="h-5 w-5 animate-spin text-blue-600" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                  </svg>
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">Crunching numbers…</div>
-                    <div className="text-xs text-gray-600">This will take a few seconds</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {results && (
-              <>
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {results.map((r) => (
-                    <div key={r.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="text-sm text-gray-600">{r.name} scenario</div>
-                      <div className="text-2xl font-semibold text-gray-900 mt-1">{currency(r.enterpriseValue)}</div>
-                      <div className="text-xs text-gray-600 mt-2">
-                        <div>EBITDA margin: {r.ebitdaMarginPct}%</div>
-                        <div>Revenue growth: {r.revenueGrowthPct}%/yr</div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                      <input
+                        type="url"
+                        value={companyWebsite}
+                        onChange={(e) => setCompanyWebsite(e.target.value)}
+                        placeholder="e.g. www.example.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone Contact</label>
+                      <div className="flex gap-2">
+                        <PhoneCountryCodeSelect
+                          value={phoneCountryCode}
+                          onChange={setPhoneCountryCode}
+                          className="w-28"
+                        />
+                        <input
+                          type="tel"
+                          value={companyPhone}
+                          onChange={(e) => setCompanyPhone(e.target.value)}
+                          placeholder="234 567 8900"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                        />
                       </div>
                     </div>
-                  ))}
-                </div>
-                {isSignedIn && (
-                  <div className="mt-4 flex justify-end">
-                    <Button onClick={handleSaveValuation} disabled={isSaving}>
-                      {isSaving ? 'Saving...' : 'Save Valuation'}
-                    </Button>
                   </div>
-                )}
-              </>
-            )}
-          </TabsContent>
+                </div>
 
-          <TabsContent value="advanced">
-            <form onSubmit={handleSubmitAdvanced} className="bg-white border border-gray-200 rounded-lg p-4 space-y-6">
-              {/* Business Information Section */}
-              <div className="border-b border-gray-200 pb-4 mb-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Business Information (Optional)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                    <input
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="e.g. Acme Corp"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                    <input
-                      type="url"
-                      value={companyWebsite}
-                      onChange={(e) => setCompanyWebsite(e.target.value)}
-                      placeholder="e.g. www.example.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Contact</label>
-                    <div className="flex gap-2">
-                      <PhoneCountryCodeSelect
-                        value={phoneCountryCode}
-                        onChange={setPhoneCountryCode}
-                        className="w-28"
-                      />
-                      <input
-                        type="tel"
-                        value={companyPhone}
-                        onChange={(e) => setCompanyPhone(e.target.value)}
-                        placeholder="234 567 8900"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Risk profile: Industry & Country */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
-                  <select
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">Select...</option>
-                    {industries.map((i) => (
-                      <option key={i} value={i}>
-                        {i}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                  <select
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">Select...</option>
-                    {countries.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Step 1: Revenue */}
-              <div
-                className={`transition-all duration-500 ease-out ${advStep >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'} ${advStep >= 1 ? '' : 'pointer-events-none'}`}
-              >
-                <div className="mb-2 text-sm font-medium text-gray-700">1. Revenue</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Last year&#39;s revenue (USD)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={lastYearRevenue}
-                      onChange={(e) => setLastYearRevenue(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Forecast years</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
                     <select
-                      value={advYears}
-                      onChange={(e) => setAdvYears(Number(e.target.value))}
+                      value={industry}
+                      onChange={(e) => setIndustry(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
-                      {[3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                        <option key={n} value={n}>
-                          {n}
+                      <option value="">Select...</option>
+                      {industries.map((i) => (
+                        <option key={i} value={i}>
+                          {i}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                    <select
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Select...</option>
+                      {countries.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
-                <div className="mt-3 flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-                    disabled={!(parseFloat(lastYearRevenue || '0') > 0) || advYears < 2}
-                    onClick={() => setAdvStep(2)}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
 
-              {/* Step 2: Revenue growth / direct and LTG */}
-              <div
-                className={`transition-all duration-500 ease-out ${advStep >= 2 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
-              >
-                <div className="mb-2 text-sm font-medium text-gray-700">2. Revenue growth</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Input method</label>
-                    <select
-                      value={advRevenueInputMethod}
-                      onChange={(e) => setAdvRevenueInputMethod(e.target.value as 'growth' | 'direct')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="growth">Growth based</option>
-                      <option value="direct">Direct revenue per year</option>
-                    </select>
-                  </div>
-                  {advRevenueInputMethod === 'growth' ? (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Growth mode</label>
-                      <select
-                        value={growthMode}
-                        onChange={(e) => setGrowthMode(e.target.value as 'uniform' | 'perYear')}
+                <div className="space-y-4">
+                  <div
+                    className={`transition-all duration-500 ease-out ${step >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      What was last year&#39;s revenue (USD)?
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={lastYearRevenue}
+                        onChange={(e) => setLastYearRevenue(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                      <button
+                        type="button"
+                        className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                        disabled={!(parseFloat(lastYearRevenue || '0') > 0)}
+                        onClick={() => setStep(2)}
                       >
-                        <option value="uniform">Uniform (%/yr)</option>
-                        <option value="perYear">Per-year list</option>
-                      </select>
+                        Next
+                      </button>
                     </div>
-                  ) : (
+                  </div>
+
+                  <div
+                    className={`transition-all duration-500 ease-out ${step >= 2 ? 'opacity-100 translate-y-0 max-h-40' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      What is expected revenue growth (%/yr)?
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={revenueGrowthPct}
+                        onChange={(e) => setRevenueGrowthPct(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                      <button
+                        type="button"
+                        className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                        disabled={revenueGrowthPct.trim() === ''}
+                        onClick={() => setStep(3)}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`transition-all duration-500 ease-out ${step >= 3 ? 'opacity-100 translate-y-0 max-h-40' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      What is the EBITDA margin (%)?
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={ebitdaMarginPct}
+                        onChange={(e) => setEbitdaMarginPct(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                      <button
+                        type="submit"
+                        className="px-3 py-2 bg-green-600 text-white rounded-md disabled:opacity-50"
+                        disabled={ebitdaMarginPct.trim() === '' || isCalculating}
+                      >
+                        Estimate
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+
+              {isCalculating && (
+                <div className="mt-4">
+                  <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg p-4">
+                    <svg className="h-5 w-5 animate-spin text-blue-600" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Revenues per year:</label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {revenueDirectList.map((val, idx) => (
-                          <div key={idx} className="flex flex-col">
-                            <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={val}
-                              onChange={(e) => {
-                                const next = [...revenueDirectList];
-                                next[idx] = e.target.value;
-                                setRevenueDirectList(next);
-                              }}
-                              className="px-2 py-2 border border-gray-300 rounded-md"
-                            />
-                          </div>
-                        ))}
+                      <div className="text-sm font-medium text-gray-900">Crunching numbers…</div>
+                      <div className="text-xs text-gray-600">This will take a few seconds</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {results && (
+                <>
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {results.map((r) => (
+                      <div key={r.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="text-sm text-gray-600">{r.name} scenario</div>
+                        <div className="text-2xl font-semibold text-gray-900 mt-1">{currency(r.enterpriseValue)}</div>
+                        <div className="text-xs text-gray-600 mt-2">
+                          <div>EBITDA margin: {r.ebitdaMarginPct}%</div>
+                          <div>Revenue growth: {r.revenueGrowthPct}%/yr</div>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                  {isSignedIn && (
+                    <div className="mt-4 flex justify-end">
+                      <Button onClick={handleSaveValuation} disabled={isSaving}>
+                        {isSaving ? 'Saving...' : 'Save Valuation'}
+                      </Button>
                     </div>
                   )}
-                </div>
-                {advRevenueInputMethod === 'growth' && (
-                  <div className="mt-3 grid grid-cols-1 gap-4">
-                    {growthMode === 'uniform' ? (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Uniform growth (%/yr)</label>
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={advUniformGrowth}
-                          onChange={(e) => setAdvUniformGrowth(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="advanced">
+              <form
+                onSubmit={handleSubmitAdvanced}
+                className="bg-white border border-gray-200 rounded-lg p-4 space-y-6"
+              >
+                {/* Business Information Section */}
+                <div className="border-b border-gray-200 pb-4 mb-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Business Information (Optional)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                      <input
+                        type="text"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder="e.g. Acme Corp"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                      <input
+                        type="url"
+                        value={companyWebsite}
+                        onChange={(e) => setCompanyWebsite(e.target.value)}
+                        placeholder="e.g. www.example.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone Contact</label>
+                      <div className="flex gap-2">
+                        <PhoneCountryCodeSelect
+                          value={phoneCountryCode}
+                          onChange={setPhoneCountryCode}
+                          className="w-28"
                         />
+                        <input
+                          type="tel"
+                          value={companyPhone}
+                          onChange={(e) => setCompanyPhone(e.target.value)}
+                          placeholder="234 567 8900"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Risk profile: Industry & Country */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+                    <select
+                      value={industry}
+                      onChange={(e) => setIndustry(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Select...</option>
+                      {industries.map((i) => (
+                        <option key={i} value={i}>
+                          {i}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                    <select
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Select...</option>
+                      {countries.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Step 1: Revenue */}
+                <div
+                  className={`transition-all duration-500 ease-out ${advStep >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'} ${advStep >= 1 ? '' : 'pointer-events-none'}`}
+                >
+                  <div className="mb-2 text-sm font-medium text-gray-700">1. Revenue</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Last year&#39;s revenue (USD)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={lastYearRevenue}
+                        onChange={(e) => setLastYearRevenue(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Forecast years</label>
+                      <select
+                        value={advYears}
+                        onChange={(e) => setAdvYears(Number(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        {[3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-3">
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                      disabled={!(parseFloat(lastYearRevenue || '0') > 0) || advYears < 2}
+                      onClick={() => setAdvStep(2)}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+
+                {/* Step 2: Revenue growth / direct and LTG */}
+                <div
+                  className={`transition-all duration-500 ease-out ${advStep >= 2 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+                >
+                  <div className="mb-2 text-sm font-medium text-gray-700">2. Revenue growth</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Input method</label>
+                      <select
+                        value={advRevenueInputMethod}
+                        onChange={(e) => setAdvRevenueInputMethod(e.target.value as 'growth' | 'direct')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="growth">Growth based</option>
+                        <option value="direct">Direct revenue per year</option>
+                      </select>
+                    </div>
+                    {advRevenueInputMethod === 'growth' ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Growth mode</label>
+                        <select
+                          value={growthMode}
+                          onChange={(e) => setGrowthMode(e.target.value as 'uniform' | 'perYear')}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="uniform">Uniform (%/yr)</option>
+                          <option value="perYear">Per-year list</option>
+                        </select>
                       </div>
                     ) : (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Per-year growth rates (%):
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Revenues per year:</label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                          {growthPerYearList.map((val, idx) => (
+                          {revenueDirectList.map((val, idx) => (
                             <div key={idx} className="flex flex-col">
                               <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
                               <input
                                 type="number"
-                                step="0.1"
+                                step="0.01"
                                 value={val}
                                 onChange={(e) => {
-                                  const next = [...growthPerYearList];
+                                  const next = [...revenueDirectList];
                                   next[idx] = e.target.value;
-                                  setGrowthPerYearList(next);
+                                  setRevenueDirectList(next);
                                 }}
                                 className="px-2 py-2 border border-gray-300 rounded-md"
                               />
@@ -1173,7 +1146,60 @@ export default function FreeValuationPage() {
                         </div>
                       </div>
                     )}
-                    <div>
+                  </div>
+                  {advRevenueInputMethod === 'growth' && (
+                    <div className="mt-3 grid grid-cols-1 gap-4">
+                      {growthMode === 'uniform' ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Uniform growth (%/yr)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={advUniformGrowth}
+                            onChange={(e) => setAdvUniformGrowth(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Per-year growth rates (%):
+                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {growthPerYearList.map((val, idx) => (
+                              <div key={idx} className="flex flex-col">
+                                <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={val}
+                                  onChange={(e) => {
+                                    const next = [...growthPerYearList];
+                                    next[idx] = e.target.value;
+                                    setGrowthPerYearList(next);
+                                  }}
+                                  className="px-2 py-2 border border-gray-300 rounded-md"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Long-term growth (%)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={advLTG}
+                          onChange={(e) => setAdvLTG(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="e.g. 2.5"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {advRevenueInputMethod === 'direct' && (
+                    <div className="mt-3">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Long-term growth (%)</label>
                       <input
                         type="number"
@@ -1184,521 +1210,68 @@ export default function FreeValuationPage() {
                         placeholder="e.g. 2.5"
                       />
                     </div>
-                  </div>
-                )}
-                {advRevenueInputMethod === 'direct' && (
-                  <div className="mt-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Long-term growth (%)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={advLTG}
-                      onChange={(e) => setAdvLTG(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      placeholder="e.g. 2.5"
-                    />
-                  </div>
-                )}
-                <div className="mt-3 flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
-                    onClick={() => setAdvStep(1)}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-                    disabled={
-                      advRevenueInputMethod === 'growth'
-                        ? (growthMode === 'uniform'
-                            ? advUniformGrowth.trim() === ''
-                            : growthPerYearList.slice(0, Math.max(advYears - 1, 1)).some((v) => v.trim() === '')) ||
-                          advLTG.trim() === ''
-                        : revenueDirectList.slice(0, advYears).some((v) => v.trim() === '') || advLTG.trim() === ''
-                    }
-                    onClick={() => setAdvStep(3)}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-
-              {/* Step 3: EBITDA */}
-              <div
-                className={`transition-all duration-500 ease-out ${advStep >= 3 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
-              >
-                <div className="mb-2 text-sm font-medium text-gray-700">3. EBITDA</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Input type</label>
-                    <select
-                      value={ebitdaInputType}
-                      onChange={(e) => setEbitdaInputType(e.target.value as 'percent' | 'direct')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  )}
+                  <div className="mt-3 flex items-center gap-3">
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+                      onClick={() => setAdvStep(1)}
                     >
-                      <option value="percent">% EBITDA</option>
-                      <option value="direct">Direct EBITDA per year</option>
-                    </select>
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                      disabled={
+                        advRevenueInputMethod === 'growth'
+                          ? (growthMode === 'uniform'
+                              ? advUniformGrowth.trim() === ''
+                              : growthPerYearList.slice(0, Math.max(advYears - 1, 1)).some((v) => v.trim() === '')) ||
+                            advLTG.trim() === ''
+                          : revenueDirectList.slice(0, advYears).some((v) => v.trim() === '') || advLTG.trim() === ''
+                      }
+                      onClick={() => setAdvStep(3)}
+                    >
+                      Next
+                    </button>
                   </div>
-                  {ebitdaInputType === 'percent' ? (
+                </div>
+
+                {/* Step 3: EBITDA */}
+                <div
+                  className={`transition-all duration-500 ease-out ${advStep >= 3 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+                >
+                  <div className="mb-2 text-sm font-medium text-gray-700">3. EBITDA</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">% mode</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Input type</label>
                       <select
-                        value={ebitdaPctMode}
-                        onChange={(e) => setEbitdaPctMode(e.target.value as 'uniform' | 'perYear' | 'ramp')}
+                        value={ebitdaInputType}
+                        onChange={(e) => setEbitdaInputType(e.target.value as 'percent' | 'direct')}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       >
-                        <option value="uniform">Uniform</option>
-                        <option value="ramp">Start → Target</option>
-                        <option value="perYear">Per-year list</option>
+                        <option value="percent">% EBITDA</option>
+                        <option value="direct">Direct EBITDA per year</option>
                       </select>
                     </div>
-                  ) : (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">EBITDA per year:</label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {ebitdaDirectList.map((val, idx) => (
-                          <div key={idx} className="flex flex-col">
-                            <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={val}
-                              onChange={(e) => {
-                                const next = [...ebitdaDirectList];
-                                next[idx] = e.target.value;
-                                setEbitdaDirectList(next);
-                              }}
-                              className="px-2 py-2 border border-gray-300 rounded-md"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {ebitdaInputType === 'percent' && (
-                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {ebitdaPctMode === 'uniform' && (
+                    {ebitdaInputType === 'percent' ? (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">EBITDA margin (%)</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.1"
-                          value={advEbitdaUniformPct}
-                          onChange={(e) => setAdvEbitdaUniformPct(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        />
-                      </div>
-                    )}
-                    {ebitdaPctMode === 'ramp' && (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Start EBITDA margin (%)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.1"
-                            value={advEbitdaStart}
-                            onChange={(e) => setAdvEbitdaStart(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Target EBITDA margin (%)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.1"
-                            value={advEbitdaTarget}
-                            onChange={(e) => setAdvEbitdaTarget(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          />
-                        </div>
-                      </>
-                    )}
-                    {ebitdaPctMode === 'perYear' && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          EBITDA margin (%) per year:
-                        </label>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                          {ebitdaPercentPerYearList.map((val, idx) => (
-                            <div key={idx} className="flex flex-col">
-                              <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
-                              <input
-                                type="number"
-                                step="0.1"
-                                value={val}
-                                onChange={(e) => {
-                                  const next = [...ebitdaPercentPerYearList];
-                                  next[idx] = e.target.value;
-                                  setEbitdaPercentPerYearList(next);
-                                }}
-                                className="px-2 py-2 border border-gray-300 rounded-md"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                <div className="mt-3 flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
-                    onClick={() => setAdvStep(2)}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-                    disabled={
-                      ebitdaInputType === 'percent'
-                        ? ebitdaPctMode === 'uniform'
-                          ? advEbitdaUniformPct.trim() === ''
-                          : ebitdaPctMode === 'ramp'
-                            ? advEbitdaStart.trim() === '' || advEbitdaTarget.trim() === ''
-                            : ebitdaPercentPerYearList.slice(0, advYears).some((v) => v.trim() === '')
-                        : ebitdaDirectList.slice(0, advYears).some((v) => v.trim() === '')
-                    }
-                    onClick={() => setAdvStep(4)}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-
-              {/* Step 4: Others */}
-              <div
-                className={`transition-all duration-500 ease-out ${advStep >= 4 ? 'opacity-100 translate-y-0 max-h-[2000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
-              >
-                <div className="mb-2 text-sm font-medium text-gray-700">4. Others</div>
-                {/* CAPEX */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">CAPEX method</label>
-                    <select
-                      value={capexMethod}
-                      onChange={(e) => setCapexMethod(e.target.value as 'percentOfRevenue' | 'direct')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="percentOfRevenue">% of revenue</option>
-                      <option value="direct">Direct</option>
-                    </select>
-                  </div>
-                  {capexMethod === 'percentOfRevenue' ? (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Percent mode</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">% mode</label>
                         <select
-                          value={capexPercentMode}
-                          onChange={(e) => setCapexPercentMode(e.target.value as 'uniform' | 'individual')}
+                          value={ebitdaPctMode}
+                          onChange={(e) => setEbitdaPctMode(e.target.value as 'uniform' | 'perYear' | 'ramp')}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         >
                           <option value="uniform">Uniform</option>
-                          <option value="individual">Each year</option>
+                          <option value="ramp">Start → Target</option>
+                          <option value="perYear">Per-year list</option>
                         </select>
-                      </div>
-                      {capexPercentMode === 'uniform' ? (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">CAPEX (% of revenue)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={advCapexPct}
-                            onChange={(e) => setAdvCapexPct(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          />
-                        </div>
-                      ) : (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            CAPEX percents per year:
-                          </label>
-                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                            {capexPercentsList.map((val, idx) => (
-                              <div key={idx} className="flex flex-col">
-                                <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={val}
-                                  onChange={(e) => {
-                                    const next = [...capexPercentsList];
-                                    next[idx] = e.target.value;
-                                    setCapexPercentsList(next);
-                                  }}
-                                  className="px-2 py-2 border border-gray-300 rounded-md"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">CAPEX direct per year:</label>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                        {capexDirectList.map((val, idx) => (
-                          <div key={idx} className="flex flex-col">
-                            <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={val}
-                              onChange={(e) => {
-                                const next = [...capexDirectList];
-                                next[idx] = e.target.value;
-                                setCapexDirectList(next);
-                              }}
-                              className="px-2 py-2 border border-gray-300 rounded-md"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* NWC */}
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">NWC method</label>
-                    <select
-                      value={nwcMethod}
-                      onChange={(e) => setNwcMethod(e.target.value as 'percentOfRevenue' | 'direct')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="percentOfRevenue">% of revenue</option>
-                      <option value="direct">Direct</option>
-                    </select>
-                  </div>
-                  {nwcMethod === 'percentOfRevenue' ? (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Percent mode</label>
-                        <select
-                          value={nwcPercentMode}
-                          onChange={(e) => setNwcPercentMode(e.target.value as 'uniform' | 'individual')}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        >
-                          <option value="uniform">Uniform</option>
-                          <option value="individual">Each year</option>
-                        </select>
-                      </div>
-                      {nwcPercentMode === 'uniform' ? (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">NWC (% of revenue)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={advNwcPct}
-                            onChange={(e) => setAdvNwcPct(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          />
-                        </div>
-                      ) : (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">NWC percents per year:</label>
-                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                            {nwcPercentsList.map((val, idx) => (
-                              <div key={idx} className="flex flex-col">
-                                <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={val}
-                                  onChange={(e) => {
-                                    const next = [...nwcPercentsList];
-                                    next[idx] = e.target.value;
-                                    setNwcPercentsList(next);
-                                  }}
-                                  className="px-2 py-2 border border-gray-300 rounded-md"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">NWC direct per year:</label>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                        {nwcDirectList.map((val, idx) => (
-                          <div key={idx} className="flex flex-col">
-                            <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={val}
-                              onChange={(e) => {
-                                const next = [...nwcDirectList];
-                                next[idx] = e.target.value;
-                                setNwcDirectList(next);
-                              }}
-                              className="px-2 py-2 border border-gray-300 rounded-md"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* D&A */}
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">D&A method</label>
-                    <select
-                      value={daMethod}
-                      onChange={(e) => setDaMethod(e.target.value as 'percentOfRevenue' | 'direct')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="percentOfRevenue">% of revenue</option>
-                      <option value="direct">Direct</option>
-                    </select>
-                  </div>
-                  {daMethod === 'percentOfRevenue' ? (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Percent mode</label>
-                        <select
-                          value={daPercentMode}
-                          onChange={(e) => setDaPercentMode(e.target.value as 'uniform' | 'individual')}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        >
-                          <option value="uniform">Uniform</option>
-                          <option value="individual">Each year</option>
-                        </select>
-                      </div>
-                      {daPercentMode === 'uniform' ? (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">D&A (% of revenue)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={advDaPct}
-                            onChange={(e) => setAdvDaPct(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          />
-                        </div>
-                      ) : (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">D&A percents per year:</label>
-                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                            {daPercentsList.map((val, idx) => (
-                              <div key={idx} className="flex flex-col">
-                                <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={val}
-                                  onChange={(e) => {
-                                    const next = [...daPercentsList];
-                                    next[idx] = e.target.value;
-                                    setDaPercentsList(next);
-                                  }}
-                                  className="px-2 py-2 border border-gray-300 rounded-md"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">D&A direct per year:</label>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                        {daDirectList.map((val, idx) => (
-                          <div key={idx} className="flex flex-col">
-                            <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={val}
-                              onChange={(e) => {
-                                const next = [...daDirectList];
-                                next[idx] = e.target.value;
-                                setDaDirectList(next);
-                              }}
-                              className="px-2 py-2 border border-gray-300 rounded-md"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-3 flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
-                    onClick={() => setAdvStep(3)}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    className="px-3 py-2 bg-blue-600 text-white rounded-md"
-                    onClick={() => setAdvStep(5)}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-
-              {/* Step 5: Taxes */}
-              <div
-                className={`transition-all duration-500 ease-out ${advStep >= 5 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
-              >
-                <div className="mb-2 text-sm font-medium text-gray-700">5. Taxes</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
-                    <select
-                      value={taxesMethod}
-                      onChange={(e) => setTaxesMethod(e.target.value as 'percentOfEBIT' | 'direct')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="percentOfEBIT">% of EBIT</option>
-                      <option value="direct">Direct per year</option>
-                    </select>
-                  </div>
-                  <div>
-                    {taxesMethod === 'percentOfEBIT' ? (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tax % of EBIT</label>
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={taxesPct}
-                          onChange={(e) => setTaxesPct(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          placeholder="e.g. 25"
-                        />
                       </div>
                     ) : (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Taxes direct per year:</label>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                          {taxesDirectList.map((val, idx) => (
+                        <label className="block text-sm font-medium text-gray-700 mb-2">EBITDA per year:</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {ebitdaDirectList.map((val, idx) => (
                             <div key={idx} className="flex flex-col">
                               <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
                               <input
@@ -1706,9 +1279,9 @@ export default function FreeValuationPage() {
                                 step="0.01"
                                 value={val}
                                 onChange={(e) => {
-                                  const next = [...taxesDirectList];
+                                  const next = [...ebitdaDirectList];
                                   next[idx] = e.target.value;
-                                  setTaxesDirectList(next);
+                                  setEbitdaDirectList(next);
                                 }}
                                 className="px-2 py-2 border border-gray-300 rounded-md"
                               />
@@ -1718,122 +1291,566 @@ export default function FreeValuationPage() {
                       </div>
                     )}
                   </div>
-                </div>
-
-                <div className="mt-3 flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
-                    onClick={() => setAdvStep(4)}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-                    disabled={isCalculating}
-                  >
-                    Estimate
-                  </button>
-                </div>
-              </div>
-            </form>
-
-            {isCalculating && (
-              <div className="mt-4">
-                <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg p-4">
-                  <svg className="h-5 w-5 animate-spin text-blue-600" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                  </svg>
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">Crunching numbers…</div>
-                    <div className="text-xs text-gray-600">This will take a few seconds</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {results && (
-              <>
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {results.map((r) => (
-                    <div key={r.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="text-sm text-gray-600">{r.name} scenario</div>
-                      <div className="text-2xl font-semibold text-gray-900 mt-1">{currency(r.enterpriseValue)}</div>
-                      <div className="text-xs text-gray-600 mt-2">
-                        <div>EBITDA margin: {r.ebitdaMarginPct}%</div>
-                        <div>Revenue growth: {r.revenueGrowthPct}%/yr</div>
-                      </div>
+                  {ebitdaInputType === 'percent' && (
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {ebitdaPctMode === 'uniform' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">EBITDA margin (%)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value={advEbitdaUniformPct}
+                            onChange={(e) => setAdvEbitdaUniformPct(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
+                      )}
+                      {ebitdaPctMode === 'ramp' && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Start EBITDA margin (%)
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.1"
+                              value={advEbitdaStart}
+                              onChange={(e) => setAdvEbitdaStart(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Target EBITDA margin (%)
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.1"
+                              value={advEbitdaTarget}
+                              onChange={(e) => setAdvEbitdaTarget(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                        </>
+                      )}
+                      {ebitdaPctMode === 'perYear' && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            EBITDA margin (%) per year:
+                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            {ebitdaPercentPerYearList.map((val, idx) => (
+                              <div key={idx} className="flex flex-col">
+                                <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={val}
+                                  onChange={(e) => {
+                                    const next = [...ebitdaPercentPerYearList];
+                                    next[idx] = e.target.value;
+                                    setEbitdaPercentPerYearList(next);
+                                  }}
+                                  className="px-2 py-2 border border-gray-300 rounded-md"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-                {isSignedIn && (
-                  <div className="mt-4 flex justify-end">
-                    <Button onClick={handleSaveValuation} disabled={isSaving}>
-                      {isSaving ? 'Saving...' : 'Save Valuation'}
-                    </Button>
+                  )}
+                  <div className="mt-3 flex items-center gap-3">
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+                      onClick={() => setAdvStep(2)}
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                      disabled={
+                        ebitdaInputType === 'percent'
+                          ? ebitdaPctMode === 'uniform'
+                            ? advEbitdaUniformPct.trim() === ''
+                            : ebitdaPctMode === 'ramp'
+                              ? advEbitdaStart.trim() === '' || advEbitdaTarget.trim() === ''
+                              : ebitdaPercentPerYearList.slice(0, advYears).some((v) => v.trim() === '')
+                          : ebitdaDirectList.slice(0, advYears).some((v) => v.trim() === '')
+                      }
+                      onClick={() => setAdvStep(4)}
+                    >
+                      Next
+                    </button>
                   </div>
-                )}
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+                </div>
 
-      {/* Debug: Pretty print model and calculated financials */}
-      <div className="mt-8 bg-white border border-gray-200 rounded-lg">
-        <div className="px-4 py-2 border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-900">Debug: Model & Calculations</h2>
-        </div>
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <div className="text-xs font-medium text-gray-700 mb-2">Model</div>
-            <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
-              {JSON.stringify(model, null, 2)}
-            </pre>
-          </div>
-          <div>
-            <div className="text-xs font-medium text-gray-700 mb-2">Calculated Financials</div>
-            <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
-              {JSON.stringify(calculatedFinancials, null, 2)}
-            </pre>
-          </div>
-        </div>
-      </div>
+                {/* Step 4: Others */}
+                <div
+                  className={`transition-all duration-500 ease-out ${advStep >= 4 ? 'opacity-100 translate-y-0 max-h-[2000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+                >
+                  <div className="mb-2 text-sm font-medium text-gray-700">4. Others</div>
+                  {/* CAPEX */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">CAPEX method</label>
+                      <select
+                        value={capexMethod}
+                        onChange={(e) => setCapexMethod(e.target.value as 'percentOfRevenue' | 'direct')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="percentOfRevenue">% of revenue</option>
+                        <option value="direct">Direct</option>
+                      </select>
+                    </div>
+                    {capexMethod === 'percentOfRevenue' ? (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Percent mode</label>
+                          <select
+                            value={capexPercentMode}
+                            onChange={(e) => setCapexPercentMode(e.target.value as 'uniform' | 'individual')}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          >
+                            <option value="uniform">Uniform</option>
+                            <option value="individual">Each year</option>
+                          </select>
+                        </div>
+                        {capexPercentMode === 'uniform' ? (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">CAPEX (% of revenue)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={advCapexPct}
+                              onChange={(e) => setAdvCapexPct(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              CAPEX percents per year:
+                            </label>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                              {capexPercentsList.map((val, idx) => (
+                                <div key={idx} className="flex flex-col">
+                                  <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={val}
+                                    onChange={(e) => {
+                                      const next = [...capexPercentsList];
+                                      next[idx] = e.target.value;
+                                      setCapexPercentsList(next);
+                                    }}
+                                    className="px-2 py-2 border border-gray-300 rounded-md"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">CAPEX direct per year:</label>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                          {capexDirectList.map((val, idx) => (
+                            <div key={idx} className="flex flex-col">
+                              <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={val}
+                                onChange={(e) => {
+                                  const next = [...capexDirectList];
+                                  next[idx] = e.target.value;
+                                  setCapexDirectList(next);
+                                }}
+                                className="px-2 py-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-      {/* Auth Required Dialog */}
-      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Sign in to view your valuation</DialogTitle>
-            <DialogDescription>
-              To see your valuation results and save them for future reference, please sign in or create an account.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-center py-4">
-            <SignIn
-              appearance={{
-                elements: {
-                  rootBox: 'w-full',
-                  card: 'shadow-none',
-                },
-              }}
-              routing="hash"
-              forceRedirectUrl="/free-valuation"
-              fallbackRedirectUrl="/free-valuation"
-            />
+                  {/* NWC */}
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">NWC method</label>
+                      <select
+                        value={nwcMethod}
+                        onChange={(e) => setNwcMethod(e.target.value as 'percentOfRevenue' | 'direct')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="percentOfRevenue">% of revenue</option>
+                        <option value="direct">Direct</option>
+                      </select>
+                    </div>
+                    {nwcMethod === 'percentOfRevenue' ? (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Percent mode</label>
+                          <select
+                            value={nwcPercentMode}
+                            onChange={(e) => setNwcPercentMode(e.target.value as 'uniform' | 'individual')}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          >
+                            <option value="uniform">Uniform</option>
+                            <option value="individual">Each year</option>
+                          </select>
+                        </div>
+                        {nwcPercentMode === 'uniform' ? (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">NWC (% of revenue)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={advNwcPct}
+                              onChange={(e) => setAdvNwcPct(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              NWC percents per year:
+                            </label>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                              {nwcPercentsList.map((val, idx) => (
+                                <div key={idx} className="flex flex-col">
+                                  <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={val}
+                                    onChange={(e) => {
+                                      const next = [...nwcPercentsList];
+                                      next[idx] = e.target.value;
+                                      setNwcPercentsList(next);
+                                    }}
+                                    className="px-2 py-2 border border-gray-300 rounded-md"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">NWC direct per year:</label>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                          {nwcDirectList.map((val, idx) => (
+                            <div key={idx} className="flex flex-col">
+                              <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={val}
+                                onChange={(e) => {
+                                  const next = [...nwcDirectList];
+                                  next[idx] = e.target.value;
+                                  setNwcDirectList(next);
+                                }}
+                                className="px-2 py-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* D&A */}
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">D&A method</label>
+                      <select
+                        value={daMethod}
+                        onChange={(e) => setDaMethod(e.target.value as 'percentOfRevenue' | 'direct')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="percentOfRevenue">% of revenue</option>
+                        <option value="direct">Direct</option>
+                      </select>
+                    </div>
+                    {daMethod === 'percentOfRevenue' ? (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Percent mode</label>
+                          <select
+                            value={daPercentMode}
+                            onChange={(e) => setDaPercentMode(e.target.value as 'uniform' | 'individual')}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          >
+                            <option value="uniform">Uniform</option>
+                            <option value="individual">Each year</option>
+                          </select>
+                        </div>
+                        {daPercentMode === 'uniform' ? (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">D&A (% of revenue)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={advDaPct}
+                              onChange={(e) => setAdvDaPct(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              D&A percents per year:
+                            </label>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                              {daPercentsList.map((val, idx) => (
+                                <div key={idx} className="flex flex-col">
+                                  <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={val}
+                                    onChange={(e) => {
+                                      const next = [...daPercentsList];
+                                      next[idx] = e.target.value;
+                                      setDaPercentsList(next);
+                                    }}
+                                    className="px-2 py-2 border border-gray-300 rounded-md"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">D&A direct per year:</label>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                          {daDirectList.map((val, idx) => (
+                            <div key={idx} className="flex flex-col">
+                              <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={val}
+                                onChange={(e) => {
+                                  const next = [...daDirectList];
+                                  next[idx] = e.target.value;
+                                  setDaDirectList(next);
+                                }}
+                                className="px-2 py-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-3">
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+                      onClick={() => setAdvStep(3)}
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-blue-600 text-white rounded-md"
+                      onClick={() => setAdvStep(5)}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+
+                {/* Step 5: Taxes */}
+                <div
+                  className={`transition-all duration-500 ease-out ${advStep >= 5 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+                >
+                  <div className="mb-2 text-sm font-medium text-gray-700">5. Taxes</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
+                      <select
+                        value={taxesMethod}
+                        onChange={(e) => setTaxesMethod(e.target.value as 'percentOfEBIT' | 'direct')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="percentOfEBIT">% of EBIT</option>
+                        <option value="direct">Direct per year</option>
+                      </select>
+                    </div>
+                    <div>
+                      {taxesMethod === 'percentOfEBIT' ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Tax % of EBIT</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={taxesPct}
+                            onChange={(e) => setTaxesPct(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            placeholder="e.g. 25"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Taxes direct per year:</label>
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            {taxesDirectList.map((val, idx) => (
+                              <div key={idx} className="flex flex-col">
+                                <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={val}
+                                  onChange={(e) => {
+                                    const next = [...taxesDirectList];
+                                    next[idx] = e.target.value;
+                                    setTaxesDirectList(next);
+                                  }}
+                                  className="px-2 py-2 border border-gray-300 rounded-md"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-3">
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+                      onClick={() => setAdvStep(4)}
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                      disabled={isCalculating}
+                    >
+                      Estimate
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {isCalculating && (
+                <div className="mt-4">
+                  <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg p-4">
+                    <svg className="h-5 w-5 animate-spin text-blue-600" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">Crunching numbers…</div>
+                      <div className="text-xs text-gray-600">This will take a few seconds</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {results && (
+                <>
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {results.map((r) => (
+                      <div key={r.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="text-sm text-gray-600">{r.name} scenario</div>
+                        <div className="text-2xl font-semibold text-gray-900 mt-1">{currency(r.enterpriseValue)}</div>
+                        <div className="text-xs text-gray-600 mt-2">
+                          <div>EBITDA margin: {r.ebitdaMarginPct}%</div>
+                          <div>Revenue growth: {r.revenueGrowthPct}%/yr</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {isSignedIn && (
+                    <div className="mt-4 flex justify-end">
+                      <Button onClick={handleSaveValuation} disabled={isSaving}>
+                        {isSaving ? 'Saving...' : 'Save Valuation'}
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Debug: Pretty print model and calculated financials */}
+        <div className="mt-8 bg-white border border-gray-200 rounded-lg">
+          <div className="px-4 py-2 border-b border-gray-200">
+            <h2 className="text-sm font-semibold text-gray-900">Debug: Model & Calculations</h2>
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs font-medium text-gray-700 mb-2">Model</div>
+              <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
+                {JSON.stringify(model, null, 2)}
+              </pre>
+            </div>
+            <div>
+              <div className="text-xs font-medium text-gray-700 mb-2">Calculated Financials</div>
+              <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
+                {JSON.stringify(calculatedFinancials, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </div>
+
+        {/* Auth Required Dialog */}
+        <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Sign in to view your valuation</DialogTitle>
+              <DialogDescription>
+                To see your valuation results and save them for future reference, please sign in or create an account.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-center py-4">
+              <SignIn
+                appearance={{
+                  elements: {
+                    rootBox: 'w-full',
+                    card: 'shadow-none',
+                  },
+                }}
+                routing="hash"
+                forceRedirectUrl="/free-valuation"
+                fallbackRedirectUrl="/free-valuation"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   );
 }
