@@ -15,6 +15,8 @@ import { ToastAction } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/home/header/header';
 import { useUserInfo } from '@/hooks/useUserInfo';
+import { RevenueEbitdaChart } from '@/components/dashboard/valuations/revenue-ebitda-chart';
+import { FootballFieldChart } from '@/components/dashboard/valuations/football-field-chart';
 
 type Scenario = {
   id: string;
@@ -333,6 +335,111 @@ export default function FreeValuationPage() {
 
   const currency = (v: number) =>
     v.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+  // Calculate sensitivity ranges for football field chart
+  const sensitivityRanges = useMemo(() => {
+    if (!results || results.length === 0) return [];
+
+    const baseScenario = results.find((r) => r.id === 'base');
+    if (!baseScenario) return [];
+
+    const baseValue = baseScenario.enterpriseValue;
+    const revenue0 = parseFloat(lastYearRevenue || '0');
+    const industryData = betasStatic[industry as keyof typeof betasStatic];
+    const countryData = countryRiskPremiumStatic[country as keyof typeof countryRiskPremiumStatic];
+
+    // Helper to calculate EV with modified parameters
+    const calculateEVWithParams = (
+      growthDelta: number,
+      marginDelta: number,
+      waccDelta: number = 0,
+      multipleDelta: number = 0,
+    ): number => {
+      // Simplified calculation based on simple valuation logic
+      const adjustedGrowth = baseScenario.revenueGrowthPct + growthDelta;
+      const adjustedMargin = Math.max(0, Math.min(100, baseScenario.ebitdaMarginPct + marginDelta));
+
+      // Estimate revenue projection with adjusted growth
+      let projectedRevenues = [];
+      for (let i = 0; i < 5; i++) {
+        if (i === 0) {
+          projectedRevenues.push(revenue0);
+        } else {
+          projectedRevenues.push(projectedRevenues[i - 1] * (1 + adjustedGrowth / 100));
+        }
+      }
+
+      // Calculate EBITDA based on adjusted margin
+      const finalYearRevenue = projectedRevenues[4];
+      const finalYearEBITDA = finalYearRevenue * (adjustedMargin / 100);
+
+      // Calculate WACC
+      const riskFreeRate = model.riskProfile?.riskFreeRate ?? 0.0444;
+      const leveredBeta = industryData
+        ? industryData.unleveredBeta * (1 + (1 - (countryData?.corporateTaxRate ?? 0.25)) * (industryData.dERatio ?? 0))
+        : 0;
+      const equityRiskPremium = countryData?.equityRiskPremium ?? 0;
+      const countryRiskPremium = countryData?.countryRiskPremium ?? 0;
+      const adjustedDefaultSpread = countryData?.adjDefaultSpread ?? 0;
+      const companySpread = model.riskProfile?.companySpread ?? 0.05;
+      const deRatio = industryData?.dERatio ?? 0;
+      const corporateTaxRate = countryData?.corporateTaxRate ?? 0.25;
+
+      const costOfEquity = riskFreeRate + leveredBeta * (equityRiskPremium + countryRiskPremium);
+      const costOfDebt = riskFreeRate + adjustedDefaultSpread + companySpread;
+      const equityWeight = 1 / (1 + deRatio);
+      const debtWeight = deRatio / (1 + deRatio);
+      let wacc = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - corporateTaxRate);
+
+      // Apply WACC delta
+      wacc = Math.max(0.01, wacc + waccDelta);
+
+      // Calculate terminal value using multiples method
+      const baseMultiple = 10;
+      const adjustedMultiple = baseMultiple + multipleDelta;
+      const terminalValue = finalYearEBITDA * adjustedMultiple;
+      const presentValueTV = terminalValue / Math.pow(1 + wacc, 5);
+
+      // Simplified FCF calculation - assume FCF approximates EBITDA * 0.6
+      let sumPVFCF = 0;
+      for (let i = 0; i < 5; i++) {
+        const yearRevenue = projectedRevenues[i];
+        const yearEBITDA = yearRevenue * (adjustedMargin / 100);
+        const yearFCF = yearEBITDA * 0.6;
+        const pvFCF = yearFCF / Math.pow(1 + wacc, i + 1);
+        sumPVFCF += pvFCF;
+      }
+
+      return sumPVFCF + presentValueTV;
+    };
+
+    return [
+      {
+        scenario: 'WACC Sensitivity (±2%)',
+        min: calculateEVWithParams(0, 0, 0.02, 0),
+        max: calculateEVWithParams(0, 0, -0.02, 0),
+        base: baseValue,
+      },
+      {
+        scenario: 'EBITDA Multiple (±2x)',
+        min: calculateEVWithParams(0, 0, 0, -2),
+        max: calculateEVWithParams(0, 0, 0, 2),
+        base: baseValue,
+      },
+      {
+        scenario: 'EBITDA Margin (±5%)',
+        min: calculateEVWithParams(0, -5, 0, 0),
+        max: calculateEVWithParams(0, 5, 0, 0),
+        base: baseValue,
+      },
+      {
+        scenario: 'Revenue Growth (±5%)',
+        min: calculateEVWithParams(-5, 0, 0, 0),
+        max: calculateEVWithParams(5, 0, 0, 0),
+        base: baseValue,
+      },
+    ];
+  }, [results, lastYearRevenue, industry, country, model.riskProfile]);
 
   const performAdvancedCalculation = () => {
     const revenue0 = parseFloat(lastYearRevenue || '0');
@@ -954,6 +1061,26 @@ export default function FreeValuationPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Revenue & EBITDA Margin Chart */}
+                  {calculatedFinancials.revenue.length > 0 && (
+                    <div className="mt-6">
+                      <RevenueEbitdaChart
+                        revenues={calculatedFinancials.revenue.slice(0, 5)}
+                        ebitdaMargins={calculatedFinancials.ebitdaMargin.slice(0, 5)}
+                        years={model.periods.periodLabels.slice(0, 5)}
+                        title="Revenue & EBITDA Margin Projection (5-Year)"
+                      />
+                    </div>
+                  )}
+
+                  {/* Football Field Valuation Chart */}
+                  {sensitivityRanges.length > 0 && (
+                    <div className="mt-6">
+                      <FootballFieldChart ranges={sensitivityRanges} title="Valuation Sensitivity Analysis" />
+                    </div>
+                  )}
+
                   {isSignedIn && (
                     <div className="mt-4 flex justify-end">
                       <Button onClick={handleSaveValuation} disabled={isSaving}>
@@ -1792,6 +1919,26 @@ export default function FreeValuationPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Revenue & EBITDA Margin Chart - Advanced (shows user-selected years) */}
+                  {calculatedFinancials.revenue.length > 0 && (
+                    <div className="mt-6">
+                      <RevenueEbitdaChart
+                        revenues={calculatedFinancials.revenue.slice(0, advYears)}
+                        ebitdaMargins={calculatedFinancials.ebitdaMargin.slice(0, advYears)}
+                        years={model.periods.periodLabels.slice(0, advYears)}
+                        title={`Revenue & EBITDA Margin Projection (${advYears}-Year)`}
+                      />
+                    </div>
+                  )}
+
+                  {/* Football Field Valuation Chart */}
+                  {sensitivityRanges.length > 0 && (
+                    <div className="mt-6">
+                      <FootballFieldChart ranges={sensitivityRanges} title="Valuation Sensitivity Analysis" />
+                    </div>
+                  )}
+
                   {isSignedIn && (
                     <div className="mt-4 flex justify-end">
                       <Button onClick={handleSaveValuation} disabled={isSaving}>
