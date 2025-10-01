@@ -8,16 +8,8 @@ import { countryRiskPremiumStatic } from '../valuation/countryRiskPremiumStatic'
 import { useUser } from '@clerk/nextjs';
 import { SignIn } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PhoneCountryCodeSelect } from '@/components/shared/phone-country-code-select';
 
 type Scenario = {
   id: string;
@@ -160,10 +152,14 @@ export default function FreeValuationPage() {
 
   const { isSignedIn, isLoaded } = useUser();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [valuationName, setValuationName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [pendingCalculation, setPendingCalculation] = useState<'simple' | 'advanced' | null>(null);
+
+  // Business information fields
+  const [companyName, setCompanyName] = useState<string>('');
+  const [companyWebsite, setCompanyWebsite] = useState<string>('');
+  const [companyPhone, setCompanyPhone] = useState<string>('');
+  const [phoneCountryCode, setPhoneCountryCode] = useState<string>('+1');
 
   // Restore form data from sessionStorage on mount (after login redirect)
   React.useEffect(() => {
@@ -171,6 +167,19 @@ export default function FreeValuationPage() {
     if (savedData) {
       try {
         const data = JSON.parse(savedData);
+        if (data.companyName) setCompanyName(data.companyName);
+        if (data.companyWebsite) setCompanyWebsite(data.companyWebsite);
+        if (data.companyPhone) {
+          // Parse phone number to extract country code if present
+          const phoneMatch = data.companyPhone.match(/^(\+\d{1,4})\s*(.*)$/);
+          if (phoneMatch) {
+            setPhoneCountryCode(phoneMatch[1]);
+            setCompanyPhone(phoneMatch[2]);
+          } else {
+            setCompanyPhone(data.companyPhone);
+          }
+        }
+        if (data.phoneCountryCode) setPhoneCountryCode(data.phoneCountryCode);
         if (data.industry) setIndustry(data.industry);
         if (data.country) setCountry(data.country);
         if (data.lastYearRevenue) setLastYearRevenue(data.lastYearRevenue);
@@ -311,9 +320,6 @@ export default function FreeValuationPage() {
       }));
       setResults(computed);
       setIsCalculating(false);
-
-      // Show save dialog after calculation
-      setShowSaveDialog(true);
     }, 3000);
   };
 
@@ -572,14 +578,15 @@ export default function FreeValuationPage() {
         },
       ]);
       setIsCalculating(false);
-
-      // Show save dialog after calculation
-      setShowSaveDialog(true);
     }, 3000);
   };
 
   const saveFormDataToSession = () => {
     const formData = {
+      companyName,
+      companyWebsite,
+      companyPhone: companyPhone ? `${phoneCountryCode} ${companyPhone}` : '',
+      phoneCountryCode,
       industry,
       country,
       lastYearRevenue,
@@ -665,52 +672,39 @@ export default function FreeValuationPage() {
   };
 
   const handleSaveValuation = async () => {
-    if (!isSignedIn) return;
+    if (!isSignedIn || !results) return;
 
     setIsSaving(true);
     try {
       const baseScenario = results?.find((r) => r.id === 'base');
-      const payload = {
-        name: valuationName || `Valuation - ${new Date().toLocaleDateString()}`,
-        modelData: model,
-        resultsData: calculatedFinancials,
-        enterpriseValue: baseScenario?.enterpriseValue || calculatedFinancials.enterpriseValue,
-        industry: industry || null,
-        country: country || null,
-      };
-
-      console.log('[Free Valuation] Saving valuation with payload:', {
-        name: payload.name,
-        enterpriseValue: payload.enterpriseValue,
-        industry: payload.industry,
-        country: payload.country,
-        hasModelData: !!payload.modelData,
-        hasResultsData: !!payload.resultsData,
-      });
-
+      const valuationDisplayName = companyName || `Valuation - ${new Date().toLocaleDateString()}`;
+      const fullPhoneNumber = companyPhone ? `${phoneCountryCode} ${companyPhone}` : null;
       const response = await fetch('/api/valuations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          name: valuationDisplayName,
+          modelData: model,
+          resultsData: calculatedFinancials,
+          enterpriseValue: baseScenario?.enterpriseValue || calculatedFinancials.enterpriseValue,
+          industry: industry || null,
+          country: country || null,
+          companyName: companyName || null,
+          companyWebsite: companyWebsite || null,
+          companyPhone: fullPhoneNumber,
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('[Free Valuation] Save failed:', errorData);
         throw new Error(errorData.error || 'Failed to save valuation');
       }
 
-      const savedValuation = await response.json();
-      console.log('[Free Valuation] Valuation saved successfully:', savedValuation.id);
-
-      setShowSaveDialog(false);
-      setValuationName('');
-
-      // Show success message
-      alert('Valuation saved successfully! View it in your dashboard.');
+      // Show success feedback without dialog
+      alert('Valuation saved successfully!');
     } catch (error) {
-      console.error('[Free Valuation] Failed to save valuation:', error);
-      alert(`Failed to save valuation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Failed to save valuation:', error);
+      alert('Failed to save valuation. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -736,6 +730,50 @@ export default function FreeValuationPage() {
 
           <TabsContent value="simple">
             <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+              {/* Business Information Section */}
+              <div className="border-b border-gray-200 pb-4 mb-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Business Information (Optional)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                    <input
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder="e.g. Acme Corp"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                    <input
+                      type="url"
+                      value={companyWebsite}
+                      onChange={(e) => setCompanyWebsite(e.target.value)}
+                      placeholder="e.g. www.example.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Contact</label>
+                    <div className="flex gap-2">
+                      <PhoneCountryCodeSelect
+                        value={phoneCountryCode}
+                        onChange={setPhoneCountryCode}
+                        className="w-28"
+                      />
+                      <input
+                        type="tel"
+                        value={companyPhone}
+                        onChange={(e) => setCompanyPhone(e.target.value)}
+                        placeholder="234 567 8900"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
@@ -871,23 +909,76 @@ export default function FreeValuationPage() {
             )}
 
             {results && (
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                {results.map((r) => (
-                  <div key={r.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-600">{r.name} scenario</div>
-                    <div className="text-2xl font-semibold text-gray-900 mt-1">{currency(r.enterpriseValue)}</div>
-                    <div className="text-xs text-gray-600 mt-2">
-                      <div>EBITDA margin: {r.ebitdaMarginPct}%</div>
-                      <div>Revenue growth: {r.revenueGrowthPct}%/yr</div>
+              <>
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {results.map((r) => (
+                    <div key={r.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="text-sm text-gray-600">{r.name} scenario</div>
+                      <div className="text-2xl font-semibold text-gray-900 mt-1">{currency(r.enterpriseValue)}</div>
+                      <div className="text-xs text-gray-600 mt-2">
+                        <div>EBITDA margin: {r.ebitdaMarginPct}%</div>
+                        <div>Revenue growth: {r.revenueGrowthPct}%/yr</div>
+                      </div>
                     </div>
+                  ))}
+                </div>
+                {isSignedIn && (
+                  <div className="mt-4 flex justify-end">
+                    <Button onClick={handleSaveValuation} disabled={isSaving}>
+                      {isSaving ? 'Saving...' : 'Save Valuation'}
+                    </Button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </TabsContent>
 
           <TabsContent value="advanced">
             <form onSubmit={handleSubmitAdvanced} className="bg-white border border-gray-200 rounded-lg p-4 space-y-6">
+              {/* Business Information Section */}
+              <div className="border-b border-gray-200 pb-4 mb-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Business Information (Optional)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                    <input
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder="e.g. Acme Corp"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                    <input
+                      type="url"
+                      value={companyWebsite}
+                      onChange={(e) => setCompanyWebsite(e.target.value)}
+                      placeholder="e.g. www.example.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Contact</label>
+                    <div className="flex gap-2">
+                      <PhoneCountryCodeSelect
+                        value={phoneCountryCode}
+                        onChange={setPhoneCountryCode}
+                        className="w-28"
+                      />
+                      <input
+                        type="tel"
+                        value={companyPhone}
+                        onChange={(e) => setCompanyPhone(e.target.value)}
+                        placeholder="234 567 8900"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Risk profile: Industry & Country */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -1649,18 +1740,27 @@ export default function FreeValuationPage() {
             )}
 
             {results && (
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                {results.map((r) => (
-                  <div key={r.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-600">{r.name} scenario</div>
-                    <div className="text-2xl font-semibold text-gray-900 mt-1">{currency(r.enterpriseValue)}</div>
-                    <div className="text-xs text-gray-600 mt-2">
-                      <div>EBITDA margin: {r.ebitdaMarginPct}%</div>
-                      <div>Revenue growth: {r.revenueGrowthPct}%/yr</div>
+              <>
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {results.map((r) => (
+                    <div key={r.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="text-sm text-gray-600">{r.name} scenario</div>
+                      <div className="text-2xl font-semibold text-gray-900 mt-1">{currency(r.enterpriseValue)}</div>
+                      <div className="text-xs text-gray-600 mt-2">
+                        <div>EBITDA margin: {r.ebitdaMarginPct}%</div>
+                        <div>Revenue growth: {r.revenueGrowthPct}%/yr</div>
+                      </div>
                     </div>
+                  ))}
+                </div>
+                {isSignedIn && (
+                  <div className="mt-4 flex justify-end">
+                    <Button onClick={handleSaveValuation} disabled={isSaving}>
+                      {isSaving ? 'Saving...' : 'Save Valuation'}
+                    </Button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </TabsContent>
         </Tabs>
@@ -1709,34 +1809,6 @@ export default function FreeValuationPage() {
               fallbackRedirectUrl="/free-valuation"
             />
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Save Valuation Dialog */}
-      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Save your valuation</DialogTitle>
-            <DialogDescription>Give your valuation a name to find it easily later in your dashboard.</DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="valuation-name">Valuation Name (optional)</Label>
-            <Input
-              id="valuation-name"
-              value={valuationName}
-              onChange={(e) => setValuationName(e.target.value)}
-              placeholder={`Valuation - ${new Date().toLocaleDateString()}`}
-              className="mt-2"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSaveDialog(false)} disabled={isSaving}>
-              Skip
-            </Button>
-            <Button onClick={handleSaveValuation} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

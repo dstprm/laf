@@ -11,6 +11,9 @@ interface CreateValuationData {
   enterpriseValue?: number;
   industry?: string;
   country?: string;
+  companyName?: string;
+  companyWebsite?: string;
+  companyPhone?: string;
 }
 
 interface UpdateValuationData {
@@ -20,40 +23,29 @@ interface UpdateValuationData {
   enterpriseValue?: number;
   industry?: string;
   country?: string;
+  companyName?: string;
+  companyWebsite?: string;
+  companyPhone?: string;
 }
 
 /**
  * Create a new valuation
  */
 export async function createValuation(data: CreateValuationData) {
-  console.log('[createValuation] Input data:', {
-    userId: data.userId,
-    name: data.name,
-    enterpriseValue: data.enterpriseValue,
-    industry: data.industry,
-    country: data.country,
-    hasModelData: !!data.modelData,
-    hasResultsData: !!data.resultsData,
+  return prisma.valuation.create({
+    data: {
+      userId: data.userId,
+      name: data.name,
+      modelData: data.modelData as any,
+      resultsData: data.resultsData as any,
+      enterpriseValue: data.enterpriseValue,
+      industry: data.industry,
+      country: data.country,
+      companyName: data.companyName,
+      companyWebsite: data.companyWebsite,
+      companyPhone: data.companyPhone,
+    },
   });
-
-  try {
-    const result = await prisma.valuation.create({
-      data: {
-        userId: data.userId,
-        name: data.name,
-        modelData: data.modelData as any,
-        resultsData: data.resultsData as any,
-        enterpriseValue: data.enterpriseValue,
-        industry: data.industry,
-        country: data.country,
-      },
-    });
-    console.log('[createValuation] Success:', result.id);
-    return result;
-  } catch (error) {
-    console.error('[createValuation] Prisma error:', error);
-    throw error;
-  }
 }
 
 /**
@@ -97,6 +89,9 @@ export async function updateValuation(id: string, userId: string, data: UpdateVa
       ...(data.enterpriseValue !== undefined && { enterpriseValue: data.enterpriseValue }),
       ...(data.industry !== undefined && { industry: data.industry }),
       ...(data.country !== undefined && { country: data.country }),
+      ...(data.companyName !== undefined && { companyName: data.companyName }),
+      ...(data.companyWebsite !== undefined && { companyWebsite: data.companyWebsite }),
+      ...(data.companyPhone !== undefined && { companyPhone: data.companyPhone }),
     },
   });
 }
