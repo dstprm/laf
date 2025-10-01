@@ -35,18 +35,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'modelData and resultsData are required' }, { status: 400 });
     }
 
-    const valuation = await createValuation({
+    // Build valuation data object, only including optional fields if they exist
+    const valuationData: any = {
       userId: user.id,
-      name,
+      name: name || `Valuation - ${new Date().toLocaleDateString()}`,
       modelData,
       resultsData,
-      enterpriseValue,
-      industry,
-      country,
-      companyName,
-      companyWebsite,
-      companyPhone,
-    });
+    };
+
+    // Add optional fields only if they have values
+    if (enterpriseValue !== undefined) valuationData.enterpriseValue = enterpriseValue;
+    if (industry) valuationData.industry = industry;
+    if (country) valuationData.country = country;
+    if (companyName) valuationData.companyName = companyName;
+    if (companyWebsite) valuationData.companyWebsite = companyWebsite;
+    if (companyPhone) valuationData.companyPhone = companyPhone;
+
+    const valuation = await createValuation(valuationData);
 
     return NextResponse.json(valuation, { status: 201 });
   } catch (error) {

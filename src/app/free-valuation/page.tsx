@@ -10,6 +10,9 @@ import { SignIn } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PhoneCountryCodeSelect } from '@/components/shared/phone-country-code-select';
+import { useToast } from '@/components/ui/use-toast';
+import { ToastAction } from '@/components/ui/toast';
+import { useRouter } from 'next/navigation';
 
 type Scenario = {
   id: string;
@@ -36,6 +39,8 @@ export default function FreeValuationPage() {
 
   const industries = useMemo(() => Object.keys(betasStatic), []);
   const countries = useMemo(() => Object.keys(countryRiskPremiumStatic), []);
+  const { toast } = useToast();
+  const router = useRouter();
 
   const [industry, setIndustry] = useState<string>('');
   const [country, setCountry] = useState<string>('');
@@ -677,22 +682,28 @@ export default function FreeValuationPage() {
     setIsSaving(true);
     try {
       const baseScenario = results?.find((r) => r.id === 'base');
-      const valuationDisplayName = companyName || `Valuation - ${new Date().toLocaleDateString()}`;
-      const fullPhoneNumber = companyPhone ? `${phoneCountryCode} ${companyPhone}` : null;
+      const defaultName = `Valuation - ${new Date().toLocaleDateString()}`;
+      const valuationDisplayName = companyName.trim() || defaultName;
+      const fullPhoneNumber = companyPhone.trim() ? `${phoneCountryCode} ${companyPhone}` : undefined;
+
+      const payload: any = {
+        name: valuationDisplayName,
+        modelData: model,
+        resultsData: calculatedFinancials,
+        enterpriseValue: baseScenario?.enterpriseValue || calculatedFinancials.enterpriseValue,
+      };
+
+      // Only include optional fields if they have values
+      if (industry) payload.industry = industry;
+      if (country) payload.country = country;
+      if (companyName.trim()) payload.companyName = companyName.trim();
+      if (companyWebsite.trim()) payload.companyWebsite = companyWebsite.trim();
+      if (fullPhoneNumber) payload.companyPhone = fullPhoneNumber;
+
       const response = await fetch('/api/valuations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: valuationDisplayName,
-          modelData: model,
-          resultsData: calculatedFinancials,
-          enterpriseValue: baseScenario?.enterpriseValue || calculatedFinancials.enterpriseValue,
-          industry: industry || null,
-          country: country || null,
-          companyName: companyName || null,
-          companyWebsite: companyWebsite || null,
-          companyPhone: fullPhoneNumber,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -700,11 +711,23 @@ export default function FreeValuationPage() {
         throw new Error(errorData.error || 'Failed to save valuation');
       }
 
-      // Show success feedback without dialog
-      alert('Valuation saved successfully!');
+      // Show success toast with dashboard redirect button
+      toast({
+        title: 'Valuation saved successfully!',
+        description: 'Your valuation has been saved to your dashboard.',
+        action: (
+          <ToastAction altText="Go to Dashboard" onClick={() => router.push('/dashboard')}>
+            Go to Dashboard
+          </ToastAction>
+        ),
+      });
     } catch (error) {
       console.error('Failed to save valuation:', error);
-      alert('Failed to save valuation. Please try again.');
+      toast({
+        variant: 'destructive',
+        title: 'Failed to save valuation',
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
     } finally {
       setIsSaving(false);
     }
