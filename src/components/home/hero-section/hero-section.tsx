@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useRef, useState } from 'react';
 
 const VIDEOS = [
-  '/videos/tech-office.mp4', // Smallest first (9MB) for faster initial load
   '/videos/business-meeting.mp4', // 20MB
   '/videos/meeting.mp4', // 28MB
-  'videos/solar.mp4',
+  '/videos/solar.mp4',
+  '/videos/tech-office.mp4', // Smallest first (9MB) for faster initial load
 ];
 
 export function HeroSection() {
@@ -51,18 +51,18 @@ export function HeroSection() {
   return (
     <section
       className={
-        'relative mx-auto min-h-[75vh] flex items-center justify-center px-4 sm:px-6 md:px-8 -mt-20 pt-28 pb-16'
+        'relative z-0 mx-auto min-h-[75vh] flex items-center justify-center px-4 sm:px-6 md:px-8 -mt-20 pt-28 pb-16'
       }
     >
       {/* Video Background with crossfade - extends behind navbar */}
-      <div className="absolute inset-0 top-0 -z-10 overflow-hidden">
+      <div className="absolute -inset-x-0 -top-20 bottom-0 -z-10 overflow-hidden bg-black">
         {/* Video 1 */}
         <video
           ref={video1Ref}
           muted
           playsInline
           preload="auto"
-          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ${
+          className={`absolute top-0 left-0 w-full h-[calc(100%+80px)] object-cover transition-opacity duration-1000 ${
             activeVideo === 1 ? 'opacity-100' : 'opacity-0'
           }`}
         >
@@ -75,15 +75,15 @@ export function HeroSection() {
           muted
           playsInline
           preload="none"
-          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ${
+          className={`absolute top-0 left-0 w-full h-[calc(100%+80px)] object-cover transition-opacity duration-1000 ${
             activeVideo === 2 ? 'opacity-100' : 'opacity-0'
           }`}
         >
           <source src={VIDEOS[1]} type="video/mp4" />
         </video>
 
-        {/* Darker overlay for better contrast - similar to OffDeal */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/70 to-black/75" />
+        {/* Darker overlay for better contrast - extends to cover navbar area */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/60" />
       </div>
 
       <div className={'mx-auto w-full max-w-5xl text-center'}>
