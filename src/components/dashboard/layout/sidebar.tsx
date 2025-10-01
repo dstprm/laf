@@ -1,6 +1,6 @@
 'use client';
 
-import { Album, BarChart3, CreditCard, Home, Layers, Palette, Shield } from 'lucide-react';
+import { Album, BarChart3, CreditCard, FileText, Home, Layers, Palette, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,11 @@ const baseSidebarItems = [
     title: 'Dashboard',
     icon: <Home className="h-6 w-6" />,
     href: '/dashboard',
+  },
+  {
+    title: 'Valuations',
+    icon: <FileText className="h-6 w-6" />,
+    href: '/dashboard/valuations',
   },
   {
     title: 'Features',

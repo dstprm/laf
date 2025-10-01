@@ -25,7 +25,8 @@ model User {
     updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
     // Relations
-    customer Customer?
+    customer   Customer?
+    valuations Valuation[]
 
     @@map("users")
 }
@@ -117,4 +118,34 @@ model ContactRequest {
 
     @@index([email])
     @@map("contact_requests")
+}
+
+/// Valuations created by users via the free valuation tool
+model Valuation {
+    id              String   @id @default(cuid())
+    userId          String   @map("user_id")
+    name            String?
+    /// Complete input model data (FinancialModel from modelStore)
+    modelData       Json     @map("model_data")
+    /// Calculated financial results (CalculatedFinancials from modelStore)
+    resultsData     Json     @map("results_data")
+    /// Denormalized enterprise value for easy querying
+    enterpriseValue Float?   @map("enterprise_value")
+    /// Denormalized industry for filtering
+    industry        String?
+    /// Denormalized country for filtering
+    country         String?
+    /// Company business information
+    companyName     String?  @map("company_name")
+    companyWebsite  String?  @map("company_website")
+    companyPhone    String?  @map("company_phone")
+    createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    // Relations
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([userId, createdAt])
+    @@map("valuations")
 }
