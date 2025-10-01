@@ -76,8 +76,8 @@ export default function Header({ user }: Props) {
         'sticky top-0 z-50 transition-all duration-300 border-b',
         isHidden ? '-translate-y-full' : 'translate-y-0',
         isStuck
-          ? 'bg-black/85 dark:bg-background/95 border-white/20 dark:border-border shadow-lg backdrop-blur-lg'
-          : 'bg-black/40 border-white/10 backdrop-blur-sm',
+          ? 'bg-black/70 dark:bg-background/90 border-white/20 dark:border-border shadow-lg backdrop-blur-lg'
+          : 'bg-black/30 border-white/10 backdrop-blur-sm',
       )}
     >
       <div
