@@ -15,6 +15,7 @@ import { ToastAction } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/home/header/header';
 import { useUserInfo } from '@/hooks/useUserInfo';
+import { RevenueEbitdaChart } from '@/components/dashboard/valuations/revenue-ebitda-chart';
 
 type Scenario = {
   id: string;
@@ -954,6 +955,19 @@ export default function FreeValuationPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Revenue & EBITDA Margin Chart */}
+                  {calculatedFinancials.revenue.length > 0 && (
+                    <div className="mt-6">
+                      <RevenueEbitdaChart
+                        revenues={calculatedFinancials.revenue}
+                        ebitdaMargins={calculatedFinancials.ebitdaMargin}
+                        years={model.periods.periodLabels}
+                        title="Revenue & EBITDA Margin Projection"
+                      />
+                    </div>
+                  )}
+
                   {isSignedIn && (
                     <div className="mt-4 flex justify-end">
                       <Button onClick={handleSaveValuation} disabled={isSaving}>
@@ -1792,6 +1806,19 @@ export default function FreeValuationPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Revenue & EBITDA Margin Chart */}
+                  {calculatedFinancials.revenue.length > 0 && (
+                    <div className="mt-6">
+                      <RevenueEbitdaChart
+                        revenues={calculatedFinancials.revenue}
+                        ebitdaMargins={calculatedFinancials.ebitdaMargin}
+                        years={model.periods.periodLabels}
+                        title="Revenue & EBITDA Margin Projection"
+                      />
+                    </div>
+                  )}
+
                   {isSignedIn && (
                     <div className="mt-4 flex justify-end">
                       <Button onClick={handleSaveValuation} disabled={isSaving}>
