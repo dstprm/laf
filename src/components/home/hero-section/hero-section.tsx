@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useRef, useState } from 'react';
 
 const VIDEOS = [
-  '/videos/business-meeting.mp4', // 20MB
-  '/videos/meeting.mp4', // 28MB
-  '/videos/solar.mp4',
-  '/videos/tech-office.mp4', // Smallest first (9MB) for faster initial load
+  '/videos/business-meeting.webm',
+  '/videos/meeting.webm',
+  '/videos/solar.webm',
+  '/videos/tech-office.webm',
 ];
 
 export function HeroSection() {
@@ -59,28 +59,26 @@ export function HeroSection() {
         {/* Video 1 */}
         <video
           ref={video1Ref}
+          src={VIDEOS[0]}
           muted
           playsInline
           preload="auto"
           className={`absolute top-0 left-0 w-full h-[calc(100%+80px)] object-cover transition-opacity duration-1000 ${
             activeVideo === 1 ? 'opacity-100' : 'opacity-0'
           }`}
-        >
-          <source src={VIDEOS[0]} type="video/mp4" />
-        </video>
+        />
 
         {/* Video 2 */}
         <video
           ref={video2Ref}
+          src={VIDEOS[1]}
           muted
           playsInline
           preload="none"
           className={`absolute top-0 left-0 w-full h-[calc(100%+80px)] object-cover transition-opacity duration-1000 ${
             activeVideo === 2 ? 'opacity-100' : 'opacity-0'
           }`}
-        >
-          <source src={VIDEOS[1]} type="video/mp4" />
-        </video>
+        />
 
         {/* Darker overlay for better contrast - extends to cover navbar area */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/60" />
