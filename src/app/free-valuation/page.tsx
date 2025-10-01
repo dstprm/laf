@@ -5,6 +5,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useModelStore } from '../valuation/store/modelStore';
 import { betasStatic } from '../valuation/betasStatic';
 import { countryRiskPremiumStatic } from '../valuation/countryRiskPremiumStatic';
+import { useUser } from '@clerk/nextjs';
+import { SignIn } from '@clerk/nextjs';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type Scenario = {
   id: string;
@@ -145,8 +158,86 @@ export default function FreeValuationPage() {
     { id: string; name: string; enterpriseValue: number; ebitdaMarginPct: number; revenueGrowthPct: number }[] | null
   >(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const { isSignedIn, isLoaded } = useUser();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [valuationName, setValuationName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [pendingCalculation, setPendingCalculation] = useState<'simple' | 'advanced' | null>(null);
+
+  // Restore form data from sessionStorage on mount (after login redirect)
+  React.useEffect(() => {
+    const savedData = sessionStorage.getItem('valuation_form_data');
+    if (savedData) {
+      try {
+        const data = JSON.parse(savedData);
+        if (data.industry) setIndustry(data.industry);
+        if (data.country) setCountry(data.country);
+        if (data.lastYearRevenue) setLastYearRevenue(data.lastYearRevenue);
+        if (data.ebitdaMarginPct) setEbitdaMarginPct(data.ebitdaMarginPct);
+        if (data.revenueGrowthPct) setRevenueGrowthPct(data.revenueGrowthPct);
+        if (data.activeTab) setActiveTab(data.activeTab);
+        if (data.step !== undefined) setStep(data.step);
+        // Restore advanced form data
+        if (data.advYears) setAdvYears(data.advYears);
+        if (data.growthMode) setGrowthMode(data.growthMode);
+        if (data.advUniformGrowth) setAdvUniformGrowth(data.advUniformGrowth);
+        if (data.advEbitdaStart) setAdvEbitdaStart(data.advEbitdaStart);
+        if (data.advEbitdaTarget) setAdvEbitdaTarget(data.advEbitdaTarget);
+        if (data.advCapexPct) setAdvCapexPct(data.advCapexPct);
+        if (data.advNwcPct) setAdvNwcPct(data.advNwcPct);
+        if (data.advDaPct) setAdvDaPct(data.advDaPct);
+        if (data.taxesPct) setTaxesPct(data.taxesPct);
+        if (data.advLTG) setAdvLTG(data.advLTG);
+        if (data.advEbitdaUniformPct) setAdvEbitdaUniformPct(data.advEbitdaUniformPct);
+        if (data.advStep !== undefined) setAdvStep(data.advStep);
+        if (data.pendingCalculation) setPendingCalculation(data.pendingCalculation);
+        if (data.advRevenueInputMethod) setAdvRevenueInputMethod(data.advRevenueInputMethod);
+        if (data.ebitdaInputType) setEbitdaInputType(data.ebitdaInputType);
+        if (data.ebitdaPctMode) setEbitdaPctMode(data.ebitdaPctMode);
+        if (data.capexMethod) setCapexMethod(data.capexMethod);
+        if (data.capexPercentMode) setCapexPercentMode(data.capexPercentMode);
+        if (data.nwcMethod) setNwcMethod(data.nwcMethod);
+        if (data.nwcPercentMode) setNwcPercentMode(data.nwcPercentMode);
+        if (data.daMethod) setDaMethod(data.daMethod);
+        if (data.daPercentMode) setDaPercentMode(data.daPercentMode);
+        if (data.taxesMethod) setTaxesMethod(data.taxesMethod);
+        // Restore arrays
+        if (data.revenueDirectList) setRevenueDirectList(data.revenueDirectList);
+        if (data.growthPerYearList) setGrowthPerYearList(data.growthPerYearList);
+        if (data.ebitdaPercentPerYearList) setEbitdaPercentPerYearList(data.ebitdaPercentPerYearList);
+        if (data.ebitdaDirectList) setEbitdaDirectList(data.ebitdaDirectList);
+        if (data.capexPercentsList) setCapexPercentsList(data.capexPercentsList);
+        if (data.nwcPercentsList) setNwcPercentsList(data.nwcPercentsList);
+        if (data.daPercentsList) setDaPercentsList(data.daPercentsList);
+        if (data.taxesDirectList) setTaxesDirectList(data.taxesDirectList);
+        if (data.capexDirectList) setCapexDirectList(data.capexDirectList);
+        if (data.nwcDirectList) setNwcDirectList(data.nwcDirectList);
+        if (data.daDirectList) setDaDirectList(data.daDirectList);
+
+        // Clear the saved data after restoring
+        sessionStorage.removeItem('valuation_form_data');
+      } catch (error) {
+        console.error('Failed to restore form data:', error);
+      }
+    }
+  }, []);
+
+  // Effect to trigger calculation after user logs in
+  React.useEffect(() => {
+    if (isSignedIn && pendingCalculation) {
+      setShowAuthDialog(false);
+      if (pendingCalculation === 'simple') {
+        performSimpleCalculation();
+      } else if (pendingCalculation === 'advanced') {
+        performAdvancedCalculation();
+      }
+      setPendingCalculation(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignedIn, pendingCalculation]);
+
+  const performSimpleCalculation = () => {
     const revenue0 = parseFloat(lastYearRevenue || '0');
     if (!industry || !country || !(revenue0 > 0)) {
       setResults(null);
@@ -220,14 +311,16 @@ export default function FreeValuationPage() {
       }));
       setResults(computed);
       setIsCalculating(false);
+
+      // Show save dialog after calculation
+      setShowSaveDialog(true);
     }, 3000);
   };
 
   const currency = (v: number) =>
     v.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-  const handleSubmitAdvanced = (e: React.FormEvent) => {
-    e.preventDefault();
+  const performAdvancedCalculation = () => {
     const revenue0 = parseFloat(lastYearRevenue || '0');
     if (!(revenue0 > 0) || advYears < 2) {
       setResults(null);
@@ -479,7 +572,126 @@ export default function FreeValuationPage() {
         },
       ]);
       setIsCalculating(false);
+
+      // Show save dialog after calculation
+      setShowSaveDialog(true);
     }, 3000);
+  };
+
+  const saveFormDataToSession = () => {
+    const formData = {
+      industry,
+      country,
+      lastYearRevenue,
+      ebitdaMarginPct,
+      revenueGrowthPct,
+      activeTab,
+      step,
+      advYears,
+      growthMode,
+      advUniformGrowth,
+      advEbitdaStart,
+      advEbitdaTarget,
+      advCapexPct,
+      advNwcPct,
+      advDaPct,
+      taxesPct,
+      advLTG,
+      advEbitdaUniformPct,
+      advStep,
+      pendingCalculation,
+      advRevenueInputMethod,
+      ebitdaInputType,
+      ebitdaPctMode,
+      capexMethod,
+      capexPercentMode,
+      nwcMethod,
+      nwcPercentMode,
+      daMethod,
+      daPercentMode,
+      taxesMethod,
+      // Save arrays
+      revenueDirectList,
+      growthPerYearList,
+      ebitdaPercentPerYearList,
+      ebitdaDirectList,
+      capexPercentsList,
+      nwcPercentsList,
+      daPercentsList,
+      taxesDirectList,
+      capexDirectList,
+      nwcDirectList,
+      daDirectList,
+    };
+    sessionStorage.setItem('valuation_form_data', JSON.stringify(formData));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Check if user is authenticated
+    if (!isLoaded) {
+      return; // Wait for Clerk to load
+    }
+
+    if (!isSignedIn) {
+      // Save form data before showing auth
+      saveFormDataToSession();
+      setPendingCalculation('simple');
+      setShowAuthDialog(true);
+      return;
+    }
+
+    performSimpleCalculation();
+  };
+
+  const handleSubmitAdvanced = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Check if user is authenticated
+    if (!isLoaded) {
+      return; // Wait for Clerk to load
+    }
+
+    if (!isSignedIn) {
+      // Save form data before showing auth
+      saveFormDataToSession();
+      setPendingCalculation('advanced');
+      setShowAuthDialog(true);
+      return;
+    }
+
+    performAdvancedCalculation();
+  };
+
+  const handleSaveValuation = async () => {
+    if (!isSignedIn) return;
+
+    setIsSaving(true);
+    try {
+      const baseScenario = results?.find((r) => r.id === 'base');
+      await fetch('/api/valuations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: valuationName || `Valuation - ${new Date().toLocaleDateString()}`,
+          modelData: model,
+          resultsData: calculatedFinancials,
+          enterpriseValue: baseScenario?.enterpriseValue || calculatedFinancials.enterpriseValue,
+          industry: industry || null,
+          country: country || null,
+        }),
+      });
+
+      setShowSaveDialog(false);
+      setValuationName('');
+      // Optionally show success message or redirect to dashboard
+    } catch (error) {
+      console.error('Failed to save valuation:', error);
+      alert('Failed to save valuation. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -1452,6 +1664,59 @@ export default function FreeValuationPage() {
           </div>
         </div>
       </div>
+
+      {/* Auth Required Dialog */}
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sign in to view your valuation</DialogTitle>
+            <DialogDescription>
+              To see your valuation results and save them for future reference, please sign in or create an account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <SignIn
+              appearance={{
+                elements: {
+                  rootBox: 'w-full',
+                  card: 'shadow-none',
+                },
+              }}
+              routing="hash"
+              forceRedirectUrl="/free-valuation"
+              fallbackRedirectUrl="/free-valuation"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save Valuation Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save your valuation</DialogTitle>
+            <DialogDescription>Give your valuation a name to find it easily later in your dashboard.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="valuation-name">Valuation Name (optional)</Label>
+            <Input
+              id="valuation-name"
+              value={valuationName}
+              onChange={(e) => setValuationName(e.target.value)}
+              placeholder={`Valuation - ${new Date().toLocaleDateString()}`}
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)} disabled={isSaving}>
+              Skip
+            </Button>
+            <Button onClick={handleSaveValuation} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
