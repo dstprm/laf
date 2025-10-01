@@ -22,7 +22,6 @@
 .idea
 
 # large video files
-/public/videos/*.webm
 
 # debug
 npm-debug.log*

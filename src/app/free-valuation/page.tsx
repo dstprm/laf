@@ -360,7 +360,7 @@ export default function FreeValuationPage() {
       const adjustedMargin = Math.max(0, Math.min(100, baseScenario.ebitdaMarginPct + marginDelta));
 
       // Estimate revenue projection with adjusted growth
-      let projectedRevenues = [];
+      const projectedRevenues: number[] = [];
       for (let i = 0; i < 5; i++) {
         if (i === 0) {
           projectedRevenues.push(revenue0);
@@ -796,7 +796,17 @@ export default function FreeValuationPage() {
       const valuationDisplayName = companyName.trim() || defaultName;
       const fullPhoneNumber = companyPhone.trim() ? `${phoneCountryCode} ${companyPhone}` : undefined;
 
-      const payload: any = {
+      const payload: {
+        name: string;
+        modelData: unknown;
+        resultsData: unknown;
+        enterpriseValue?: number;
+        industry?: string;
+        country?: string;
+        companyName?: string;
+        companyWebsite?: string;
+        companyPhone?: string;
+      } = {
         name: valuationDisplayName,
         modelData: model,
         resultsData: calculatedFinancials,

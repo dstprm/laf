@@ -1,17 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  ReferenceLine,
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ValuationRange {
   scenario: string;
@@ -92,6 +82,7 @@ export function FootballFieldChart({
   };
 
   // Custom bar shape that shows the range as a horizontal bar
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CustomBar = (props: any) => {
     const { x, y, width, height, payload } = props;
     const { min, max, base } = payload;

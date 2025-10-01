@@ -36,7 +36,18 @@ export async function POST(req: Request) {
     }
 
     // Build valuation data object, only including optional fields if they exist
-    const valuationData: any = {
+    const valuationData: {
+      userId: string;
+      name: string;
+      modelData: unknown;
+      resultsData: unknown;
+      enterpriseValue?: number;
+      industry?: string;
+      country?: string;
+      companyName?: string;
+      companyWebsite?: string;
+      companyPhone?: string;
+    } = {
       userId: user.id,
       name: name || `Valuation - ${new Date().toLocaleDateString()}`,
       modelData,
