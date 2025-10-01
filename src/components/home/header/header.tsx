@@ -75,7 +75,9 @@ export default function Header({ user }: Props) {
       className={cn(
         'sticky top-0 z-50 transition-all duration-300 border-b',
         isHidden ? '-translate-y-full' : 'translate-y-0',
-        isStuck ? 'backdrop-blur-md bg-background/80 border-border' : 'backdrop-blur-sm bg-black/10 border-white/10',
+        isStuck
+          ? 'bg-black/85 dark:bg-background/95 border-white/20 dark:border-border shadow-lg backdrop-blur-lg'
+          : 'bg-black/40 border-white/10 backdrop-blur-sm',
       )}
     >
       <div
@@ -95,30 +97,42 @@ export default function Header({ user }: Props) {
         <div
           className={cn(
             'hidden md:flex items-center justify-center gap-6 text-sm transition-colors',
-            isStuck ? 'text-muted-foreground' : 'text-white/90',
+            isStuck ? 'text-white/90 dark:text-muted-foreground' : 'text-white/90',
           )}
         >
           <Link
             href={hrefFor('features')}
-            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+            className={cn(
+              'transition-colors',
+              isStuck ? 'hover:text-white dark:hover:text-foreground' : 'hover:text-white',
+            )}
           >
             Características
           </Link>
           <Link
             href={hrefFor('services')}
-            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+            className={cn(
+              'transition-colors',
+              isStuck ? 'hover:text-white dark:hover:text-foreground' : 'hover:text-white',
+            )}
           >
             Servicios
           </Link>
           <Link
             href={hrefFor('how-it-works')}
-            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+            className={cn(
+              'transition-colors',
+              isStuck ? 'hover:text-white dark:hover:text-foreground' : 'hover:text-white',
+            )}
           >
             Cómo funciona
           </Link>
           <Link
             href={hrefFor('faq')}
-            className={cn('transition-colors', isStuck ? 'hover:text-foreground' : 'hover:text-white')}
+            className={cn(
+              'transition-colors',
+              isStuck ? 'hover:text-white dark:hover:text-foreground' : 'hover:text-white',
+            )}
           >
             FAQ
           </Link>
@@ -131,10 +145,7 @@ export default function Header({ user }: Props) {
                 <Link href={'/dashboard'}>Panel</Link>
               </Button>
             ) : (
-              <Button
-                asChild={true}
-                className={cn('transition-colors', isStuck ? '' : 'bg-white text-black hover:bg-white/90')}
-              >
+              <Button asChild={true} className={cn('transition-colors bg-white text-black hover:bg-white/90')}>
                 {/* If you want to use the login page, uncomment the following line and comment out the SignInButton */}
                 {/* <Link href={'/login'}>Sign in</Link> */}
                 <SignInButton mode="modal">Comenzar</SignInButton>

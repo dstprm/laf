@@ -24,8 +24,8 @@ export function HomePage() {
 
   return (
     <>
-      <div>
-        <div id="nav-sentinel" aria-hidden className="h-0" />
+      <div className="relative isolate">
+        <div id="nav-sentinel" aria-hidden className="h-0 w-0 overflow-hidden" />
         <Header user={user} />
         <HeroSection />
         <HeroStats />
