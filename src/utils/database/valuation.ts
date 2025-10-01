@@ -1,7 +1,7 @@
 /**
  * Database utilities for Valuation operations
  */
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 interface CreateValuationData {
   userId: string;
@@ -26,17 +26,34 @@ interface UpdateValuationData {
  * Create a new valuation
  */
 export async function createValuation(data: CreateValuationData) {
-  return prisma.valuation.create({
-    data: {
-      userId: data.userId,
-      name: data.name,
-      modelData: data.modelData as any,
-      resultsData: data.resultsData as any,
-      enterpriseValue: data.enterpriseValue,
-      industry: data.industry,
-      country: data.country,
-    },
+  console.log('[createValuation] Input data:', {
+    userId: data.userId,
+    name: data.name,
+    enterpriseValue: data.enterpriseValue,
+    industry: data.industry,
+    country: data.country,
+    hasModelData: !!data.modelData,
+    hasResultsData: !!data.resultsData,
   });
+
+  try {
+    const result = await prisma.valuation.create({
+      data: {
+        userId: data.userId,
+        name: data.name,
+        modelData: data.modelData as any,
+        resultsData: data.resultsData as any,
+        enterpriseValue: data.enterpriseValue,
+        industry: data.industry,
+        country: data.country,
+      },
+    });
+    console.log('[createValuation] Success:', result.id);
+    return result;
+  } catch (error) {
+    console.error('[createValuation] Prisma error:', error);
+    throw error;
+  }
 }
 
 /**

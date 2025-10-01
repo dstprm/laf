@@ -670,25 +670,47 @@ export default function FreeValuationPage() {
     setIsSaving(true);
     try {
       const baseScenario = results?.find((r) => r.id === 'base');
-      await fetch('/api/valuations', {
+      const payload = {
+        name: valuationName || `Valuation - ${new Date().toLocaleDateString()}`,
+        modelData: model,
+        resultsData: calculatedFinancials,
+        enterpriseValue: baseScenario?.enterpriseValue || calculatedFinancials.enterpriseValue,
+        industry: industry || null,
+        country: country || null,
+      };
+
+      console.log('[Free Valuation] Saving valuation with payload:', {
+        name: payload.name,
+        enterpriseValue: payload.enterpriseValue,
+        industry: payload.industry,
+        country: payload.country,
+        hasModelData: !!payload.modelData,
+        hasResultsData: !!payload.resultsData,
+      });
+
+      const response = await fetch('/api/valuations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: valuationName || `Valuation - ${new Date().toLocaleDateString()}`,
-          modelData: model,
-          resultsData: calculatedFinancials,
-          enterpriseValue: baseScenario?.enterpriseValue || calculatedFinancials.enterpriseValue,
-          industry: industry || null,
-          country: country || null,
-        }),
+        body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('[Free Valuation] Save failed:', errorData);
+        throw new Error(errorData.error || 'Failed to save valuation');
+      }
+
+      const savedValuation = await response.json();
+      console.log('[Free Valuation] Valuation saved successfully:', savedValuation.id);
 
       setShowSaveDialog(false);
       setValuationName('');
-      // Optionally show success message or redirect to dashboard
+
+      // Show success message
+      alert('Valuation saved successfully! View it in your dashboard.');
     } catch (error) {
-      console.error('Failed to save valuation:', error);
-      alert('Failed to save valuation. Please try again.');
+      console.error('[Free Valuation] Failed to save valuation:', error);
+      alert(`Failed to save valuation: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }

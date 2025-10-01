@@ -10,10 +10,15 @@ import { getUserByClerkId } from '@/utils/database/user';
  */
 export async function POST(req: Request) {
   try {
+    console.log('[Valuations API] POST request received');
+
     const clerkUserId = await validateUserSession();
+    console.log('[Valuations API] Clerk User ID:', clerkUserId);
 
     // Get the local user ID
     const user = await getUserByClerkId(clerkUserId);
+    console.log('[Valuations API] Local user:', user ? { id: user.id, email: user.email } : 'NOT FOUND');
+
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -21,10 +26,21 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, modelData, resultsData, enterpriseValue, industry, country } = body;
 
+    console.log('[Valuations API] Request body:', {
+      name,
+      hasModelData: !!modelData,
+      hasResultsData: !!resultsData,
+      enterpriseValue,
+      industry,
+      country,
+    });
+
     if (!modelData || !resultsData) {
+      console.error('[Valuations API] Missing required data');
       return NextResponse.json({ error: 'modelData and resultsData are required' }, { status: 400 });
     }
 
+    console.log('[Valuations API] Creating valuation...');
     const valuation = await createValuation({
       userId: user.id,
       name,
@@ -35,9 +51,10 @@ export async function POST(req: Request) {
       country,
     });
 
+    console.log('[Valuations API] Valuation created successfully:', valuation.id);
     return NextResponse.json(valuation, { status: 201 });
   } catch (error) {
-    console.error('Error creating valuation:', error);
+    console.error('[Valuations API] Error creating valuation:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to create valuation' },
       { status: 500 },
