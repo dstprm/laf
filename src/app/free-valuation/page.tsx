@@ -960,10 +960,10 @@ export default function FreeValuationPage() {
                   {calculatedFinancials.revenue.length > 0 && (
                     <div className="mt-6">
                       <RevenueEbitdaChart
-                        revenues={calculatedFinancials.revenue}
-                        ebitdaMargins={calculatedFinancials.ebitdaMargin}
-                        years={model.periods.periodLabels}
-                        title="Revenue & EBITDA Margin Projection"
+                        revenues={calculatedFinancials.revenue.slice(0, 5)}
+                        ebitdaMargins={calculatedFinancials.ebitdaMargin.slice(0, 5)}
+                        years={model.periods.periodLabels.slice(0, 5)}
+                        title="Revenue & EBITDA Margin Projection (5-Year)"
                       />
                     </div>
                   )}
@@ -1807,14 +1807,14 @@ export default function FreeValuationPage() {
                     ))}
                   </div>
 
-                  {/* Revenue & EBITDA Margin Chart */}
+                  {/* Revenue & EBITDA Margin Chart - Advanced (shows user-selected years) */}
                   {calculatedFinancials.revenue.length > 0 && (
                     <div className="mt-6">
                       <RevenueEbitdaChart
-                        revenues={calculatedFinancials.revenue}
-                        ebitdaMargins={calculatedFinancials.ebitdaMargin}
-                        years={model.periods.periodLabels}
-                        title="Revenue & EBITDA Margin Projection"
+                        revenues={calculatedFinancials.revenue.slice(0, advYears)}
+                        ebitdaMargins={calculatedFinancials.ebitdaMargin.slice(0, advYears)}
+                        years={model.periods.periodLabels.slice(0, advYears)}
+                        title={`Revenue & EBITDA Margin Projection (${advYears}-Year)`}
                       />
                     </div>
                   )}
