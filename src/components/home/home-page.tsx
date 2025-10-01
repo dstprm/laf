@@ -5,7 +5,7 @@ import '../../styles/home-page.css';
 
 import Header from '@/components/home/header/header';
 import { HeroSection } from '@/components/home/hero-section/hero-section';
-import { Brands } from '@/components/home/sections/brands';
+// import { Brands } from '@/components/home/sections/brands';
 import { FeaturesSection } from '@/components/home/sections/features';
 import { HowItWorks } from '@/components/home/sections/how-it-works';
 import { Stats } from '@/components/home/sections/stats';
@@ -30,7 +30,7 @@ export function HomePage() {
         <HeroSection />
         <HeroStats />
         <FeatureTicker />
-        <Brands />
+        {/* <Brands /> */}
         <FeaturesSection />
         <ServiceComparison />
         <HowItWorks />
