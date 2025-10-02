@@ -62,6 +62,32 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   const industries = Object.keys(betasStatic);
   const countries = Object.keys(countryRiskPremiumStatic);
 
+  // Force sync on mount (important for when component re-mounts with new key)
+  useEffect(() => {
+    if (!model.riskProfile) return;
+
+    console.log('IndustryCountrySelector mounting - forcing initial sync with store');
+    const newIndustry = model.riskProfile.selectedIndustry || null;
+    const newCountry = model.riskProfile.selectedCountry || null;
+
+    // Force update even if values appear the same
+    setSelectedIndustry(newIndustry);
+    setSelectedCountry(newCountry);
+
+    // Update all WACC fields
+    setUnleveredBetaStr(model.riskProfile.unleveredBeta?.toString() || '0');
+    setLeveredBetaStr(model.riskProfile.leveredBeta?.toString() || '0');
+    setEquityRiskPremiumStr(formatPercent(model.riskProfile.equityRiskPremium || 0));
+    setCountryRiskPremiumStr(formatPercent(model.riskProfile.countryRiskPremium || 0));
+    setDeRatioStr(model.riskProfile.deRatio?.toString() || '0');
+    setAdjustedDefaultSpreadStr(formatPercent(model.riskProfile.adjustedDefaultSpread || 0));
+    setCompanySpreadStr(formatPercent(model.riskProfile.companySpread || 0.05));
+    setRiskFreeRateStr(formatPercent(model.riskProfile.riskFreeRate || 0.0444));
+    setCorporateTaxRateStr(formatPercent(model.riskProfile.corporateTaxRate || 0.25));
+
+    console.log('Initial sync complete:', { newIndustry, newCountry });
+  }, []); // Empty deps = run only on mount
+
   // Sync with model when it changes (important for when loading saved data)
   useEffect(() => {
     if (!model.riskProfile) return;

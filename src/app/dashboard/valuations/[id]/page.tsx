@@ -29,6 +29,18 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
   // Parse the valuation to get properly typed modelData and resultsData
   const valuation: ValuationRecord = parseValuationRecord(rawValuation);
 
+  // Debug: Log what we loaded from database (server-side)
+  console.log('[SERVER] Loaded valuation from database:', {
+    id: valuation.id,
+    hasModelData: !!valuation.modelData,
+    hasResultsData: !!valuation.resultsData,
+    hasRiskProfile: !!valuation.modelData?.riskProfile,
+    riskProfileIndustry: valuation.modelData?.riskProfile?.selectedIndustry,
+    riskProfileCountry: valuation.modelData?.riskProfile?.selectedCountry,
+    dbIndustry: valuation.industry,
+    dbCountry: valuation.country,
+  });
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
