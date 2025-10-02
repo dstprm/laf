@@ -6,9 +6,13 @@ import { useModelStore } from '../store/modelStore';
 
 interface IndustryCountrySelectorProps {
   className?: string;
+  defaultExpanded?: boolean;
 }
 
-export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = ({ className = '' }) => {
+export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = ({
+  className = '',
+  defaultExpanded = true,
+}) => {
   const { model, updateRiskProfile, updateSelectedIndustry } = useModelStore();
 
   // Helper functions
@@ -17,7 +21,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
 
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(model.riskProfile?.selectedIndustry || null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(model.riskProfile?.selectedCountry || null);
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
 
   // Risk profile inputs - store as strings to allow proper typing
   const [unleveredBetaStr, setUnleveredBetaStr] = useState<string>(model.riskProfile?.unleveredBeta?.toString() || '0');
@@ -56,6 +60,52 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   // Get available industries and countries
   const industries = Object.keys(betasStatic);
   const countries = Object.keys(countryRiskPremiumStatic);
+
+  // Sync with model when it changes (important for when loading saved data)
+  useEffect(() => {
+    if (model.riskProfile) {
+      // Only update if values are actually different to avoid unnecessary re-renders
+      const newIndustry = model.riskProfile.selectedIndustry || null;
+      const newCountry = model.riskProfile.selectedCountry || null;
+
+      if (selectedIndustry !== newIndustry) setSelectedIndustry(newIndustry);
+      if (selectedCountry !== newCountry) setSelectedCountry(newCountry);
+
+      // Update all numeric fields
+      const newUnleveredBeta = model.riskProfile.unleveredBeta?.toString() || '0';
+      const newLeveredBeta = model.riskProfile.leveredBeta?.toString() || '0';
+      const newEquityRiskPremium = formatPercent(model.riskProfile.equityRiskPremium || 0);
+      const newCountryRiskPremium = formatPercent(model.riskProfile.countryRiskPremium || 0);
+      const newDeRatio = model.riskProfile.deRatio?.toString() || '0';
+      const newAdjustedDefaultSpread = formatPercent(model.riskProfile.adjustedDefaultSpread || 0);
+      const newCompanySpread = formatPercent(model.riskProfile.companySpread || 0.05);
+      const newRiskFreeRate = formatPercent(model.riskProfile.riskFreeRate || 0.0444);
+      const newCorporateTaxRate = formatPercent(model.riskProfile.corporateTaxRate || 0.25);
+
+      if (unleveredBetaStr !== newUnleveredBeta) setUnleveredBetaStr(newUnleveredBeta);
+      if (leveredBetaStr !== newLeveredBeta) setLeveredBetaStr(newLeveredBeta);
+      if (equityRiskPremiumStr !== newEquityRiskPremium) setEquityRiskPremiumStr(newEquityRiskPremium);
+      if (countryRiskPremiumStr !== newCountryRiskPremium) setCountryRiskPremiumStr(newCountryRiskPremium);
+      if (deRatioStr !== newDeRatio) setDeRatioStr(newDeRatio);
+      if (adjustedDefaultSpreadStr !== newAdjustedDefaultSpread) setAdjustedDefaultSpreadStr(newAdjustedDefaultSpread);
+      if (companySpreadStr !== newCompanySpread) setCompanySpreadStr(newCompanySpread);
+      if (riskFreeRateStr !== newRiskFreeRate) setRiskFreeRateStr(newRiskFreeRate);
+      if (corporateTaxRateStr !== newCorporateTaxRate) setCorporateTaxRateStr(newCorporateTaxRate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    model.riskProfile?.selectedIndustry,
+    model.riskProfile?.selectedCountry,
+    model.riskProfile?.unleveredBeta,
+    model.riskProfile?.leveredBeta,
+    model.riskProfile?.equityRiskPremium,
+    model.riskProfile?.countryRiskPremium,
+    model.riskProfile?.deRatio,
+    model.riskProfile?.adjustedDefaultSpread,
+    model.riskProfile?.companySpread,
+    model.riskProfile?.riskFreeRate,
+    model.riskProfile?.corporateTaxRate,
+  ]); // Sync when any risk profile value changes
 
   // Update suggestions when industry or country changes
   useEffect(() => {

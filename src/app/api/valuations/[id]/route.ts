@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { validateUserSession } from '@/utils/database/auth';
-import { deleteValuation, getValuationById } from '@/utils/database/valuation';
+import { deleteValuation, getValuationById, updateValuation } from '@/utils/database/valuation';
 import { getUserByClerkId } from '@/utils/database/user';
 
 /**
- * DELETE /api/valuations/[id]
+ * PUT /api/valuations/[id]
  *
- * Delete a specific valuation for the authenticated user
+ * Update a specific valuation for the authenticated user
  */
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const clerkUserId = await validateUserSession();
 
@@ -18,7 +18,44 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const { id } = params;
+    const { id } = await params;
+    const body = await req.json();
+
+    // Verify the valuation exists and belongs to the user
+    const existingValuation = await getValuationById(id, user.id);
+    if (!existingValuation) {
+      return NextResponse.json({ error: 'Valuation not found' }, { status: 404 });
+    }
+
+    // Update the valuation
+    const updatedValuation = await updateValuation(id, user.id, body);
+
+    return NextResponse.json(updatedValuation, { status: 200 });
+  } catch (error) {
+    console.error('Error updating valuation:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to update valuation' },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * DELETE /api/valuations/[id]
+ *
+ * Delete a specific valuation for the authenticated user
+ */
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const clerkUserId = await validateUserSession();
+
+    // Get the local user ID
+    const user = await getUserByClerkId(clerkUserId);
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const { id } = await params;
 
     // Verify the valuation exists and belongs to the user
     const valuation = await getValuationById(id, user.id);
