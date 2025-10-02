@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
-import { JsonValue } from '@prisma/client/runtime/library';
 import { DCFTable } from '@/app/valuation/components/DCFTable';
 import { IndustryCountrySelector } from '@/app/valuation/components/IndustryCountrySelector';
 import { useModelStore } from '@/app/valuation/store/modelStore';
@@ -14,10 +13,12 @@ import { FootballFieldChart } from './football-field-chart';
 import { betasStatic } from '@/app/valuation/betasStatic';
 import { countryRiskPremiumStatic } from '@/app/valuation/countryRiskPremiumStatic';
 
+import type { FinancialModel, CalculatedFinancials } from '@/lib/valuation.types';
+
 interface ValuationEditClientProps {
   valuationId: string;
-  initialModelData: JsonValue;
-  initialResultsData: JsonValue;
+  initialModelData: FinancialModel;
+  initialResultsData: CalculatedFinancials;
   companyName?: string | null;
   industry?: string | null;
   country?: string | null;
@@ -33,9 +34,21 @@ export default function ValuationEditClient({
   country,
   enterpriseValue,
 }: ValuationEditClientProps) {
+  // Debug: Log what data we received from props
+  console.log('ValuationEditClient mounted with props:', {
+    hasModelData: !!initialModelData,
+    hasResultsData: !!initialResultsData,
+    hasRiskProfile: !!initialModelData?.riskProfile,
+    riskProfileIndustry: initialModelData?.riskProfile?.selectedIndustry,
+    riskProfileCountry: initialModelData?.riskProfile?.selectedCountry,
+    propsIndustry: industry,
+    propsCountry: country,
+  });
+
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editMode, setEditMode] = useState<'simple' | 'advanced' | 'full'>('simple');
+  const [componentKey, setComponentKey] = useState(0); // Force re-mount when entering edit mode
   const { toast } = useToast();
   const router = useRouter();
 
@@ -60,16 +73,46 @@ export default function ValuationEditClient({
   useEffect(() => {
     if (isEditMode && initialModelData && initialResultsData) {
       try {
-        // Use Zustand's setState to load the saved model
-        useModelStore.setState({
-          model: initialModelData as any,
-          calculatedFinancials: initialResultsData as any,
+        console.log('Loading valuation data into store:', {
+          hasRiskProfile: !!initialModelData.riskProfile,
+          riskProfile: initialModelData.riskProfile,
         });
+
+        // Use Zustand's setState to load the saved model
+        // Ensure we're loading the complete model including riskProfile
+        useModelStore.setState({
+          model: {
+            ...initialModelData,
+            // Ensure riskProfile is properly set, fallback to defaults if missing
+            riskProfile: initialModelData.riskProfile || {
+              selectedIndustry: industry || null,
+              selectedCountry: country || null,
+              unleveredBeta: 0,
+              leveredBeta: 0,
+              equityRiskPremium: 0,
+              countryRiskPremium: 0,
+              deRatio: 0,
+              adjustedDefaultSpread: 0,
+              companySpread: 0.05,
+              riskFreeRate: 0.0444,
+              corporateTaxRate: 0.25,
+            },
+          },
+          calculatedFinancials: initialResultsData,
+        });
+
+        console.log('Model loaded. Current riskProfile:', useModelStore.getState().model.riskProfile);
+
+        // Wait a tick to ensure store update has propagated, then force re-mount
+        setTimeout(() => {
+          console.log('Forcing component re-mount with new key');
+          setComponentKey((prev) => prev + 1);
+        }, 0);
 
         // Recalculate to ensure everything is in sync
         setTimeout(() => {
           calculateFinancials();
-        }, 100);
+        }, 150);
       } catch (error) {
         console.error('Error loading valuation data:', error);
         toast({
@@ -79,7 +122,7 @@ export default function ValuationEditClient({
         });
       }
     }
-  }, [isEditMode, initialModelData, initialResultsData, toast, calculateFinancials]);
+  }, [isEditMode, initialModelData, initialResultsData, toast, calculateFinancials, industry, country]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -380,7 +423,7 @@ export default function ValuationEditClient({
 
         <TabsContent value="simple" className="space-y-6">
           {/* Industry and Country Selector - WACC collapsed for simple mode */}
-          <IndustryCountrySelector waccExpanded={false} />
+          <IndustryCountrySelector key={`simple-selector-${componentKey}`} waccExpanded={false} />
 
           {/* Simple Inputs */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -462,7 +505,7 @@ export default function ValuationEditClient({
 
         <TabsContent value="advanced" className="space-y-6">
           {/* Industry and Country Selector - WACC collapsed for advanced mode */}
-          <IndustryCountrySelector waccExpanded={false} />
+          <IndustryCountrySelector key={`advanced-selector-${componentKey}`} waccExpanded={false} />
 
           {/* Advanced Form - Same as /free-valuation */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -535,10 +578,10 @@ export default function ValuationEditClient({
 
         <TabsContent value="full" className="space-y-6">
           {/* Industry and Country Selector - WACC expanded for full DCF */}
-          <IndustryCountrySelector waccExpanded={true} />
+          <IndustryCountrySelector key={`full-selector-${componentKey}`} waccExpanded={true} />
 
           {/* Full DCF Table */}
-          <DCFTable />
+          <DCFTable key={`dcf-table-${componentKey}`} />
         </TabsContent>
       </Tabs>
 

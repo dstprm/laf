@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import { validateUserSession } from '@/utils/database/auth';
-import { deleteValuation, getValuationById, updateValuation } from '@/utils/database/valuation';
+import { deleteValuation, getValuationById, updateValuation, parseValuationRecord } from '@/utils/database/valuation';
 import { getUserByClerkId } from '@/utils/database/user';
+import type {
+  UpdateValuationInput,
+  UpdateValuationResponse,
+  GetValuationResponse,
+  isFinancialModel,
+  isCalculatedFinancials,
+} from '@/lib/valuation.types';
 
 /**
  * PUT /api/valuations/[id]
@@ -19,7 +26,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     const { id } = await params;
-    const body = await req.json();
+    const body: UpdateValuationInput = await req.json();
 
     // Verify the valuation exists and belongs to the user
     const existingValuation = await getValuationById(id, user.id);
@@ -27,10 +34,19 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: 'Valuation not found' }, { status: 404 });
     }
 
+    // Validate data structure if provided
+    if (body.modelData && !isFinancialModel(body.modelData)) {
+      return NextResponse.json({ error: 'Invalid modelData structure' }, { status: 400 });
+    }
+
+    if (body.resultsData && !isCalculatedFinancials(body.resultsData)) {
+      return NextResponse.json({ error: 'Invalid resultsData structure' }, { status: 400 });
+    }
+
     // Update the valuation
     const updatedValuation = await updateValuation(id, user.id, body);
 
-    return NextResponse.json(updatedValuation, { status: 200 });
+    return NextResponse.json<UpdateValuationResponse>(updatedValuation, { status: 200 });
   } catch (error) {
     console.error('Error updating valuation:', error);
     return NextResponse.json(

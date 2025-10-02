@@ -17,6 +17,7 @@ import Header from '@/components/home/header/header';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { RevenueEbitdaChart } from '@/components/dashboard/valuations/revenue-ebitda-chart';
 import { FootballFieldChart } from '@/components/dashboard/valuations/football-field-chart';
+import type { CreateValuationInput } from '@/lib/valuation.types';
 
 type Scenario = {
   id: string;
@@ -796,29 +797,20 @@ export default function FreeValuationPage() {
       const valuationDisplayName = companyName.trim() || defaultName;
       const fullPhoneNumber = companyPhone.trim() ? `${phoneCountryCode} ${companyPhone}` : undefined;
 
-      const payload: {
-        name: string;
-        modelData: unknown;
-        resultsData: unknown;
-        enterpriseValue?: number;
-        industry?: string;
-        country?: string;
-        companyName?: string;
-        companyWebsite?: string;
-        companyPhone?: string;
-      } = {
+      // Log the model data to verify riskProfile is included
+      console.log('Saving valuation with riskProfile:', model.riskProfile);
+
+      const payload: CreateValuationInput = {
         name: valuationDisplayName,
         modelData: model,
         resultsData: calculatedFinancials,
         enterpriseValue: baseScenario?.enterpriseValue || calculatedFinancials.enterpriseValue,
+        industry: industry || undefined,
+        country: country || undefined,
+        companyName: companyName.trim() || undefined,
+        companyWebsite: companyWebsite.trim() || undefined,
+        companyPhone: fullPhoneNumber,
       };
-
-      // Only include optional fields if they have values
-      if (industry) payload.industry = industry;
-      if (country) payload.country = country;
-      if (companyName.trim()) payload.companyName = companyName.trim();
-      if (companyWebsite.trim()) payload.companyWebsite = companyWebsite.trim();
-      if (fullPhoneNumber) payload.companyPhone = fullPhoneNumber;
 
       const response = await fetch('/api/valuations', {
         method: 'POST',

@@ -1,10 +1,11 @@
 import { auth } from '@clerk/nextjs/server';
 import { getUserByClerkId } from '@/utils/database/user';
-import { getValuationById } from '@/utils/database/valuation';
+import { getValuationById, parseValuationRecord } from '@/utils/database/valuation';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import ValuationEditClient from '@/components/dashboard/valuations/valuation-edit-client';
 import { DashboardPageWrapper } from '@/components/dashboard/layout/dashboard-page-wrapper';
+import type { ValuationRecord } from '@/lib/valuation.types';
 
 export default async function ValuationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { userId: clerkUserId } = await auth();
@@ -19,11 +20,14 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
   }
 
   const { id } = await params;
-  const valuation = await getValuationById(id, user.id);
+  const rawValuation = await getValuationById(id, user.id);
 
-  if (!valuation) {
+  if (!rawValuation) {
     notFound();
   }
+
+  // Parse the valuation to get properly typed modelData and resultsData
+  const valuation: ValuationRecord = parseValuationRecord(rawValuation);
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {

@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { JsonValue } from '@prisma/client/runtime/library';
+import type { FinancialModel, CalculatedFinancials } from '@/lib/valuation.types';
 
 interface ValuationDetailClientProps {
-  modelData: JsonValue;
-  resultsData: JsonValue;
+  modelData: FinancialModel;
+  resultsData: CalculatedFinancials;
 }
 
 export default function ValuationDetailClient({ modelData, resultsData }: ValuationDetailClientProps) {
@@ -26,20 +26,18 @@ export default function ValuationDetailClient({ modelData, resultsData }: Valuat
     return `${value.toFixed(2)}%`;
   };
 
-  const modelDataObj = modelData as Record<string, unknown>;
-  const resultsDataObj = resultsData as Record<string, unknown>;
-
-  const periods = (modelDataObj?.periods as { periodLabels?: string[] })?.periodLabels || [];
+  // Extract data - now fully typed!
+  const periods = modelData.periods.periodLabels || [];
 
   // Extract key metrics
-  const revenue = (resultsDataObj?.revenue as number[]) || [];
-  const ebitda = (resultsDataObj?.ebitda as number[]) || [];
-  const ebitdaMargin = (resultsDataObj?.ebitdaMargin as number[]) || [];
-  const freeCashFlow = (resultsDataObj?.freeCashFlow as number[]) || [];
-  const discountedCashFlows = (resultsDataObj?.discountedCashFlows as number[]) || [];
-  const enterpriseValue = (resultsDataObj?.enterpriseValue as number) || 0;
-  const terminalValue = (resultsDataObj?.terminalValue as number) || 0;
-  const presentValueTerminalValue = (resultsDataObj?.presentValueTerminalValue as number) || 0;
+  const revenue = resultsData.revenue || [];
+  const ebitda = resultsData.ebitda || [];
+  const ebitdaMargin = resultsData.ebitdaMargin || [];
+  const freeCashFlow = resultsData.freeCashFlow || [];
+  const discountedCashFlows = resultsData.discountedCashFlows || [];
+  const enterpriseValue = resultsData.enterpriseValue || 0;
+  const terminalValue = resultsData.terminalValue || 0;
+  const presentValueTerminalValue = resultsData.presentValueTerminalValue || 0;
 
   return (
     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'overview' | 'financials' | 'raw')}>
@@ -181,7 +179,7 @@ export default function ValuationDetailClient({ modelData, resultsData }: Valuat
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 sticky left-0 bg-white">
                     COGS
                   </td>
-                  {((resultsDataObj?.cogs as number[]) || []).map((val: number, i: number) => (
+                  {((resultsData?.cogs as number[]) || []).map((val: number, i: number) => (
                     <td key={i} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(val)}
                     </td>
@@ -191,7 +189,7 @@ export default function ValuationDetailClient({ modelData, resultsData }: Valuat
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50">
                     Gross Profit
                   </td>
-                  {((resultsDataObj?.grossProfit as number[]) || []).map((val: number, i: number) => (
+                  {((resultsData?.grossProfit as number[]) || []).map((val: number, i: number) => (
                     <td key={i} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(val)}
                     </td>
@@ -201,7 +199,7 @@ export default function ValuationDetailClient({ modelData, resultsData }: Valuat
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 sticky left-0 bg-white">
                     OpEx
                   </td>
-                  {((resultsDataObj?.opex as number[]) || []).map((val: number, i: number) => (
+                  {((resultsData?.opex as number[]) || []).map((val: number, i: number) => (
                     <td key={i} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(val)}
                     </td>
@@ -221,7 +219,7 @@ export default function ValuationDetailClient({ modelData, resultsData }: Valuat
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 sticky left-0 bg-white">
                     D&A
                   </td>
-                  {((resultsDataObj?.da as number[]) || []).map((val: number, i: number) => (
+                  {((resultsData?.da as number[]) || []).map((val: number, i: number) => (
                     <td key={i} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(val)}
                     </td>
@@ -231,7 +229,7 @@ export default function ValuationDetailClient({ modelData, resultsData }: Valuat
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50">
                     EBIT
                   </td>
-                  {((resultsDataObj?.ebit as number[]) || []).map((val: number, i: number) => (
+                  {((resultsData?.ebit as number[]) || []).map((val: number, i: number) => (
                     <td key={i} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(val)}
                     </td>
@@ -241,7 +239,7 @@ export default function ValuationDetailClient({ modelData, resultsData }: Valuat
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 sticky left-0 bg-white">
                     Taxes
                   </td>
-                  {((resultsDataObj?.taxes as number[]) || []).map((val: number, i: number) => (
+                  {((resultsData?.taxes as number[]) || []).map((val: number, i: number) => (
                     <td key={i} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(val)}
                     </td>
@@ -251,7 +249,7 @@ export default function ValuationDetailClient({ modelData, resultsData }: Valuat
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 sticky left-0 bg-blue-50">
                     Net Income
                   </td>
-                  {((resultsDataObj?.netIncome as number[]) || []).map((val: number, i: number) => (
+                  {((resultsData?.netIncome as number[]) || []).map((val: number, i: number) => (
                     <td key={i} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(val)}
                     </td>
@@ -261,7 +259,7 @@ export default function ValuationDetailClient({ modelData, resultsData }: Valuat
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 sticky left-0 bg-white">
                     CAPEX
                   </td>
-                  {((resultsDataObj?.capex as number[]) || []).map((val: number, i: number) => (
+                  {((resultsData?.capex as number[]) || []).map((val: number, i: number) => (
                     <td key={i} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(val)}
                     </td>
@@ -271,7 +269,7 @@ export default function ValuationDetailClient({ modelData, resultsData }: Valuat
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 sticky left-0 bg-white">
                     Change in NWC
                   </td>
-                  {((resultsDataObj?.changeInNWC as number[]) || []).map((val: number, i: number) => (
+                  {((resultsData?.changeInNWC as number[]) || []).map((val: number, i: number) => (
                     <td key={i} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(val)}
                     </td>
@@ -330,13 +328,13 @@ export default function ValuationDetailClient({ modelData, resultsData }: Valuat
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Model Data</h4>
                 <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
-                  {JSON.stringify(modelDataObj, null, 2)}
+                  {JSON.stringify(modelData, null, 2)}
                 </pre>
               </div>
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Results Data</h4>
                 <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
-                  {JSON.stringify(resultsDataObj, null, 2)}
+                  {JSON.stringify(resultsData, null, 2)}
                 </pre>
               </div>
             </div>
