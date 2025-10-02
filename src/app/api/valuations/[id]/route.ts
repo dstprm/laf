@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
 import { validateUserSession } from '@/utils/database/auth';
-import { getValuationById, updateValuation, deleteValuation } from '@/utils/database/valuation';
+import { deleteValuation, getValuationById, updateValuation, parseValuationRecord } from '@/utils/database/valuation';
 import { getUserByClerkId } from '@/utils/database/user';
+import type {
+  UpdateValuationInput,
+  UpdateValuationResponse,
+  GetValuationResponse,
+  isFinancialModel,
+  isCalculatedFinancials,
+} from '@/lib/valuation.types';
 
 /**
- * GET /api/valuations/[id]
+ * PUT /api/valuations/[id]
  *
- * Get a single valuation by ID (must belong to authenticated user)
+ * Update a specific valuation for the authenticated user
  */
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const clerkUserId = await validateUserSession();
 
@@ -19,44 +26,27 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     const { id } = await params;
-    const valuation = await getValuationById(id, user.id);
+    const body: UpdateValuationInput = await req.json();
 
-    if (!valuation) {
+    // Verify the valuation exists and belongs to the user
+    const existingValuation = await getValuationById(id, user.id);
+    if (!existingValuation) {
       return NextResponse.json({ error: 'Valuation not found' }, { status: 404 });
     }
 
-    return NextResponse.json(valuation);
-  } catch (error) {
-    console.error('Error fetching valuation:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to fetch valuation' },
-      { status: 500 },
-    );
-  }
-}
-
-/**
- * PATCH /api/valuations/[id]
- *
- * Update a valuation (currently supports updating name only)
- */
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const clerkUserId = await validateUserSession();
-
-    // Get the local user ID
-    const user = await getUserByClerkId(clerkUserId);
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    // Validate data structure if provided
+    if (body.modelData && !isFinancialModel(body.modelData)) {
+      return NextResponse.json({ error: 'Invalid modelData structure' }, { status: 400 });
     }
 
-    const { id } = await params;
-    const body = await req.json();
-    const { name } = body;
+    if (body.resultsData && !isCalculatedFinancials(body.resultsData)) {
+      return NextResponse.json({ error: 'Invalid resultsData structure' }, { status: 400 });
+    }
 
-    const valuation = await updateValuation(id, user.id, { name });
+    // Update the valuation
+    const updatedValuation = await updateValuation(id, user.id, body);
 
-    return NextResponse.json(valuation);
+    return NextResponse.json<UpdateValuationResponse>(updatedValuation, { status: 200 });
   } catch (error) {
     console.error('Error updating valuation:', error);
     return NextResponse.json(
@@ -69,7 +59,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 /**
  * DELETE /api/valuations/[id]
  *
- * Delete a valuation (must belong to authenticated user)
+ * Delete a specific valuation for the authenticated user
  */
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -82,9 +72,17 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     }
 
     const { id } = await params;
+
+    // Verify the valuation exists and belongs to the user
+    const valuation = await getValuationById(id, user.id);
+    if (!valuation) {
+      return NextResponse.json({ error: 'Valuation not found' }, { status: 404 });
+    }
+
+    // Delete the valuation
     await deleteValuation(id, user.id);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ message: 'Valuation deleted successfully' }, { status: 200 });
   } catch (error) {
     console.error('Error deleting valuation:', error);
     return NextResponse.json(

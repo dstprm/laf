@@ -3,12 +3,20 @@
  */
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import type {
+  FinancialModel,
+  CalculatedFinancials,
+  ValuationRecord,
+  ValuationListItem,
+  parseModelData,
+  parseResultsData,
+} from '@/lib/valuation.types';
 
 interface CreateValuationData {
   userId: string;
   name?: string;
-  modelData: unknown;
-  resultsData: unknown;
+  modelData: FinancialModel;
+  resultsData: CalculatedFinancials;
   enterpriseValue?: number;
   industry?: string;
   country?: string;
@@ -19,8 +27,8 @@ interface CreateValuationData {
 
 interface UpdateValuationData {
   name?: string;
-  modelData?: unknown;
-  resultsData?: unknown;
+  modelData?: FinancialModel;
+  resultsData?: CalculatedFinancials;
   enterpriseValue?: number;
   industry?: string;
   country?: string;
@@ -52,7 +60,7 @@ export async function createValuation(data: CreateValuationData) {
 /**
  * Get all valuations for a user
  */
-export async function getUserValuations(userId: string) {
+export async function getUserValuations(userId: string): Promise<ValuationListItem[]> {
   return prisma.valuation.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
@@ -62,6 +70,7 @@ export async function getUserValuations(userId: string) {
       enterpriseValue: true,
       industry: true,
       country: true,
+      companyName: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -70,11 +79,23 @@ export async function getUserValuations(userId: string) {
 
 /**
  * Get a single valuation by ID (with full data)
+ * Returns the raw database record - use parseValuationRecord to get typed data
  */
 export async function getValuationById(id: string, userId: string) {
   return prisma.valuation.findFirst({
     where: { id, userId },
   });
+}
+
+/**
+ * Helper to safely parse a valuation record with typed modelData and resultsData
+ */
+export function parseValuationRecord(record: any): ValuationRecord {
+  return {
+    ...record,
+    modelData: record.modelData as FinancialModel,
+    resultsData: record.resultsData as CalculatedFinancials,
+  };
 }
 
 /**

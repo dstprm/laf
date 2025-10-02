@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { validateUserSession } from '@/utils/database/auth';
 import { createValuation, getUserValuations } from '@/utils/database/valuation';
 import { getUserByClerkId } from '@/utils/database/user';
+import type {
+  CreateValuationInput,
+  CreateValuationResponse,
+  GetValuationsResponse,
+  isFinancialModel,
+  isCalculatedFinancials,
+} from '@/lib/valuation.types';
 
 /**
  * POST /api/valuations
@@ -18,7 +25,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const body = await req.json();
+    const body: CreateValuationInput = await req.json();
     const {
       name,
       modelData,
@@ -31,40 +38,37 @@ export async function POST(req: Request) {
       companyPhone,
     } = body;
 
+    // Validate required fields
     if (!modelData || !resultsData) {
       return NextResponse.json({ error: 'modelData and resultsData are required' }, { status: 400 });
     }
 
-    // Build valuation data object, only including optional fields if they exist
-    const valuationData: {
-      userId: string;
-      name: string;
-      modelData: unknown;
-      resultsData: unknown;
-      enterpriseValue?: number;
-      industry?: string;
-      country?: string;
-      companyName?: string;
-      companyWebsite?: string;
-      companyPhone?: string;
-    } = {
+    // Validate data structure
+    if (!isFinancialModel(modelData)) {
+      return NextResponse.json({ error: 'Invalid modelData structure' }, { status: 400 });
+    }
+
+    if (!isCalculatedFinancials(resultsData)) {
+      return NextResponse.json({ error: 'Invalid resultsData structure' }, { status: 400 });
+    }
+
+    // Build valuation data object
+    const valuationData = {
       userId: user.id,
       name: name || `Valuation - ${new Date().toLocaleDateString()}`,
       modelData,
       resultsData,
+      enterpriseValue,
+      industry,
+      country,
+      companyName,
+      companyWebsite,
+      companyPhone,
     };
-
-    // Add optional fields only if they have values
-    if (enterpriseValue !== undefined) valuationData.enterpriseValue = enterpriseValue;
-    if (industry) valuationData.industry = industry;
-    if (country) valuationData.country = country;
-    if (companyName) valuationData.companyName = companyName;
-    if (companyWebsite) valuationData.companyWebsite = companyWebsite;
-    if (companyPhone) valuationData.companyPhone = companyPhone;
 
     const valuation = await createValuation(valuationData);
 
-    return NextResponse.json(valuation, { status: 201 });
+    return NextResponse.json<CreateValuationResponse>(valuation, { status: 201 });
   } catch (error) {
     console.error('Error creating valuation:', error);
     return NextResponse.json(
@@ -91,7 +95,7 @@ export async function GET() {
 
     const valuations = await getUserValuations(user.id);
 
-    return NextResponse.json(valuations);
+    return NextResponse.json<GetValuationsResponse>(valuations);
   } catch (error) {
     console.error('Error fetching valuations:', error);
     return NextResponse.json(
