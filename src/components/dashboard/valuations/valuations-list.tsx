@@ -97,7 +97,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
 
   if (valuations.length === 0) {
     return (
-      <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+      <div className="text-center py-12 bg-white rounded-lg border-2 border-gray-300">
         <svg
           className="mx-auto h-12 w-12 text-gray-400"
           fill="none"
@@ -128,18 +128,18 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
 
   return (
     <>
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
+      <div className="bg-white shadow-md border border-gray-300 overflow-hidden sm:rounded-lg">
+        <ul className="divide-y divide-gray-300">
           {valuations.map((valuation) => (
             <li key={valuation.id}>
-              <Link href={`/dashboard/valuations/${valuation.id}`} className="block hover:bg-gray-50">
+              <Link href={`/dashboard/valuations/${valuation.id}`} className="block hover:bg-gray-100 transition-colors">
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-blue-600 truncate">
+                      <p className="text-base font-semibold text-blue-700 truncate">
                         {valuation.name || `Valuation - ${formatDate(valuation.createdAt)}`}
                       </p>
-                      <div className="mt-2 flex items-center text-sm text-gray-500">
+                      <div className="mt-2 flex items-center text-sm text-gray-600">
                         {valuation.industry && (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
                             {valuation.industry}
