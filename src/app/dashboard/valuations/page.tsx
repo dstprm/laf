@@ -4,6 +4,7 @@ import { getUserByClerkId } from '@/utils/database/user';
 import { getUserValuations } from '@/utils/database/valuation';
 import { redirect } from 'next/navigation';
 import { ValuationsList } from '@/components/dashboard/valuations/valuations-list';
+import { DashboardPageWrapper } from '@/components/dashboard/layout/dashboard-page-wrapper';
 
 export default async function ValuationsPage() {
   const { userId: clerkUserId } = await auth();
@@ -20,7 +21,7 @@ export default async function ValuationsPage() {
   const valuations = await getUserValuations(user.id);
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-8">
+    <DashboardPageWrapper>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -37,6 +38,6 @@ export default async function ValuationsPage() {
 
         <ValuationsList valuations={valuations} />
       </div>
-    </main>
+    </DashboardPageWrapper>
   );
 }

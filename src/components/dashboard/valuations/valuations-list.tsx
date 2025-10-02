@@ -132,7 +132,10 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
         <ul className="divide-y divide-gray-300">
           {valuations.map((valuation) => (
             <li key={valuation.id}>
-              <Link href={`/dashboard/valuations/${valuation.id}`} className="block hover:bg-gray-100 transition-colors">
+              <Link
+                href={`/dashboard/valuations/${valuation.id}`}
+                className="block hover:bg-gray-100 transition-colors"
+              >
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
@@ -154,10 +157,8 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                     </div>
                     <div className="flex items-center gap-4 ml-4">
                       <div className="flex flex-col items-end">
-                        <p className="text-sm font-semibold text-gray-900">
-                          {formatCurrency(valuation.enterpriseValue)}
-                        </p>
-                        <p className="mt-1 text-xs text-gray-500">{formatDate(valuation.createdAt)}</p>
+                        <p className="text-base font-bold text-gray-900">{formatCurrency(valuation.enterpriseValue)}</p>
+                        <p className="mt-1 text-xs text-gray-600">{formatDate(valuation.createdAt)}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
