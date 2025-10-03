@@ -42,17 +42,17 @@ export function EditReportComment({ valuationId, initialComment }: EditReportCom
       }
 
       toast({
-        title: 'Comment saved',
-        description: 'Your report comment has been updated.',
+        title: 'Executive summary saved',
+        description: 'Your report executive summary has been updated.',
       });
 
       setIsOpen(false);
       router.refresh();
     } catch (error) {
-      console.error('Error saving comment:', error);
+      console.error('Error saving executive summary:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save comment',
+        description: 'Failed to save executive summary',
         variant: 'destructive',
       });
     } finally {
@@ -62,18 +62,18 @@ export function EditReportComment({ valuationId, initialComment }: EditReportCom
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)} variant="outline" size="sm">
+      <Button onClick={() => setIsOpen(true)} variant="default" size="default" className="font-semibold">
         <Pencil className="h-4 w-4 mr-2" />
-        {initialComment ? 'Edit Comment' : 'Add Comment'}
+        {initialComment ? 'Edit Executive Summary' : 'Add Executive Summary'}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Report Commentary</DialogTitle>
+            <DialogTitle>Report Executive Summary</DialogTitle>
             <DialogDescription>
-              Add a comment or note that will appear at the top of your published report. This is helpful for providing
-              context, key highlights, or executive summary information.
+              Add an executive summary that will be prominently displayed at the top of your published report. Use this
+              to highlight key findings, conclusions, investment thesis, or provide important context for readers.
             </DialogDescription>
           </DialogHeader>
 
@@ -81,7 +81,7 @@ export function EditReportComment({ valuationId, initialComment }: EditReportCom
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Enter your report commentary here..."
+              placeholder="Enter your executive summary here... (e.g., 'Strong growth trajectory with improving margins. Company well-positioned in expanding market. Valuation reflects 25% upside to current trading levels.')"
               className="w-full min-h-[150px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
               maxLength={1000}
             />
@@ -93,7 +93,7 @@ export function EditReportComment({ valuationId, initialComment }: EditReportCom
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Comment'}
+              {isSaving ? 'Saving...' : 'Save Executive Summary'}
             </Button>
           </DialogFooter>
         </DialogContent>

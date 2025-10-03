@@ -156,11 +156,21 @@ export function ValuationReport({
         </div>
       )}
 
-      {/* Report Comment */}
+      {/* Executive Summary */}
       {reportComment && (
-        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-blue-900 mb-2">Report Commentary</h3>
-          <p className="text-sm text-blue-800 whitespace-pre-wrap">{reportComment}</p>
+        <div className="bg-blue-50 border-l-4 border-blue-600 rounded-lg p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <svg className="h-5 w-5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            <h3 className="text-base font-bold text-blue-900">Executive Summary</h3>
+          </div>
+          <p className="text-sm text-blue-900 whitespace-pre-wrap leading-relaxed">{reportComment}</p>
         </div>
       )}
 
