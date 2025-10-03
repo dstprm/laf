@@ -82,10 +82,10 @@ export function EditReportComment({ valuationId, initialComment }: EditReportCom
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Enter your executive summary here... (e.g., 'Strong growth trajectory with improving margins. Company well-positioned in expanding market. Valuation reflects 25% upside to current trading levels.')"
-              className="w-full min-h-[150px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
-              maxLength={1000}
+              className="w-full min-h-[200px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+              maxLength={50000}
             />
-            <p className="text-xs text-gray-500 mt-2">{comment.length} / 1000 characters</p>
+            <p className="text-xs text-gray-500 mt-2">{comment.length.toLocaleString()} / 50,000 characters</p>
           </div>
 
           <DialogFooter>

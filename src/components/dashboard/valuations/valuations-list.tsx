@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Tooltip } from '@/components/ui/tooltip';
 
 interface Valuation {
   id: string;
@@ -299,32 +300,35 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={(e) => handlePreview(valuation, e)}
-                          className="p-2 text-gray-600 border border-gray-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-md transition-colors"
-                          title="Preview report"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={(e) => handleShare(valuation, e)}
-                          className="p-2 text-gray-600 border border-gray-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-md transition-colors"
-                          title="Share valuation"
-                        >
-                          <Share2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={(e) => handleDelete(valuation.id, valuation.name, e)}
-                          disabled={deletingId === valuation.id}
-                          className="p-2 text-gray-600 border border-gray-300 hover:text-red-600 hover:bg-red-50 hover:border-red-600 rounded-md transition-colors disabled:opacity-50"
-                          title="Delete valuation"
-                        >
-                          {deletingId === valuation.id ? (
-                            <div className="h-4 w-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </button>
+                        <Tooltip content="Preview report">
+                          <button
+                            onClick={(e) => handlePreview(valuation, e)}
+                            className="p-2 text-gray-600 border border-gray-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-md transition-colors"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Share valuation">
+                          <button
+                            onClick={(e) => handleShare(valuation, e)}
+                            className="p-2 text-gray-600 border border-gray-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-md transition-colors"
+                          >
+                            <Share2 className="h-4 w-4" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Delete valuation">
+                          <button
+                            onClick={(e) => handleDelete(valuation.id, valuation.name, e)}
+                            disabled={deletingId === valuation.id}
+                            className="p-2 text-gray-600 border border-gray-300 hover:text-red-600 hover:bg-red-50 hover:border-red-600 rounded-md transition-colors disabled:opacity-50"
+                          >
+                            {deletingId === valuation.id ? (
+                              <div className="h-4 w-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        </Tooltip>
                       </div>
                     </div>
                   </div>
