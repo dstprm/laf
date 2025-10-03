@@ -277,7 +277,7 @@ export function CreateScenarioDialog({
                   const availableVars = SCENARIO_VARIABLES.filter((v) => v.id === adj.variableId || !usedIds.has(v.id));
 
                   return (
-                    <div key={index} className="p-3 border border-gray-200 rounded-lg space-y-2">
+                    <div key={`${adj.variableId}-${index}`} className="p-3 border border-gray-200 rounded-lg space-y-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <select
@@ -285,10 +285,15 @@ export function CreateScenarioDialog({
                             onChange={(e) => {
                               const newVarId = e.target.value as ScenarioVariableType;
                               const newBase = getVariableBaseValue(newVarId, baseModel, baseResults) || 0;
-                              updateAdjustment(index, 'variableId', newVarId);
-                              updateAdjustment(index, 'baseValue', newBase);
-                              updateAdjustment(index, 'minValue', newBase);
-                              updateAdjustment(index, 'maxValue', newBase);
+                              // Update all fields at once to avoid state race conditions
+                              const updated = [...adjustments];
+                              updated[index] = {
+                                variableId: newVarId,
+                                baseValue: newBase,
+                                minValue: newBase,
+                                maxValue: newBase,
+                              };
+                              setAdjustments(updated);
                             }}
                             className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
                           >
@@ -298,7 +303,7 @@ export function CreateScenarioDialog({
                               </option>
                             ))}
                           </select>
-                          <p className="text-xs text-gray-500 mt-1">{variable.description}</p>
+                          <p className="text-xs text-gray-500 mt-1">{variable?.description || ''}</p>
                         </div>
                         <Button
                           type="button"
