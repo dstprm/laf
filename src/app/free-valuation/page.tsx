@@ -329,6 +329,13 @@ export default function FreeValuationPage() {
         ebitdaMarginPct: s.ebitdaMarginPct,
         revenueGrowthPct: s.revenueGrowthPct,
       }));
+
+      // Recompute base case to set store to base case values for graphs and saving
+      const baseScenario = scenarios.find((s) => s.id === 'base');
+      if (baseScenario) {
+        computeEVForScenario(baseScenario);
+      }
+
       setResults(computed);
       setIsCalculating(false);
     }, 3000);
@@ -648,6 +655,10 @@ export default function FreeValuationPage() {
       const baseEV = computeEVForScenarioAdvanced(0, 0);
       const lowEV = computeEVForScenarioAdvanced(-5, -5);
       const highEV = computeEVForScenarioAdvanced(5, 5);
+
+      // Recompute base case to set store to base case values for graphs and saving
+      computeEVForScenarioAdvanced(0, 0);
+
       setResults([
         {
           id: 'bear',

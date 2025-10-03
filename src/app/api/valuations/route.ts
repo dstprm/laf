@@ -2,13 +2,8 @@ import { NextResponse } from 'next/server';
 import { validateUserSession } from '@/utils/database/auth';
 import { createValuation, getUserValuations } from '@/utils/database/valuation';
 import { getUserByClerkId } from '@/utils/database/user';
-import type {
-  CreateValuationInput,
-  CreateValuationResponse,
-  GetValuationsResponse,
-  isFinancialModel,
-  isCalculatedFinancials,
-} from '@/lib/valuation.types';
+import type { CreateValuationInput, CreateValuationResponse, GetValuationsResponse } from '@/lib/valuation.types';
+import { isFinancialModel, isCalculatedFinancials } from '@/lib/valuation.types';
 
 /**
  * POST /api/valuations

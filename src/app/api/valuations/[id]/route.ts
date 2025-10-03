@@ -2,13 +2,8 @@ import { NextResponse } from 'next/server';
 import { validateUserSession } from '@/utils/database/auth';
 import { deleteValuation, getValuationById, updateValuation, parseValuationRecord } from '@/utils/database/valuation';
 import { getUserByClerkId } from '@/utils/database/user';
-import type {
-  UpdateValuationInput,
-  UpdateValuationResponse,
-  GetValuationResponse,
-  isFinancialModel,
-  isCalculatedFinancials,
-} from '@/lib/valuation.types';
+import type { UpdateValuationInput, UpdateValuationResponse, GetValuationResponse } from '@/lib/valuation.types';
+import { isFinancialModel, isCalculatedFinancials } from '@/lib/valuation.types';
 
 /**
  * PUT /api/valuations/[id]
