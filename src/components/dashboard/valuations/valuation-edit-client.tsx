@@ -10,10 +10,11 @@ import { IndustryCountrySelector } from '@/app/valuation/components/IndustryCoun
 import { useModelStore } from '@/app/valuation/store/modelStore';
 import { RevenueEbitdaChart } from './revenue-ebitda-chart';
 import { FootballFieldChart } from './football-field-chart';
+import { ScenarioList } from './scenario-list';
 import { betasStatic } from '@/app/valuation/betasStatic';
 import { countryRiskPremiumStatic } from '@/app/valuation/countryRiskPremiumStatic';
 
-import type { FinancialModel, CalculatedFinancials } from '@/lib/valuation.types';
+import type { FinancialModel, CalculatedFinancials, ScenarioListItem } from '@/lib/valuation.types';
 
 interface ValuationEditClientProps {
   valuationId: string;
@@ -49,6 +50,7 @@ export default function ValuationEditClient({
   const [isSaving, setIsSaving] = useState(false);
   const [editMode, setEditMode] = useState<'simple' | 'advanced' | 'full'>('simple');
   const [componentKey, setComponentKey] = useState(0); // Force re-mount when entering edit mode
+  const [scenarios, setScenarios] = useState<ScenarioListItem[]>([]);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -173,53 +175,22 @@ export default function ValuationEditClient({
     setIsEditMode(false);
   };
 
-  // Calculate sensitivity ranges for football field chart
-  const sensitivityRanges = React.useMemo(() => {
-    if (!calculatedFinancials.enterpriseValue || calculatedFinancials.enterpriseValue === 0) {
-      return [];
+  // Convert saved scenarios to football field chart format
+  const footballFieldData = React.useMemo(() => {
+    const baseValue = isEditMode ? calculatedFinancials.enterpriseValue || enterpriseValue || 0 : enterpriseValue || 0;
+
+    if (scenarios.length > 0) {
+      return scenarios.map((scenario) => ({
+        scenario: scenario.name,
+        min: scenario.minValue,
+        max: scenario.maxValue,
+        base: baseValue,
+      }));
     }
 
-    const baseValue = calculatedFinancials.enterpriseValue;
-    const revenue = calculatedFinancials.revenue || [];
-    const ebitdaMargin = calculatedFinancials.ebitdaMargin || [];
-
-    if (revenue.length === 0) {
-      return [];
-    }
-
-    // Simple sensitivity calculations (±10% for demonstration)
-    const waccSensitivity = baseValue * 0.15;
-    const multipleSensitivity = baseValue * 0.2;
-    const marginSensitivity = baseValue * 0.12;
-    const growthSensitivity = baseValue * 0.18;
-
-    return [
-      {
-        scenario: 'WACC Sensitivity (±2%)',
-        min: baseValue - waccSensitivity,
-        max: baseValue + waccSensitivity,
-        base: baseValue,
-      },
-      {
-        scenario: 'EBITDA Multiple (±2x)',
-        min: baseValue - multipleSensitivity,
-        max: baseValue + multipleSensitivity,
-        base: baseValue,
-      },
-      {
-        scenario: 'EBITDA Margin (±5%)',
-        min: baseValue - marginSensitivity,
-        max: baseValue + marginSensitivity,
-        base: baseValue,
-      },
-      {
-        scenario: 'Revenue Growth (±5%)',
-        min: baseValue - growthSensitivity,
-        max: baseValue + growthSensitivity,
-        base: baseValue,
-      },
-    ];
-  }, [calculatedFinancials]);
+    // If no scenarios exist, return empty array (no default sensitivity ranges)
+    return [];
+  }, [scenarios, calculatedFinancials, enterpriseValue, isEditMode]);
 
   if (!isEditMode) {
     // Read-only mode - show summary and charts
@@ -305,6 +276,15 @@ export default function ValuationEditClient({
           </div>
         </div>
 
+        {/* Scenarios Section */}
+        <ScenarioList
+          valuationId={valuationId}
+          baseValue={enterpriseValue || 0}
+          baseModel={initialModelData}
+          baseResults={initialResultsData}
+          onScenariosChange={setScenarios}
+        />
+
         {/* Charts */}
         {initialResultsData && (
           <div className="space-y-6">
@@ -315,6 +295,11 @@ export default function ValuationEditClient({
                 years={(initialModelData as any)?.periods?.periodLabels?.slice(0, 5)}
                 title="Revenue & EBITDA Margin Projection"
               />
+            )}
+
+            {/* Football Field Chart - only show if there are scenarios */}
+            {footballFieldData.length > 0 && (
+              <FootballFieldChart ranges={footballFieldData} title="Scenario Analysis" />
             )}
           </div>
         )}
@@ -597,10 +582,8 @@ export default function ValuationEditClient({
           />
         )}
 
-        {/* Football Field Chart */}
-        {sensitivityRanges.length > 0 && (
-          <FootballFieldChart ranges={sensitivityRanges} title="Valuation Sensitivity Analysis" />
-        )}
+        {/* Football Field Chart - only show if there are scenarios */}
+        {footballFieldData.length > 0 && <FootballFieldChart ranges={footballFieldData} title="Scenario Analysis" />}
       </div>
 
       {/* Key Metrics Summary */}

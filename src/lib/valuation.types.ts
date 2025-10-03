@@ -239,3 +239,76 @@ export interface SensitivityRange {
   max: number;
   base: number;
 }
+
+/**
+ * Database scenario record type
+ * Matches the Prisma Scenario model
+ */
+export interface ScenarioRecord {
+  id: string;
+  valuationId: string;
+  name: string;
+  description: string | null;
+  minValue: number;
+  maxValue: number;
+  minModelData: FinancialModel | null;
+  maxModelData: FinancialModel | null;
+  minResultsData: CalculatedFinancials | null;
+  maxResultsData: CalculatedFinancials | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Type for creating a new scenario
+ * Used in API POST requests
+ */
+export interface CreateScenarioInput {
+  valuationId: string;
+  name: string;
+  description?: string;
+  minValue: number;
+  maxValue: number;
+  minModelData?: FinancialModel;
+  maxModelData?: FinancialModel;
+  minResultsData?: CalculatedFinancials;
+  maxResultsData?: CalculatedFinancials;
+}
+
+/**
+ * Type for updating an existing scenario
+ * All fields are optional
+ */
+export interface UpdateScenarioInput {
+  name?: string;
+  description?: string;
+  minValue?: number;
+  maxValue?: number;
+  minModelData?: FinancialModel;
+  maxModelData?: FinancialModel;
+  minResultsData?: CalculatedFinancials;
+  maxResultsData?: CalculatedFinancials;
+}
+
+/**
+ * Type for scenario list items
+ * Used when fetching multiple scenarios
+ */
+export interface ScenarioListItem {
+  id: string;
+  valuationId: string;
+  name: string;
+  description: string | null;
+  minValue: number;
+  maxValue: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Scenario API response types
+ */
+export interface CreateScenarioResponse extends ScenarioRecord {}
+export interface UpdateScenarioResponse extends ScenarioRecord {}
+export interface GetScenarioResponse extends ScenarioRecord {}
+export interface GetScenariosResponse extends Array<ScenarioListItem> {}
