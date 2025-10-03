@@ -17,7 +17,9 @@ import Header from '@/components/home/header/header';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { RevenueEbitdaChart } from '@/components/dashboard/valuations/revenue-ebitda-chart';
 import { FootballFieldChart } from '@/components/dashboard/valuations/football-field-chart';
-import type { CreateValuationInput } from '@/lib/valuation.types';
+import { ScenarioList } from '@/components/dashboard/valuations/scenario-list';
+import { ScenarioListLocal } from '@/components/dashboard/valuations/scenario-list-local';
+import type { CreateValuationInput, CreateScenarioInput } from '@/lib/valuation.types';
 
 type Scenario = {
   id: string;
@@ -165,6 +167,16 @@ export default function FreeValuationPage() {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingCalculation, setPendingCalculation] = useState<'simple' | 'advanced' | null>(null);
+  const [savedValuationId, setSavedValuationId] = useState<string | null>(null);
+
+  // Local scenario state (before saving to database)
+  type LocalScenario = {
+    name: string;
+    description?: string;
+    minValue: number;
+    maxValue: number;
+  };
+  const [localScenarios, setLocalScenarios] = useState<LocalScenario[]>([]);
 
   // Business information fields
   const [companyName, setCompanyName] = useState<string>('');
@@ -448,6 +460,55 @@ export default function FreeValuationPage() {
       },
     ];
   }, [results, lastYearRevenue, industry, country, model.riskProfile]);
+
+  // Initialize local scenarios from sensitivity ranges
+  React.useEffect(() => {
+    if (results && sensitivityRanges.length > 0) {
+      // Convert sensitivity ranges to local scenarios
+      const defaultScenarios: LocalScenario[] = sensitivityRanges.map((range) => ({
+        name: range.scenario,
+        description: `Sensitivity analysis: ${range.scenario}`,
+        minValue: range.min,
+        maxValue: range.max,
+      }));
+      setLocalScenarios(defaultScenarios);
+    }
+  }, [results, sensitivityRanges]);
+
+  // Helper function to save scenarios after valuation is created
+  const saveLocalScenarios = async (valuationId: string) => {
+    if (localScenarios.length === 0) return;
+
+    try {
+      // Save each local scenario to the database
+      const scenarioPromises = localScenarios.map(async (scenario) => {
+        const scenarioData: Omit<CreateScenarioInput, 'valuationId'> = {
+          name: scenario.name,
+          description: scenario.description,
+          minValue: scenario.minValue,
+          maxValue: scenario.maxValue,
+        };
+
+        const response = await fetch(`/api/valuations/${valuationId}/scenarios`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...scenarioData, valuationId }),
+        });
+
+        if (!response.ok) {
+          console.error(`Failed to save scenario: ${scenario.name}`);
+          return null;
+        }
+
+        return response.json();
+      });
+
+      await Promise.all(scenarioPromises);
+    } catch (error) {
+      console.error('Failed to save scenarios:', error);
+      // Don't throw - scenarios are optional
+    }
+  };
 
   const performAdvancedCalculation = () => {
     const revenue0 = parseFloat(lastYearRevenue || '0');
@@ -834,10 +895,16 @@ export default function FreeValuationPage() {
         throw new Error(errorData.error || 'Failed to save valuation');
       }
 
+      const savedValuation = await response.json();
+      setSavedValuationId(savedValuation.id);
+
+      // Save local scenarios after valuation is created
+      await saveLocalScenarios(savedValuation.id);
+
       // Show success toast with dashboard redirect button
       toast({
         title: 'Valuation saved successfully!',
-        description: 'Your valuation has been saved to your dashboard.',
+        description: 'Your valuation and scenarios have been saved to your dashboard.',
         action: (
           <ToastAction altText="Go to Dashboard" onClick={() => router.push('/dashboard')}>
             Go to Dashboard
@@ -1088,13 +1155,48 @@ export default function FreeValuationPage() {
                   )}
 
                   {/* Football Field Valuation Chart */}
-                  {sensitivityRanges.length > 0 && (
+                  {localScenarios.length > 0 && (
                     <div className="mt-6">
-                      <FootballFieldChart ranges={sensitivityRanges} title="Valuation Sensitivity Analysis" />
+                      <FootballFieldChart
+                        ranges={localScenarios.map((s) => ({
+                          scenario: s.name,
+                          min: s.minValue,
+                          max: s.maxValue,
+                          base:
+                            results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                            calculatedFinancials.enterpriseValue ||
+                            0,
+                        }))}
+                        title="Valuation Sensitivity Analysis"
+                      />
                     </div>
                   )}
 
-                  {isSignedIn && (
+                  {/* Scenario Management - Show immediately (before saving) */}
+                  {!savedValuationId && (
+                    <div className="mt-6">
+                      <ScenarioListLocal scenarios={localScenarios} onChange={setLocalScenarios} />
+                    </div>
+                  )}
+
+                  {/* After saving, show database-backed scenario list */}
+                  {savedValuationId && (
+                    <div className="mt-6">
+                      <ScenarioList
+                        valuationId={savedValuationId}
+                        baseValue={
+                          results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                          calculatedFinancials.enterpriseValue ||
+                          0
+                        }
+                        baseModel={model}
+                        baseResults={calculatedFinancials}
+                        onScenariosChange={() => {}}
+                      />
+                    </div>
+                  )}
+
+                  {isSignedIn && !savedValuationId && (
                     <div className="mt-4 flex justify-end">
                       <Button onClick={handleSaveValuation} disabled={isSaving}>
                         {isSaving ? 'Saving...' : 'Save Valuation'}
@@ -1946,13 +2048,48 @@ export default function FreeValuationPage() {
                   )}
 
                   {/* Football Field Valuation Chart */}
-                  {sensitivityRanges.length > 0 && (
+                  {localScenarios.length > 0 && (
                     <div className="mt-6">
-                      <FootballFieldChart ranges={sensitivityRanges} title="Valuation Sensitivity Analysis" />
+                      <FootballFieldChart
+                        ranges={localScenarios.map((s) => ({
+                          scenario: s.name,
+                          min: s.minValue,
+                          max: s.maxValue,
+                          base:
+                            results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                            calculatedFinancials.enterpriseValue ||
+                            0,
+                        }))}
+                        title="Valuation Sensitivity Analysis"
+                      />
                     </div>
                   )}
 
-                  {isSignedIn && (
+                  {/* Scenario Management - Show immediately (before saving) */}
+                  {!savedValuationId && (
+                    <div className="mt-6">
+                      <ScenarioListLocal scenarios={localScenarios} onChange={setLocalScenarios} />
+                    </div>
+                  )}
+
+                  {/* After saving, show database-backed scenario list */}
+                  {savedValuationId && (
+                    <div className="mt-6">
+                      <ScenarioList
+                        valuationId={savedValuationId}
+                        baseValue={
+                          results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                          calculatedFinancials.enterpriseValue ||
+                          0
+                        }
+                        baseModel={model}
+                        baseResults={calculatedFinancials}
+                        onScenariosChange={() => {}}
+                      />
+                    </div>
+                  )}
+
+                  {isSignedIn && !savedValuationId && (
                     <div className="mt-4 flex justify-end">
                       <Button onClick={handleSaveValuation} disabled={isSaving}>
                         {isSaving ? 'Saving...' : 'Save Valuation'}
