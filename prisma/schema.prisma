@@ -139,6 +139,9 @@ model Valuation {
     companyName     String?  @map("company_name")
     companyWebsite  String?  @map("company_website")
     companyPhone    String?  @map("company_phone")
+    /// Report sharing
+    isPublished     Boolean  @default(false) @map("is_published")
+    shareToken      String?  @unique @map("share_token")
     createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
     updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -148,6 +151,7 @@ model Valuation {
 
     @@index([userId])
     @@index([userId, createdAt])
+    @@index([shareToken])
     @@map("valuations")
 }
 

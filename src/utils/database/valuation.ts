@@ -71,6 +71,8 @@ export async function getUserValuations(userId: string): Promise<ValuationListIt
       industry: true,
       country: true,
       companyName: true,
+      isPublished: true,
+      shareToken: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -133,5 +135,69 @@ export async function deleteValuation(id: string, userId: string) {
 export async function getUserValuationCount(userId: string) {
   return prisma.valuation.count({
     where: { userId },
+  });
+}
+
+/**
+ * Generate a unique share token
+ */
+function generateShareToken(): string {
+  // Generate a random 16-character alphanumeric string
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 16; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+
+/**
+ * Publish a valuation report (make it publicly accessible)
+ */
+export async function publishValuation(id: string, userId: string) {
+  // Check if valuation exists and belongs to user
+  const valuation = await getValuationById(id, userId);
+  if (!valuation) {
+    throw new Error('Valuation not found');
+  }
+
+  // Generate a unique share token if it doesn't exist
+  const shareToken = valuation.shareToken || generateShareToken();
+
+  return prisma.valuation.update({
+    where: { id, userId },
+    data: {
+      isPublished: true,
+      shareToken,
+    },
+  });
+}
+
+/**
+ * Unpublish a valuation report (make it private)
+ */
+export async function unpublishValuation(id: string, userId: string) {
+  return prisma.valuation.update({
+    where: { id, userId },
+    data: {
+      isPublished: false,
+    },
+  });
+}
+
+/**
+ * Get a published valuation by share token (public access, no auth required)
+ */
+export async function getPublishedValuationByToken(shareToken: string) {
+  return prisma.valuation.findFirst({
+    where: {
+      shareToken,
+      isPublished: true,
+    },
+    include: {
+      scenarios: {
+        orderBy: { createdAt: 'asc' },
+      },
+    },
   });
 }
