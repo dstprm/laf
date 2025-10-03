@@ -23,6 +23,7 @@ interface CreateValuationData {
   companyName?: string;
   companyWebsite?: string;
   companyPhone?: string;
+  reportComment?: string;
 }
 
 interface UpdateValuationData {
@@ -35,6 +36,7 @@ interface UpdateValuationData {
   companyName?: string;
   companyWebsite?: string;
   companyPhone?: string;
+  reportComment?: string;
 }
 
 /**
@@ -45,14 +47,15 @@ export async function createValuation(data: CreateValuationData) {
     data: {
       userId: data.userId,
       name: data.name,
-      modelData: data.modelData as Prisma.InputJsonValue,
-      resultsData: data.resultsData as Prisma.InputJsonValue,
+      modelData: data.modelData as unknown as Prisma.InputJsonValue,
+      resultsData: data.resultsData as unknown as Prisma.InputJsonValue,
       enterpriseValue: data.enterpriseValue,
       industry: data.industry,
       country: data.country,
       companyName: data.companyName,
       companyWebsite: data.companyWebsite,
       companyPhone: data.companyPhone,
+      reportComment: data.reportComment,
     },
   });
 }
@@ -71,6 +74,8 @@ export async function getUserValuations(userId: string): Promise<ValuationListIt
       industry: true,
       country: true,
       companyName: true,
+      isPublished: true,
+      shareToken: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -106,14 +111,15 @@ export async function updateValuation(id: string, userId: string, data: UpdateVa
     where: { id, userId },
     data: {
       ...(data.name !== undefined && { name: data.name }),
-      ...(data.modelData !== undefined && { modelData: data.modelData as Prisma.InputJsonValue }),
-      ...(data.resultsData !== undefined && { resultsData: data.resultsData as Prisma.InputJsonValue }),
+      ...(data.modelData !== undefined && { modelData: data.modelData as unknown as Prisma.InputJsonValue }),
+      ...(data.resultsData !== undefined && { resultsData: data.resultsData as unknown as Prisma.InputJsonValue }),
       ...(data.enterpriseValue !== undefined && { enterpriseValue: data.enterpriseValue }),
       ...(data.industry !== undefined && { industry: data.industry }),
       ...(data.country !== undefined && { country: data.country }),
       ...(data.companyName !== undefined && { companyName: data.companyName }),
       ...(data.companyWebsite !== undefined && { companyWebsite: data.companyWebsite }),
       ...(data.companyPhone !== undefined && { companyPhone: data.companyPhone }),
+      ...(data.reportComment !== undefined && { reportComment: data.reportComment }),
     },
   });
 }
@@ -133,5 +139,69 @@ export async function deleteValuation(id: string, userId: string) {
 export async function getUserValuationCount(userId: string) {
   return prisma.valuation.count({
     where: { userId },
+  });
+}
+
+/**
+ * Generate a unique share token
+ */
+function generateShareToken(): string {
+  // Generate a random 16-character alphanumeric string
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 16; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+
+/**
+ * Publish a valuation report (make it publicly accessible)
+ */
+export async function publishValuation(id: string, userId: string) {
+  // Check if valuation exists and belongs to user
+  const valuation = await getValuationById(id, userId);
+  if (!valuation) {
+    throw new Error('Valuation not found');
+  }
+
+  // Generate a unique share token if it doesn't exist
+  const shareToken = valuation.shareToken || generateShareToken();
+
+  return prisma.valuation.update({
+    where: { id, userId },
+    data: {
+      isPublished: true,
+      shareToken,
+    },
+  });
+}
+
+/**
+ * Unpublish a valuation report (make it private)
+ */
+export async function unpublishValuation(id: string, userId: string) {
+  return prisma.valuation.update({
+    where: { id, userId },
+    data: {
+      isPublished: false,
+    },
+  });
+}
+
+/**
+ * Get a published valuation by share token (public access, no auth required)
+ */
+export async function getPublishedValuationByToken(shareToken: string) {
+  return prisma.valuation.findFirst({
+    where: {
+      shareToken,
+      isPublished: true,
+    },
+    include: {
+      scenarios: {
+        orderBy: { createdAt: 'asc' },
+      },
+    },
   });
 }

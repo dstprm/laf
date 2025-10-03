@@ -39,10 +39,10 @@ export async function createScenario(data: CreateScenarioData) {
       description: data.description,
       minValue: data.minValue,
       maxValue: data.maxValue,
-      minModelData: data.minModelData as Prisma.InputJsonValue,
-      maxModelData: data.maxModelData as Prisma.InputJsonValue,
-      minResultsData: data.minResultsData as Prisma.InputJsonValue,
-      maxResultsData: data.maxResultsData as Prisma.InputJsonValue,
+      minModelData: data.minModelData as unknown as Prisma.InputJsonValue,
+      maxModelData: data.maxModelData as unknown as Prisma.InputJsonValue,
+      minResultsData: data.minResultsData as unknown as Prisma.InputJsonValue,
+      maxResultsData: data.maxResultsData as unknown as Prisma.InputJsonValue,
     },
   });
 }
@@ -101,10 +101,18 @@ export async function updateScenario(id: string, valuationId: string, data: Upda
       ...(data.description !== undefined && { description: data.description }),
       ...(data.minValue !== undefined && { minValue: data.minValue }),
       ...(data.maxValue !== undefined && { maxValue: data.maxValue }),
-      ...(data.minModelData !== undefined && { minModelData: data.minModelData as Prisma.InputJsonValue }),
-      ...(data.maxModelData !== undefined && { maxModelData: data.maxModelData as Prisma.InputJsonValue }),
-      ...(data.minResultsData !== undefined && { minResultsData: data.minResultsData as Prisma.InputJsonValue }),
-      ...(data.maxResultsData !== undefined && { maxResultsData: data.maxResultsData as Prisma.InputJsonValue }),
+      ...(data.minModelData !== undefined && {
+        minModelData: data.minModelData as unknown as Prisma.InputJsonValue,
+      }),
+      ...(data.maxModelData !== undefined && {
+        maxModelData: data.maxModelData as unknown as Prisma.InputJsonValue,
+      }),
+      ...(data.minResultsData !== undefined && {
+        minResultsData: data.minResultsData as unknown as Prisma.InputJsonValue,
+      }),
+      ...(data.maxResultsData !== undefined && {
+        maxResultsData: data.maxResultsData as unknown as Prisma.InputJsonValue,
+      }),
     },
   });
 }

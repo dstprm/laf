@@ -168,6 +168,8 @@ export default function FreeValuationPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [pendingCalculation, setPendingCalculation] = useState<'simple' | 'advanced' | null>(null);
   const [savedValuationId, setSavedValuationId] = useState<string | null>(null);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // Local scenario state (before saving to database)
   type LocalScenario = {
@@ -932,16 +934,8 @@ export default function FreeValuationPage() {
       // Save local scenarios after valuation is created
       await saveLocalScenarios(savedValuation.id);
 
-      // Show success toast with dashboard redirect button
-      toast({
-        title: 'Valuation saved successfully!',
-        description: 'Your valuation and scenarios have been saved to your dashboard.',
-        action: (
-          <ToastAction altText="Go to Dashboard" onClick={() => router.push('/dashboard')}>
-            Go to Dashboard
-          </ToastAction>
-        ),
-      });
+      // Show success dialog instead of toast
+      setSuccessDialogOpen(true);
     } catch (error) {
       console.error('Failed to save valuation:', error);
       toast({
@@ -951,6 +945,48 @@ export default function FreeValuationPage() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handlePublishReport = async () => {
+    if (!savedValuationId) return;
+
+    setIsPublishing(true);
+    try {
+      const response = await fetch(`/api/valuations/${savedValuationId}/publish`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to publish report');
+      }
+
+      const data = await response.json();
+
+      toast({
+        title: 'Report published!',
+        description: 'Your report is now publicly accessible.',
+      });
+
+      // Open the report in a new tab
+      if (data.shareToken) {
+        window.open(`/reports/${data.shareToken}`, '_blank');
+      }
+
+      // Close the success dialog
+      setSuccessDialogOpen(false);
+
+      // Redirect to dashboard
+      router.push('/dashboard/valuations');
+    } catch (error) {
+      console.error('Error publishing report:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to publish report',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -2195,6 +2231,73 @@ export default function FreeValuationPage() {
                 forceRedirectUrl="/free-valuation"
                 fallbackRedirectUrl="/free-valuation"
               />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Success Dialog */}
+        <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex items-center justify-center mb-4">
+                <div className="rounded-full bg-green-100 p-3">
+                  <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <DialogTitle className="text-center text-2xl">Valuation Saved Successfully!</DialogTitle>
+              <DialogDescription className="text-center">
+                Your valuation has been saved to your dashboard. What would you like to do next?
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3 py-4">
+              <Button onClick={() => router.push('/dashboard/valuations')} className="w-full" size="lg">
+                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                Go to Dashboard
+              </Button>
+
+              <Button
+                onClick={handlePublishReport}
+                disabled={isPublishing}
+                variant="outline"
+                className="w-full"
+                size="lg"
+              >
+                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                  />
+                </svg>
+                {isPublishing ? 'Publishing...' : 'Publish & Share Report'}
+              </Button>
+
+              <div className="text-center">
+                <button
+                  onClick={() => setSuccessDialogOpen(false)}
+                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                >
+                  Continue editing
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-xs text-blue-800">
+                <strong>Tip:</strong> Publishing your report creates a shareable public link that you can send to
+                investors, advisors, or team members. The report is read-only and professional-looking.
+              </p>
             </div>
           </DialogContent>
         </Dialog>
