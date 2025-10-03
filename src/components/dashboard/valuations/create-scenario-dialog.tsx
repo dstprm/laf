@@ -20,13 +20,15 @@ import {
 import { calculateScenarioValues, generateScenarioDescription } from '@/lib/scenario-calculator';
 
 interface CreateScenarioDialogProps {
-  valuationId: string;
+  valuationId?: string; // Optional - if not provided, works in local mode
   baseValue: number;
   baseModel: FinancialModel;
   baseResults: CalculatedFinancials;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  // For local mode (when valuationId is not provided)
+  onLocalCreate?: (scenario: { name: string; description?: string; minValue: number; maxValue: number }) => void;
 }
 
 export function CreateScenarioDialog({
@@ -37,6 +39,7 @@ export function CreateScenarioDialog({
   open,
   onOpenChange,
   onSuccess,
+  onLocalCreate,
 }: CreateScenarioDialogProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -163,6 +166,29 @@ export function CreateScenarioDialog({
     setIsSubmitting(true);
     try {
       const autoDescription = generateScenarioDescription(adjustments);
+
+      // Local mode - just call the callback
+      if (!valuationId && onLocalCreate) {
+        onLocalCreate({
+          name: name.trim(),
+          description: description.trim() || autoDescription,
+          minValue: scenarioValues.minValue,
+          maxValue: scenarioValues.maxValue,
+        });
+
+        toast({
+          title: 'Scenario created',
+          description: 'Your scenario has been added.',
+        });
+
+        onOpenChange(false);
+        return;
+      }
+
+      // Database mode - save via API
+      if (!valuationId) {
+        throw new Error('valuationId is required for database mode');
+      }
 
       const payload: CreateScenarioInput = {
         valuationId,

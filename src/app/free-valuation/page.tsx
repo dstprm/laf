@@ -1175,7 +1175,17 @@ export default function FreeValuationPage() {
                   {/* Scenario Management - Show immediately (before saving) */}
                   {!savedValuationId && (
                     <div className="mt-6">
-                      <ScenarioListLocal scenarios={localScenarios} onChange={setLocalScenarios} />
+                      <ScenarioListLocal
+                        scenarios={localScenarios}
+                        onChange={setLocalScenarios}
+                        baseModel={model}
+                        baseResults={calculatedFinancials}
+                        baseValue={
+                          results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                          calculatedFinancials.enterpriseValue ||
+                          0
+                        }
+                      />
                     </div>
                   )}
 
@@ -2068,7 +2078,17 @@ export default function FreeValuationPage() {
                   {/* Scenario Management - Show immediately (before saving) */}
                   {!savedValuationId && (
                     <div className="mt-6">
-                      <ScenarioListLocal scenarios={localScenarios} onChange={setLocalScenarios} />
+                      <ScenarioListLocal
+                        scenarios={localScenarios}
+                        onChange={setLocalScenarios}
+                        baseModel={model}
+                        baseResults={calculatedFinancials}
+                        baseValue={
+                          results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                          calculatedFinancials.enterpriseValue ||
+                          0
+                        }
+                      />
                     </div>
                   )}
 

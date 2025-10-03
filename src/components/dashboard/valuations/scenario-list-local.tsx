@@ -3,11 +3,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Trash2, Edit, Plus } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
+import { CreateScenarioDialog } from './create-scenario-dialog';
+import { FinancialModel, CalculatedFinancials } from '@/lib/valuation.types';
 
 type LocalScenario = {
   name: string;
@@ -19,20 +18,15 @@ type LocalScenario = {
 interface ScenarioListLocalProps {
   scenarios: LocalScenario[];
   onChange: (scenarios: LocalScenario[]) => void;
+  baseModel: FinancialModel;
+  baseResults: CalculatedFinancials;
+  baseValue: number;
 }
 
-export function ScenarioListLocal({ scenarios, onChange }: ScenarioListLocalProps) {
+export function ScenarioListLocal({ scenarios, onChange, baseModel, baseResults, baseValue }: ScenarioListLocalProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [formData, setFormData] = useState<LocalScenario>({
-    name: '',
-    description: '',
-    minValue: 0,
-    maxValue: 0,
-  });
-  const [validationError, setValidationError] = useState<string>('');
 
   const handleDelete = (index: number) => {
     setDeletingIndex(index);
@@ -48,51 +42,8 @@ export function ScenarioListLocal({ scenarios, onChange }: ScenarioListLocalProp
     setDeletingIndex(null);
   };
 
-  const handleEdit = (index: number) => {
-    setEditingIndex(index);
-    setFormData(scenarios[index]);
-    setValidationError('');
-    setIsCreateDialogOpen(true);
-  };
-
-  const handleCreate = () => {
-    setEditingIndex(null);
-    setFormData({
-      name: '',
-      description: '',
-      minValue: 0,
-      maxValue: 0,
-    });
-    setValidationError('');
-    setIsCreateDialogOpen(true);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setValidationError('');
-
-    if (!formData.name.trim()) {
-      setValidationError('Please enter a scenario name');
-      return;
-    }
-
-    if (formData.minValue >= formData.maxValue) {
-      setValidationError('Min value must be less than max value');
-      return;
-    }
-
-    const updated = [...scenarios];
-    if (editingIndex !== null) {
-      // Edit existing
-      updated[editingIndex] = formData;
-    } else {
-      // Add new
-      updated.push(formData);
-    }
-
-    onChange(updated);
-    setIsCreateDialogOpen(false);
-    setValidationError('');
+  const handleLocalCreate = (scenario: LocalScenario) => {
+    onChange([...scenarios, scenario]);
   };
 
   const formatCurrency = (value: number) => {
@@ -119,7 +70,7 @@ export function ScenarioListLocal({ scenarios, onChange }: ScenarioListLocalProp
               <CardTitle>Scenarios</CardTitle>
               <CardDescription>Create and manage scenarios before saving (changes are not saved yet)</CardDescription>
             </div>
-            <Button onClick={handleCreate} size="sm">
+            <Button onClick={() => setIsCreateDialogOpen(true)} size="sm">
               <Plus className="h-4 w-4 mr-1" />
               Add Scenario
             </Button>
@@ -154,14 +105,6 @@ export function ScenarioListLocal({ scenarios, onChange }: ScenarioListLocalProp
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleEdit(index)}
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
                       onClick={() => handleDelete(index)}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
@@ -175,86 +118,15 @@ export function ScenarioListLocal({ scenarios, onChange }: ScenarioListLocalProp
         </CardContent>
       </Card>
 
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingIndex !== null ? 'Edit Scenario' : 'Add Scenario'}</DialogTitle>
-            <DialogDescription>
-              {editingIndex !== null
-                ? 'Update the scenario details below.'
-                : 'Create a new scenario by entering a name and value range.'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {validationError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-800">{validationError}</p>
-              </div>
-            )}
-
-            <div>
-              <Label htmlFor="name">Scenario Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Optimistic Case, Conservative Case"
-                className="mt-1"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="description">Description (optional)</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Brief description of this scenario"
-                className="mt-1"
-                rows={2}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="minValue">Min Value *</Label>
-                <Input
-                  id="minValue"
-                  type="number"
-                  step="0.01"
-                  value={formData.minValue}
-                  onChange={(e) => setFormData({ ...formData, minValue: parseFloat(e.target.value) || 0 })}
-                  placeholder="e.g., 5000000"
-                  className="mt-1"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="maxValue">Max Value *</Label>
-                <Input
-                  id="maxValue"
-                  type="number"
-                  step="0.01"
-                  value={formData.maxValue}
-                  onChange={(e) => setFormData({ ...formData, maxValue: parseFloat(e.target.value) || 0 })}
-                  placeholder="e.g., 15000000"
-                  className="mt-1"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">{editingIndex !== null ? 'Update' : 'Add'} Scenario</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* Create Scenario Dialog - Uses the sophisticated variable-based dialog */}
+      <CreateScenarioDialog
+        baseValue={baseValue}
+        baseModel={baseModel}
+        baseResults={baseResults}
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onLocalCreate={handleLocalCreate}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
