@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { validateUserSession } from '@/utils/database/auth';
-import { createValuation, getUserValuations } from '@/utils/database/valuation';
+import { createValuation, getUserValuations, parseValuationRecord } from '@/utils/database/valuation';
 import { getUserByClerkId } from '@/utils/database/user';
 import type { CreateValuationInput, CreateValuationResponse, GetValuationsResponse } from '@/lib/valuation.types';
 import { isFinancialModel, isCalculatedFinancials } from '@/lib/valuation.types';
@@ -62,8 +62,9 @@ export async function POST(req: Request) {
     };
 
     const valuation = await createValuation(valuationData);
+    const responseData = parseValuationRecord(valuation);
 
-    return NextResponse.json<CreateValuationResponse>(valuation, { status: 201 });
+    return NextResponse.json<CreateValuationResponse>(responseData, { status: 201 });
   } catch (error) {
     console.error('Error creating valuation:', error);
     return NextResponse.json(

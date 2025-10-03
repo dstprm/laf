@@ -47,8 +47,8 @@ export async function createValuation(data: CreateValuationData) {
     data: {
       userId: data.userId,
       name: data.name,
-      modelData: data.modelData as Prisma.InputJsonValue,
-      resultsData: data.resultsData as Prisma.InputJsonValue,
+      modelData: data.modelData as unknown as Prisma.InputJsonValue,
+      resultsData: data.resultsData as unknown as Prisma.InputJsonValue,
       enterpriseValue: data.enterpriseValue,
       industry: data.industry,
       country: data.country,
@@ -111,8 +111,8 @@ export async function updateValuation(id: string, userId: string, data: UpdateVa
     where: { id, userId },
     data: {
       ...(data.name !== undefined && { name: data.name }),
-      ...(data.modelData !== undefined && { modelData: data.modelData as Prisma.InputJsonValue }),
-      ...(data.resultsData !== undefined && { resultsData: data.resultsData as Prisma.InputJsonValue }),
+      ...(data.modelData !== undefined && { modelData: data.modelData as unknown as Prisma.InputJsonValue }),
+      ...(data.resultsData !== undefined && { resultsData: data.resultsData as unknown as Prisma.InputJsonValue }),
       ...(data.enterpriseValue !== undefined && { enterpriseValue: data.enterpriseValue }),
       ...(data.industry !== undefined && { industry: data.industry }),
       ...(data.country !== undefined && { country: data.country }),

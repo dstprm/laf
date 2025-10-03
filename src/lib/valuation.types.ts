@@ -98,6 +98,9 @@ export interface ValuationRecord {
   companyName: string | null;
   companyWebsite: string | null;
   companyPhone: string | null;
+  reportComment: string | null;
+  isPublished?: boolean;
+  shareToken?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -116,6 +119,7 @@ export interface CreateValuationInput {
   companyName?: string;
   companyWebsite?: string;
   companyPhone?: string;
+  reportComment?: string;
 }
 
 /**
@@ -132,6 +136,7 @@ export interface UpdateValuationInput {
   companyName?: string;
   companyWebsite?: string;
   companyPhone?: string;
+  reportComment?: string;
 }
 
 /**
@@ -145,6 +150,8 @@ export interface ValuationListItem {
   industry: string | null;
   country: string | null;
   companyName: string | null;
+  isPublished?: boolean;
+  shareToken?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

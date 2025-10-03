@@ -73,13 +73,13 @@ export function ValuationReport({
   };
 
   // Extract key data
-  const revenue = resultsData?.revenue || [];
-  const ebitda = resultsData?.ebitda || [];
-  const ebitdaMargin = resultsData?.ebitdaMargin || [];
-  const freeCashFlow = resultsData?.freeCashFlow || [];
+  const revenue: number[] = (resultsData?.revenue as number[]) || [];
+  const ebitda: number[] = (resultsData?.ebitda as number[]) || [];
+  const ebitdaMargin: number[] = (resultsData?.ebitdaMargin as number[]) || [];
+  const freeCashFlow: number[] = (resultsData?.freeCashFlow as number[]) || [];
   const wacc = modelData?.terminalValue?.wacc;
   const terminalGrowthRate = modelData?.terminalValue?.terminalGrowthRate;
-  const periods = modelData?.periods?.periodLabels || [];
+  const periods: string[] = (modelData?.periods?.periodLabels as string[]) || [];
   const numberOfYears = modelData?.periods?.numberOfYears || 5;
 
   // Calculate valuation multiples

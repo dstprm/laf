@@ -40,8 +40,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     // Update the valuation
     const updatedValuation = await updateValuation(id, user.id, body);
+    // Convert Prisma JSON fields to typed data before returning
+    const responseData = parseValuationRecord(updatedValuation);
 
-    return NextResponse.json<UpdateValuationResponse>(updatedValuation, { status: 200 });
+    return NextResponse.json<UpdateValuationResponse>(responseData, { status: 200 });
   } catch (error) {
     console.error('Error updating valuation:', error);
     return NextResponse.json(
