@@ -23,6 +23,7 @@ interface CreateValuationData {
   companyName?: string;
   companyWebsite?: string;
   companyPhone?: string;
+  reportComment?: string;
 }
 
 interface UpdateValuationData {
@@ -35,6 +36,7 @@ interface UpdateValuationData {
   companyName?: string;
   companyWebsite?: string;
   companyPhone?: string;
+  reportComment?: string;
 }
 
 /**
@@ -53,6 +55,7 @@ export async function createValuation(data: CreateValuationData) {
       companyName: data.companyName,
       companyWebsite: data.companyWebsite,
       companyPhone: data.companyPhone,
+      reportComment: data.reportComment,
     },
   });
 }
@@ -116,6 +119,7 @@ export async function updateValuation(id: string, userId: string, data: UpdateVa
       ...(data.companyName !== undefined && { companyName: data.companyName }),
       ...(data.companyWebsite !== undefined && { companyWebsite: data.companyWebsite }),
       ...(data.companyPhone !== undefined && { companyPhone: data.companyPhone }),
+      ...(data.reportComment !== undefined && { reportComment: data.reportComment }),
     },
   });
 }

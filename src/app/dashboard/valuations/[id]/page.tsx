@@ -5,6 +5,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import ValuationEditClient from '@/components/dashboard/valuations/valuation-edit-client';
 import { DashboardPageWrapper } from '@/components/dashboard/layout/dashboard-page-wrapper';
+import { EditReportComment } from '@/components/dashboard/valuations/edit-report-comment';
 import type { ValuationRecord } from '@/lib/valuation.types';
 
 export default async function ValuationDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -63,6 +64,9 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
               {valuation.name || `Valuation - ${formatDate(valuation.createdAt)}`}
             </h1>
             <p className="mt-2 text-gray-600">Created on {formatDate(valuation.createdAt)}</p>
+          </div>
+          <div>
+            <EditReportComment valuationId={valuation.id} initialComment={valuation.reportComment} />
           </div>
         </div>
 

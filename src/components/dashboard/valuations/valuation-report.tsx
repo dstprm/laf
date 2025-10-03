@@ -19,6 +19,7 @@ interface ValuationReportProps {
   industry?: string | null;
   country?: string | null;
   createdAt: Date;
+  reportComment?: string | null;
 
   // Financial data
   enterpriseValue: number | null;
@@ -41,6 +42,7 @@ export function ValuationReport({
   industry,
   country,
   createdAt,
+  reportComment,
   enterpriseValue,
   modelData,
   resultsData,
@@ -80,6 +82,17 @@ export function ValuationReport({
   const periods = modelData?.periods?.periodLabels || [];
   const numberOfYears = modelData?.periods?.numberOfYears || 5;
 
+  // Calculate valuation multiples
+  const lastYearRevenue = revenue[numberOfYears - 1] || 0;
+  const firstYearEbitda = ebitda[0] || 0;
+  const lastYearEbitda = ebitda[numberOfYears - 1] || 0;
+  const evEbitdaMultipleCurrent = enterpriseValue && firstYearEbitda > 0 ? enterpriseValue / firstYearEbitda : null;
+  const evEbitdaMultipleTerminal = enterpriseValue && lastYearEbitda > 0 ? enterpriseValue / lastYearEbitda : null;
+  const terminalValuePercent =
+    enterpriseValue && resultsData?.presentValueTerminalValue
+      ? (resultsData.presentValueTerminalValue / enterpriseValue) * 100
+      : null;
+
   // Prepare football field data
   const footballFieldData =
     scenarios.length > 0
@@ -90,6 +103,28 @@ export function ValuationReport({
           base: enterpriseValue || 0,
         }))
       : [];
+
+  // Calculate scenario ranges (min and max across all scenarios)
+  const scenarioRange =
+    scenarios.length > 0
+      ? {
+          min: Math.min(...scenarios.map((s) => s.minValue)),
+          max: Math.max(...scenarios.map((s) => s.maxValue)),
+        }
+      : null;
+
+  // Calculate WACC components
+  const riskProfile = modelData?.riskProfile;
+  const waccComponents = riskProfile
+    ? {
+        costOfEquity:
+          riskProfile.riskFreeRate +
+          riskProfile.leveredBeta * (riskProfile.equityRiskPremium + riskProfile.countryRiskPremium),
+        costOfDebt: riskProfile.riskFreeRate + riskProfile.adjustedDefaultSpread + riskProfile.companySpread,
+        equityWeight: 1 / (1 + riskProfile.deRatio),
+        debtWeight: riskProfile.deRatio / (1 + riskProfile.deRatio),
+      }
+    : null;
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -121,16 +156,42 @@ export function ValuationReport({
         </div>
       )}
 
+      {/* Report Comment */}
+      {reportComment && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-blue-900 mb-2">Report Commentary</h3>
+          <p className="text-sm text-blue-800 whitespace-pre-wrap">{reportComment}</p>
+        </div>
+      )}
+
       {/* Enterprise Value Highlight */}
       <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-sm">
         <div className="text-center">
-          <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Enterprise Value</p>
+          <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Enterprise Value (Base Case)</p>
           <p className="text-4xl font-bold text-blue-600 mt-2">{formatCurrency(enterpriseValue)}</p>
+
+          {/* Show scenario range if available */}
+          {scenarioRange && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-xs font-medium text-gray-500 uppercase mb-2">Scenario Range</p>
+              <div className="flex items-center justify-center gap-6">
+                <div>
+                  <p className="text-xs text-gray-500">Low</p>
+                  <p className="text-lg font-semibold text-gray-700">{formatCurrency(scenarioRange.min)}</p>
+                </div>
+                <div className="text-gray-400">—</div>
+                <div>
+                  <p className="text-xs text-gray-500">High</p>
+                  <p className="text-lg font-semibold text-gray-700">{formatCurrency(scenarioRange.max)}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {wacc !== null && wacc !== undefined && (
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
             <p className="text-sm font-medium text-gray-600">WACC</p>
@@ -149,6 +210,49 @@ export function ValuationReport({
             <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(resultsData.terminalValue)}</p>
           </div>
         )}
+        {terminalValuePercent !== null && (
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <p className="text-sm font-medium text-gray-600">TV % of EV</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{terminalValuePercent.toFixed(1)}%</p>
+          </div>
+        )}
+      </div>
+
+      {/* Valuation Multiples */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Implied Valuation Multiples</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {evEbitdaMultipleCurrent !== null && (
+            <div>
+              <p className="text-sm font-medium text-gray-600">EV / EBITDA (Current)</p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">{evEbitdaMultipleCurrent.toFixed(2)}x</p>
+              <p className="text-xs text-gray-500 mt-1">Based on Year 1 EBITDA</p>
+            </div>
+          )}
+          {evEbitdaMultipleTerminal !== null && (
+            <div>
+              <p className="text-sm font-medium text-gray-600">EV / EBITDA (Terminal)</p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">{evEbitdaMultipleTerminal.toFixed(2)}x</p>
+              <p className="text-xs text-gray-500 mt-1">Based on Year {numberOfYears} EBITDA</p>
+            </div>
+          )}
+          {lastYearEbitda > 0 && lastYearRevenue > 0 && (
+            <div>
+              <p className="text-sm font-medium text-gray-600">Terminal EBITDA Margin</p>
+              <p className="text-2xl font-bold text-green-600 mt-1">
+                {((lastYearEbitda / lastYearRevenue) * 100).toFixed(1)}%
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Final projection year</p>
+            </div>
+          )}
+          {lastYearRevenue > 0 && (
+            <div>
+              <p className="text-sm font-medium text-gray-600">Terminal Revenue</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(lastYearRevenue)}</p>
+              <p className="text-xs text-gray-500 mt-1">Year {numberOfYears} projection</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Revenue & EBITDA Chart */}
@@ -233,7 +337,9 @@ export function ValuationReport({
       {/* Key Assumptions */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Assumptions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* General Assumptions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
             <p className="text-sm font-medium text-gray-600">Projection Period</p>
             <p className="text-base text-gray-900 mt-1">{numberOfYears} years</p>
@@ -250,25 +356,92 @@ export function ValuationReport({
               <p className="text-base text-gray-900 mt-1">{formatPercent(terminalGrowthRate)}</p>
             </div>
           )}
-          {modelData?.riskProfile?.unleveredBeta !== null && modelData?.riskProfile?.unleveredBeta !== undefined && (
+          {riskProfile?.corporateTaxRate !== null && riskProfile?.corporateTaxRate !== undefined && (
             <div>
-              <p className="text-sm font-medium text-gray-600">Unlevered Beta</p>
-              <p className="text-base text-gray-900 mt-1">{modelData.riskProfile.unleveredBeta.toFixed(2)}</p>
-            </div>
-          )}
-          {modelData?.riskProfile?.leveredBeta !== null && modelData?.riskProfile?.leveredBeta !== undefined && (
-            <div>
-              <p className="text-sm font-medium text-gray-600">Levered Beta</p>
-              <p className="text-base text-gray-900 mt-1">{modelData.riskProfile.leveredBeta.toFixed(2)}</p>
-            </div>
-          )}
-          {modelData?.taxes?.taxRate !== null && modelData?.taxes?.taxRate !== undefined && (
-            <div>
-              <p className="text-sm font-medium text-gray-600">Tax Rate</p>
-              <p className="text-base text-gray-900 mt-1">{formatPercent(modelData.taxes.taxRate)}</p>
+              <p className="text-sm font-medium text-gray-600">Corporate Tax Rate</p>
+              <p className="text-base text-gray-900 mt-1">{formatPercent(riskProfile.corporateTaxRate * 100)}</p>
             </div>
           )}
         </div>
+
+        {/* WACC Components */}
+        {waccComponents && (
+          <>
+            <div className="border-t border-gray-200 pt-4 mb-4">
+              <h4 className="text-md font-semibold text-gray-900 mb-3">WACC Components</h4>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-blue-50 rounded-lg p-3">
+                <p className="text-sm font-medium text-blue-900 mb-2">Cost of Equity</p>
+                <p className="text-lg font-bold text-blue-700">{formatPercent(waccComponents.costOfEquity * 100)}</p>
+                <div className="mt-2 space-y-1 text-xs text-blue-800">
+                  <div className="flex justify-between">
+                    <span>Risk-Free Rate:</span>
+                    <span className="font-medium">{formatPercent(riskProfile.riskFreeRate * 100)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Levered Beta:</span>
+                    <span className="font-medium">{riskProfile.leveredBeta.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Equity Risk Premium:</span>
+                    <span className="font-medium">{formatPercent(riskProfile.equityRiskPremium * 100)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Country Risk Premium:</span>
+                    <span className="font-medium">{formatPercent(riskProfile.countryRiskPremium * 100)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-green-50 rounded-lg p-3">
+                <p className="text-sm font-medium text-green-900 mb-2">Cost of Debt (After-Tax)</p>
+                <p className="text-lg font-bold text-green-700">
+                  {formatPercent(waccComponents.costOfDebt * (1 - riskProfile.corporateTaxRate) * 100)}
+                </p>
+                <div className="mt-2 space-y-1 text-xs text-green-800">
+                  <div className="flex justify-between">
+                    <span>Pre-Tax Cost of Debt:</span>
+                    <span className="font-medium">{formatPercent(waccComponents.costOfDebt * 100)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Default Spread:</span>
+                    <span className="font-medium">{formatPercent(riskProfile.adjustedDefaultSpread * 100)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Company Spread:</span>
+                    <span className="font-medium">{formatPercent(riskProfile.companySpread * 100)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tax Shield:</span>
+                    <span className="font-medium">{formatPercent(riskProfile.corporateTaxRate * 100)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Equity Weight (E/V)</p>
+                <p className="text-base text-gray-900 mt-1">{(waccComponents.equityWeight * 100).toFixed(1)}%</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Debt Weight (D/V)</p>
+                <p className="text-base text-gray-900 mt-1">{(waccComponents.debtWeight * 100).toFixed(1)}%</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">D/E Ratio</p>
+                <p className="text-base text-gray-900 mt-1">{riskProfile.deRatio.toFixed(2)}</p>
+              </div>
+              {riskProfile.unleveredBeta !== null && riskProfile.unleveredBeta !== undefined && (
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Unlevered Beta</p>
+                  <p className="text-base text-gray-900 mt-1">{riskProfile.unleveredBeta.toFixed(2)}</p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Disclaimer */}
