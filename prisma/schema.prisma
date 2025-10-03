@@ -143,9 +143,42 @@ model Valuation {
     updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
     // Relations
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    scenarios Scenario[]
 
     @@index([userId])
     @@index([userId, createdAt])
     @@map("valuations")
+}
+
+/// Valuation scenarios - custom sensitivity analysis ranges
+/// Each scenario represents a named range (min/max) to display on the football field chart
+model Scenario {
+    id             String   @id @default(cuid())
+    valuationId    String   @map("valuation_id")
+    /// Display name for the scenario (e.g., "Optimistic Case", "WACC +/-2%", "Revenue Sensitivity")
+    name           String
+    /// Optional description
+    description    String?
+    /// Lower bound enterprise value
+    minValue       Float    @map("min_value")
+    /// Upper bound enterprise value
+    maxValue       Float    @map("max_value")
+    /// Model inputs that generated the min value (FinancialModel from modelStore)
+    minModelData   Json?    @map("min_model_data")
+    /// Model inputs that generated the max value (FinancialModel from modelStore)
+    maxModelData   Json?    @map("max_model_data")
+    /// Calculated results for min case
+    minResultsData Json?    @map("min_results_data")
+    /// Calculated results for max case
+    maxResultsData Json?    @map("max_results_data")
+    createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    // Relations
+    valuation Valuation @relation(fields: [valuationId], references: [id], onDelete: Cascade)
+
+    @@index([valuationId])
+    @@index([valuationId, createdAt])
+    @@map("scenarios")
 }

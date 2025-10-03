@@ -93,8 +93,10 @@ export function FootballFieldChart({
     const barY = y;
     const barHeight = height;
 
-    // Calculate base position as a percentage
-    const basePosition = ((base - domainMin) / (domainMax - domainMin)) * barWidth + barX;
+    // Calculate base position relative to the scenario's range (min to max)
+    // The bar's x position already represents min, and width represents (max - min)
+    const baseRatio = (base - min) / (max - min);
+    const basePosition = barX + baseRatio * barWidth;
 
     // Calculate min and max positions for labels
     const minPosition = barX;
@@ -132,7 +134,7 @@ export function FootballFieldChart({
           {formatCurrency(max)}
         </text>
 
-        {/* Base case marker */}
+        {/* Base case marker - red vertical line */}
         <line
           x1={basePosition}
           y1={barY - 2}

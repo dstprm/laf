@@ -17,7 +17,9 @@ import Header from '@/components/home/header/header';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { RevenueEbitdaChart } from '@/components/dashboard/valuations/revenue-ebitda-chart';
 import { FootballFieldChart } from '@/components/dashboard/valuations/football-field-chart';
-import type { CreateValuationInput } from '@/lib/valuation.types';
+import { ScenarioList } from '@/components/dashboard/valuations/scenario-list';
+import { ScenarioListLocal } from '@/components/dashboard/valuations/scenario-list-local';
+import type { CreateValuationInput, CreateScenarioInput } from '@/lib/valuation.types';
 
 type Scenario = {
   id: string;
@@ -165,6 +167,16 @@ export default function FreeValuationPage() {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingCalculation, setPendingCalculation] = useState<'simple' | 'advanced' | null>(null);
+  const [savedValuationId, setSavedValuationId] = useState<string | null>(null);
+
+  // Local scenario state (before saving to database)
+  type LocalScenario = {
+    name: string;
+    description?: string;
+    minValue: number;
+    maxValue: number;
+  };
+  const [localScenarios, setLocalScenarios] = useState<LocalScenario[]>([]);
 
   // Business information fields
   const [companyName, setCompanyName] = useState<string>('');
@@ -329,6 +341,13 @@ export default function FreeValuationPage() {
         ebitdaMarginPct: s.ebitdaMarginPct,
         revenueGrowthPct: s.revenueGrowthPct,
       }));
+
+      // Recompute base case to set store to base case values for graphs and saving
+      const baseScenario = scenarios.find((s) => s.id === 'base');
+      if (baseScenario) {
+        computeEVForScenario(baseScenario);
+      }
+
       setResults(computed);
       setIsCalculating(false);
     }, 3000);
@@ -337,110 +356,190 @@ export default function FreeValuationPage() {
   const currency = (v: number) =>
     v.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-  // Calculate sensitivity ranges for football field chart
-  const sensitivityRanges = useMemo(() => {
-    if (!results || results.length === 0) return [];
+  // Calculate sensitivity ranges for football field chart using proper model manipulation
+  // This effect runs after results are calculated to compute sensitivity scenarios
+  React.useEffect(() => {
+    if (!results || results.length === 0) {
+      setLocalScenarios([]);
+      return;
+    }
 
     const baseScenario = results.find((r) => r.id === 'base');
-    if (!baseScenario) return [];
+    if (!baseScenario) {
+      setLocalScenarios([]);
+      return;
+    }
 
-    const baseValue = baseScenario.enterpriseValue;
     const revenue0 = parseFloat(lastYearRevenue || '0');
     const industryData = betasStatic[industry as keyof typeof betasStatic];
     const countryData = countryRiskPremiumStatic[country as keyof typeof countryRiskPremiumStatic];
 
-    // Helper to calculate EV with modified parameters
-    const calculateEVWithParams = (
-      growthDelta: number,
-      marginDelta: number,
-      waccDelta: number = 0,
-      multipleDelta: number = 0,
-    ): number => {
-      // Simplified calculation based on simple valuation logic
+    // Helper to calculate EV with modified parameters using actual model store
+    const calculateSensitivityEV = (growthDelta: number, marginDelta: number, waccDelta: number = 0): number => {
+      // Update risk profile with WACC adjustment
+      updateRiskProfile({
+        selectedIndustry: industry,
+        selectedCountry: country,
+        unleveredBeta: industryData?.unleveredBeta ?? 0,
+        leveredBeta: industryData
+          ? industryData.unleveredBeta * (1 + (1 - (countryData?.corporateTaxRate ?? 0)) * (industryData.dERatio ?? 0))
+          : 0,
+        equityRiskPremium: countryData?.equityRiskPremium ?? 0,
+        countryRiskPremium: countryData?.countryRiskPremium ?? 0,
+        deRatio: industryData?.dERatio ?? 0,
+        adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
+        companySpread: (model.riskProfile?.companySpread ?? 0.05) + waccDelta,
+        riskFreeRate: model.riskProfile?.riskFreeRate ?? 0.0444,
+        corporateTaxRate: countryData?.corporateTaxRate ?? model.riskProfile?.corporateTaxRate ?? 0.25,
+      });
+
+      // Update revenue with growth adjustment
       const adjustedGrowth = baseScenario.revenueGrowthPct + growthDelta;
+      updateRevenue({
+        inputType: 'consolidated',
+        consolidated: {
+          inputMethod: 'growth',
+          growthMethod: 'uniform',
+          baseValue: revenue0,
+          growthRate: adjustedGrowth,
+        },
+      });
+
+      // Update OpEx with margin adjustment
       const adjustedMargin = Math.max(0, Math.min(100, baseScenario.ebitdaMarginPct + marginDelta));
+      const targetOpexPercentOfRevenue = Math.max(0, 100 - adjustedMargin);
+      updateOpEx({
+        inputType: 'consolidated',
+        consolidated: {
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'uniform',
+          percentOfRevenue: targetOpexPercentOfRevenue,
+        },
+      });
 
-      // Estimate revenue projection with adjusted growth
-      const projectedRevenues: number[] = [];
-      for (let i = 0; i < 5; i++) {
-        if (i === 0) {
-          projectedRevenues.push(revenue0);
-        } else {
-          projectedRevenues.push(projectedRevenues[i - 1] * (1 + adjustedGrowth / 100));
-        }
-      }
+      updateTaxes({
+        inputMethod: 'percentOfEBIT',
+        percentMethod: 'uniform',
+        percentOfEBIT: (countryData?.corporateTaxRate ?? 0.25) * 100,
+      });
 
-      // Calculate EBITDA based on adjusted margin
-      const finalYearRevenue = projectedRevenues[4];
-      const finalYearEBITDA = finalYearRevenue * (adjustedMargin / 100);
+      updateTerminalValue({ method: 'multiples', multipleMetric: 'ebitda', multipleValue: 10 });
 
-      // Calculate WACC
-      const riskFreeRate = model.riskProfile?.riskFreeRate ?? 0.0444;
-      const leveredBeta = industryData
-        ? industryData.unleveredBeta * (1 + (1 - (countryData?.corporateTaxRate ?? 0.25)) * (industryData.dERatio ?? 0))
-        : 0;
-      const equityRiskPremium = countryData?.equityRiskPremium ?? 0;
-      const countryRiskPremium = countryData?.countryRiskPremium ?? 0;
-      const adjustedDefaultSpread = countryData?.adjDefaultSpread ?? 0;
-      const companySpread = model.riskProfile?.companySpread ?? 0.05;
-      const deRatio = industryData?.dERatio ?? 0;
-      const corporateTaxRate = countryData?.corporateTaxRate ?? 0.25;
-
-      const costOfEquity = riskFreeRate + leveredBeta * (equityRiskPremium + countryRiskPremium);
-      const costOfDebt = riskFreeRate + adjustedDefaultSpread + companySpread;
-      const equityWeight = 1 / (1 + deRatio);
-      const debtWeight = deRatio / (1 + deRatio);
-      let wacc = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - corporateTaxRate);
-
-      // Apply WACC delta
-      wacc = Math.max(0.01, wacc + waccDelta);
-
-      // Calculate terminal value using multiples method
-      const baseMultiple = 10;
-      const adjustedMultiple = baseMultiple + multipleDelta;
-      const terminalValue = finalYearEBITDA * adjustedMultiple;
-      const presentValueTV = terminalValue / Math.pow(1 + wacc, 5);
-
-      // Simplified FCF calculation - assume FCF approximates EBITDA * 0.6
-      let sumPVFCF = 0;
-      for (let i = 0; i < 5; i++) {
-        const yearRevenue = projectedRevenues[i];
-        const yearEBITDA = yearRevenue * (adjustedMargin / 100);
-        const yearFCF = yearEBITDA * 0.6;
-        const pvFCF = yearFCF / Math.pow(1 + wacc, i + 1);
-        sumPVFCF += pvFCF;
-      }
-
-      return sumPVFCF + presentValueTV;
+      calculateFinancials();
+      return useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
     };
 
-    return [
+    // Calculate each sensitivity scenario
+    const waccMin = calculateSensitivityEV(0, 0, 0.02);
+    const waccMax = calculateSensitivityEV(0, 0, -0.02);
+
+    const marginMin = calculateSensitivityEV(0, -5, 0);
+    const marginMax = calculateSensitivityEV(0, 5, 0);
+
+    const growthMin = calculateSensitivityEV(-5, 0, 0);
+    const growthMax = calculateSensitivityEV(5, 0, 0);
+
+    // Restore base case after sensitivity calculations
+    const baseScenarioData = scenarios.find((s) => s.id === 'base');
+    if (baseScenarioData) {
+      updateRiskProfile({
+        selectedIndustry: industry,
+        selectedCountry: country,
+        unleveredBeta: industryData?.unleveredBeta ?? 0,
+        leveredBeta: industryData
+          ? industryData.unleveredBeta * (1 + (1 - (countryData?.corporateTaxRate ?? 0)) * (industryData.dERatio ?? 0))
+          : 0,
+        equityRiskPremium: countryData?.equityRiskPremium ?? 0,
+        countryRiskPremium: countryData?.countryRiskPremium ?? 0,
+        deRatio: industryData?.dERatio ?? 0,
+        adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
+        companySpread: model.riskProfile?.companySpread ?? 0.05,
+        riskFreeRate: model.riskProfile?.riskFreeRate ?? 0.0444,
+        corporateTaxRate: countryData?.corporateTaxRate ?? model.riskProfile?.corporateTaxRate ?? 0.25,
+      });
+
+      updateRevenue({
+        inputType: 'consolidated',
+        consolidated: {
+          inputMethod: 'growth',
+          growthMethod: 'uniform',
+          baseValue: revenue0,
+          growthRate: baseScenario.revenueGrowthPct,
+        },
+      });
+
+      const targetOpexPercentOfRevenue = Math.max(0, 100 - baseScenario.ebitdaMarginPct);
+      updateOpEx({
+        inputType: 'consolidated',
+        consolidated: {
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'uniform',
+          percentOfRevenue: targetOpexPercentOfRevenue,
+        },
+      });
+
+      calculateFinancials();
+    }
+
+    const sensitivityScenarios: LocalScenario[] = [
       {
-        scenario: 'WACC Sensitivity (±2%)',
-        min: calculateEVWithParams(0, 0, 0.02, 0),
-        max: calculateEVWithParams(0, 0, -0.02, 0),
-        base: baseValue,
+        name: 'Revenue Growth (±5%)',
+        description: 'Sensitivity analysis: Revenue Growth (±5%)',
+        minValue: growthMin,
+        maxValue: growthMax,
       },
       {
-        scenario: 'EBITDA Multiple (±2x)',
-        min: calculateEVWithParams(0, 0, 0, -2),
-        max: calculateEVWithParams(0, 0, 0, 2),
-        base: baseValue,
+        name: 'EBITDA Margin (±5%)',
+        description: 'Sensitivity analysis: EBITDA Margin (±5%)',
+        minValue: marginMin,
+        maxValue: marginMax,
       },
       {
-        scenario: 'EBITDA Margin (±5%)',
-        min: calculateEVWithParams(0, -5, 0, 0),
-        max: calculateEVWithParams(0, 5, 0, 0),
-        base: baseValue,
-      },
-      {
-        scenario: 'Revenue Growth (±5%)',
-        min: calculateEVWithParams(-5, 0, 0, 0),
-        max: calculateEVWithParams(5, 0, 0, 0),
-        base: baseValue,
+        name: 'WACC Sensitivity (±2%)',
+        description: 'Sensitivity analysis: WACC Sensitivity (±2%)',
+        minValue: waccMin,
+        maxValue: waccMax,
       },
     ];
-  }, [results, lastYearRevenue, industry, country, model.riskProfile]);
+
+    setLocalScenarios(sensitivityScenarios);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results]);
+
+  // Helper function to save scenarios after valuation is created
+  const saveLocalScenarios = async (valuationId: string) => {
+    if (localScenarios.length === 0) return;
+
+    try {
+      // Save each local scenario to the database
+      const scenarioPromises = localScenarios.map(async (scenario) => {
+        const scenarioData: Omit<CreateScenarioInput, 'valuationId'> = {
+          name: scenario.name,
+          description: scenario.description,
+          minValue: scenario.minValue,
+          maxValue: scenario.maxValue,
+        };
+
+        const response = await fetch(`/api/valuations/${valuationId}/scenarios`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...scenarioData, valuationId }),
+        });
+
+        if (!response.ok) {
+          console.error(`Failed to save scenario: ${scenario.name}`);
+          return null;
+        }
+
+        return response.json();
+      });
+
+      await Promise.all(scenarioPromises);
+    } catch (error) {
+      console.error('Failed to save scenarios:', error);
+      // Don't throw - scenarios are optional
+    }
+  };
 
   const performAdvancedCalculation = () => {
     const revenue0 = parseFloat(lastYearRevenue || '0');
@@ -648,6 +747,10 @@ export default function FreeValuationPage() {
       const baseEV = computeEVForScenarioAdvanced(0, 0);
       const lowEV = computeEVForScenarioAdvanced(-5, -5);
       const highEV = computeEVForScenarioAdvanced(5, 5);
+
+      // Recompute base case to set store to base case values for graphs and saving
+      computeEVForScenarioAdvanced(0, 0);
+
       setResults([
         {
           id: 'bear',
@@ -823,10 +926,16 @@ export default function FreeValuationPage() {
         throw new Error(errorData.error || 'Failed to save valuation');
       }
 
+      const savedValuation = await response.json();
+      setSavedValuationId(savedValuation.id);
+
+      // Save local scenarios after valuation is created
+      await saveLocalScenarios(savedValuation.id);
+
       // Show success toast with dashboard redirect button
       toast({
         title: 'Valuation saved successfully!',
-        description: 'Your valuation has been saved to your dashboard.',
+        description: 'Your valuation and scenarios have been saved to your dashboard.',
         action: (
           <ToastAction altText="Go to Dashboard" onClick={() => router.push('/dashboard')}>
             Go to Dashboard
@@ -1077,13 +1186,58 @@ export default function FreeValuationPage() {
                   )}
 
                   {/* Football Field Valuation Chart */}
-                  {sensitivityRanges.length > 0 && (
+                  {localScenarios.length > 0 && (
                     <div className="mt-6">
-                      <FootballFieldChart ranges={sensitivityRanges} title="Valuation Sensitivity Analysis" />
+                      <FootballFieldChart
+                        ranges={localScenarios.map((s) => ({
+                          scenario: s.name,
+                          min: s.minValue,
+                          max: s.maxValue,
+                          base:
+                            results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                            calculatedFinancials.enterpriseValue ||
+                            0,
+                        }))}
+                        title="Valuation Sensitivity Analysis"
+                      />
                     </div>
                   )}
 
-                  {isSignedIn && (
+                  {/* Scenario Management - Show immediately (before saving) */}
+                  {!savedValuationId && (
+                    <div className="mt-6">
+                      <ScenarioListLocal
+                        scenarios={localScenarios}
+                        onChange={setLocalScenarios}
+                        baseModel={model}
+                        baseResults={calculatedFinancials}
+                        baseValue={
+                          results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                          calculatedFinancials.enterpriseValue ||
+                          0
+                        }
+                      />
+                    </div>
+                  )}
+
+                  {/* After saving, show database-backed scenario list */}
+                  {savedValuationId && (
+                    <div className="mt-6">
+                      <ScenarioList
+                        valuationId={savedValuationId}
+                        baseValue={
+                          results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                          calculatedFinancials.enterpriseValue ||
+                          0
+                        }
+                        baseModel={model}
+                        baseResults={calculatedFinancials}
+                        onScenariosChange={() => {}}
+                      />
+                    </div>
+                  )}
+
+                  {isSignedIn && !savedValuationId && (
                     <div className="mt-4 flex justify-end">
                       <Button onClick={handleSaveValuation} disabled={isSaving}>
                         {isSaving ? 'Saving...' : 'Save Valuation'}
@@ -1935,13 +2089,58 @@ export default function FreeValuationPage() {
                   )}
 
                   {/* Football Field Valuation Chart */}
-                  {sensitivityRanges.length > 0 && (
+                  {localScenarios.length > 0 && (
                     <div className="mt-6">
-                      <FootballFieldChart ranges={sensitivityRanges} title="Valuation Sensitivity Analysis" />
+                      <FootballFieldChart
+                        ranges={localScenarios.map((s) => ({
+                          scenario: s.name,
+                          min: s.minValue,
+                          max: s.maxValue,
+                          base:
+                            results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                            calculatedFinancials.enterpriseValue ||
+                            0,
+                        }))}
+                        title="Valuation Sensitivity Analysis"
+                      />
                     </div>
                   )}
 
-                  {isSignedIn && (
+                  {/* Scenario Management - Show immediately (before saving) */}
+                  {!savedValuationId && (
+                    <div className="mt-6">
+                      <ScenarioListLocal
+                        scenarios={localScenarios}
+                        onChange={setLocalScenarios}
+                        baseModel={model}
+                        baseResults={calculatedFinancials}
+                        baseValue={
+                          results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                          calculatedFinancials.enterpriseValue ||
+                          0
+                        }
+                      />
+                    </div>
+                  )}
+
+                  {/* After saving, show database-backed scenario list */}
+                  {savedValuationId && (
+                    <div className="mt-6">
+                      <ScenarioList
+                        valuationId={savedValuationId}
+                        baseValue={
+                          results?.find((r) => r.id === 'base')?.enterpriseValue ||
+                          calculatedFinancials.enterpriseValue ||
+                          0
+                        }
+                        baseModel={model}
+                        baseResults={calculatedFinancials}
+                        onScenariosChange={() => {}}
+                      />
+                    </div>
+                  )}
+
+                  {isSignedIn && !savedValuationId && (
                     <div className="mt-4 flex justify-end">
                       <Button onClick={handleSaveValuation} disabled={isSaving}>
                         {isSaving ? 'Saving...' : 'Save Valuation'}
