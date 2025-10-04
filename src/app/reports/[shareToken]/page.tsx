@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getValuationByTokenWithOwnerCheck } from '@/utils/database/valuation';
 import { ValuationReport } from '@/components/dashboard/valuations/valuation-report';
 import { ReportPublishBanner } from '@/components/dashboard/valuations/report-publish-banner';
+import { PrivateReportMessage } from '@/components/shared/private-report-message';
 import Link from 'next/link';
 import Header from '@/components/home/header/header';
 import { Footer } from '@/components/home/footer/footer';
@@ -27,9 +28,19 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
   }
 
   // Fetch the valuation with owner check
-  const valuation = await getValuationByTokenWithOwnerCheck(shareToken, currentUserId);
+  const { valuation, status } = await getValuationByTokenWithOwnerCheck(shareToken, currentUserId);
 
-  // If not found or not accessible, show 404
+  // If not found, show 404
+  if (status === 'not_found') {
+    notFound();
+  }
+
+  // If private (not published and not owner), show private message
+  if (status === 'private') {
+    return <PrivateReportMessage />;
+  }
+
+  // At this point, valuation is accessible
   if (!valuation) {
     notFound();
   }
@@ -107,7 +118,20 @@ export async function generateMetadata({ params }: ReportPageProps) {
     currentUserId = user?.id;
   }
 
-  const valuation = await getValuationByTokenWithOwnerCheck(shareToken, currentUserId);
+  const { valuation, status } = await getValuationByTokenWithOwnerCheck(shareToken, currentUserId);
+
+  if (status === 'not_found') {
+    return {
+      title: 'Report Not Found',
+    };
+  }
+
+  if (status === 'private') {
+    return {
+      title: 'Private Report',
+      description: 'This valuation report is private and only accessible to its owner.',
+    };
+  }
 
   if (!valuation) {
     return {

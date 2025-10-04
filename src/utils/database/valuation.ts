@@ -208,11 +208,17 @@ export async function getPublishedValuationByToken(shareToken: string) {
 
 /**
  * Get a valuation by share token with owner check
- * Returns the valuation if:
- * - It's published (anyone can see), OR
- * - The requesting user is the owner (can preview unpublished)
+ * Returns an object with:
+ * - valuation: the valuation data (if accessible)
+ * - status: 'not_found' | 'private' | 'accessible'
  */
-export async function getValuationByTokenWithOwnerCheck(shareToken: string, userId?: string) {
+export async function getValuationByTokenWithOwnerCheck(
+  shareToken: string,
+  userId?: string,
+): Promise<{
+  valuation: any | null;
+  status: 'not_found' | 'private' | 'accessible';
+}> {
   const valuation = await prisma.valuation.findFirst({
     where: { shareToken },
     include: {
@@ -223,21 +229,21 @@ export async function getValuationByTokenWithOwnerCheck(shareToken: string, user
   });
 
   if (!valuation) {
-    return null;
+    return { valuation: null, status: 'not_found' };
   }
 
   // If published, anyone can see it
   if (valuation.isPublished) {
-    return valuation;
+    return { valuation, status: 'accessible' };
   }
 
   // If not published, only the owner can see it
   if (userId && valuation.userId === userId) {
-    return valuation;
+    return { valuation, status: 'accessible' };
   }
 
   // Not published and not the owner
-  return null;
+  return { valuation: null, status: 'private' };
 }
 
 /**
