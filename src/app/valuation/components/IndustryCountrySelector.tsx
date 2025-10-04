@@ -64,13 +64,17 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   const industries = Object.keys(betasStatic);
   const countries = Object.keys(countryRiskPremiumStatic);
 
-  // Force sync on mount (important for when component re-mounts with new key)
+  // Force sync on mount and when riskProfile changes (important for when loading saved data)
   useEffect(() => {
-    if (!model.riskProfile) return;
+    if (!model.riskProfile) {
+      return;
+    }
 
-    console.log('IndustryCountrySelector mounting - forcing initial sync with store');
     const newIndustry = model.riskProfile.selectedIndustry || null;
     const newCountry = model.riskProfile.selectedCountry || null;
+
+    // Set isSyncing to prevent the update effect from triggering
+    setIsSyncing(true);
 
     // Force update even if values appear the same
     setSelectedIndustry(newIndustry);
@@ -87,8 +91,9 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     setRiskFreeRateStr(formatPercent(model.riskProfile.riskFreeRate || 0.0444));
     setCorporateTaxRateStr(formatPercent(model.riskProfile.corporateTaxRate || 0.25));
 
-    console.log('Initial sync complete:', { newIndustry, newCountry });
-  }, []); // Empty deps = run only on mount
+    // Reset isSyncing after state updates
+    setTimeout(() => setIsSyncing(false), 0);
+  }, [model.riskProfile]); // Re-run when riskProfile changes
 
   // Sync with model when it changes (important for when loading saved data)
   useEffect(() => {
@@ -272,7 +277,9 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
                     <Globe className="w-4 h-4 text-green-700" />
                     <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Country</span>
                   </div>
-                  <div className="text-base font-bold text-green-900 text-center">{selectedCountry || 'Not specified'}</div>
+                  <div className="text-base font-bold text-green-900 text-center">
+                    {selectedCountry || 'Not specified'}
+                  </div>
                 </div>
               </div>
               <div className="flex-1 min-w-[200px]">
@@ -281,7 +288,9 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
                     <Building className="w-4 h-4 text-blue-700" />
                     <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Industry</span>
                   </div>
-                  <div className="text-base font-bold text-blue-900 text-center">{selectedIndustry || 'Not specified'}</div>
+                  <div className="text-base font-bold text-blue-900 text-center">
+                    {selectedIndustry || 'Not specified'}
+                  </div>
                 </div>
               </div>
             </div>

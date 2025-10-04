@@ -35,16 +35,7 @@ export default function ValuationEditClient({
   country,
   enterpriseValue,
 }: ValuationEditClientProps) {
-  // Debug: Log what data we received from props
-  console.log('ValuationEditClient mounted with props:', {
-    hasModelData: !!initialModelData,
-    hasResultsData: !!initialResultsData,
-    hasRiskProfile: !!initialModelData?.riskProfile,
-    riskProfileIndustry: initialModelData?.riskProfile?.selectedIndustry,
-    riskProfileCountry: initialModelData?.riskProfile?.selectedCountry,
-    propsIndustry: industry,
-    propsCountry: country,
-  });
+  // Removed excessive debug logging
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -71,60 +62,109 @@ export default function ValuationEditClient({
   const industries = useMemo(() => Object.keys(betasStatic), []);
   const countries = useMemo(() => Object.keys(countryRiskPremiumStatic), []);
 
-  // Initialize the model store with saved data when entering edit mode
+  // Initialize the model store with saved data when mounting
+  const [hasInitialized, setHasInitialized] = useState(false);
+
   useEffect(() => {
-    if (isEditMode && initialModelData && initialResultsData) {
-      try {
-        console.log('Loading valuation data into store:', {
-          hasRiskProfile: !!initialModelData.riskProfile,
-          riskProfile: initialModelData.riskProfile,
-        });
+    // Only initialize once
+    if (hasInitialized || !initialModelData || !initialResultsData) return;
 
-        // Use Zustand's setState to load the saved model
-        // Ensure we're loading the complete model including riskProfile
-        useModelStore.setState({
-          model: {
-            ...initialModelData,
-            // Ensure riskProfile is properly set, fallback to defaults if missing
-            riskProfile: initialModelData.riskProfile || {
-              selectedIndustry: industry || null,
-              selectedCountry: country || null,
-              unleveredBeta: 0,
-              leveredBeta: 0,
-              equityRiskPremium: 0,
-              countryRiskPremium: 0,
-              deRatio: 0,
-              adjustedDefaultSpread: 0,
-              companySpread: 0.05,
-              riskFreeRate: 0.0444,
-              corporateTaxRate: 0.25,
-            },
-          },
-          calculatedFinancials: initialResultsData,
-        });
+    try {
+      // Get the selected industry and country (fallback to denormalized values)
+      const selectedIndustry = initialModelData.riskProfile?.selectedIndustry || industry || null;
+      const selectedCountry = initialModelData.riskProfile?.selectedCountry || country || null;
 
-        console.log('Model loaded. Current riskProfile:', useModelStore.getState().model.riskProfile);
+      // Check if WACC parameters are all defaults/zeros (indicating they need to be recalculated)
+      const hasDefaultWaccParams =
+        initialModelData.riskProfile &&
+        initialModelData.riskProfile.unleveredBeta === 0 &&
+        initialModelData.riskProfile.leveredBeta === 0 &&
+        initialModelData.riskProfile.equityRiskPremium === 0 &&
+        initialModelData.riskProfile.countryRiskPremium === 0 &&
+        initialModelData.riskProfile.deRatio === 0;
 
-        // Wait a tick to ensure store update has propagated, then force re-mount
-        setTimeout(() => {
-          console.log('Forcing component re-mount with new key');
-          setComponentKey((prev) => prev + 1);
-        }, 0);
+      let riskProfile;
 
-        // Recalculate to ensure everything is in sync
-        setTimeout(() => {
-          calculateFinancials();
-        }, 150);
-      } catch (error) {
-        console.error('Error loading valuation data:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error loading valuation',
-          description: 'Failed to load valuation data for editing.',
-        });
+      // If WACC params are defaults but we have industry/country, recalculate from static data
+      if (hasDefaultWaccParams && selectedIndustry && selectedCountry) {
+        const industryData = betasStatic[selectedIndustry as keyof typeof betasStatic];
+        const countryData = countryRiskPremiumStatic[selectedCountry as keyof typeof countryRiskPremiumStatic];
+
+        if (industryData && countryData) {
+          const unleveredBeta = industryData.unleveredBeta;
+          const deRatio = industryData.dERatio;
+          const corporateTaxRate = countryData.corporateTaxRate;
+          const leveredBeta = unleveredBeta * (1 + (1 - corporateTaxRate) * deRatio);
+
+          riskProfile = {
+            selectedIndustry,
+            selectedCountry,
+            unleveredBeta,
+            leveredBeta,
+            equityRiskPremium: countryData.equityRiskPremium,
+            countryRiskPremium: countryData.countryRiskPremium,
+            deRatio,
+            adjustedDefaultSpread: countryData.adjDefaultSpread,
+            companySpread: initialModelData.riskProfile?.companySpread || 0.05,
+            riskFreeRate: initialModelData.riskProfile?.riskFreeRate || 0.0444,
+            corporateTaxRate,
+          };
+        } else {
+          // Fallback to existing data with updated industry/country
+          riskProfile = {
+            ...initialModelData.riskProfile,
+            selectedIndustry,
+            selectedCountry,
+          };
+        }
+      } else if (initialModelData.riskProfile) {
+        // Use existing riskProfile with updated industry/country
+        riskProfile = {
+          ...initialModelData.riskProfile,
+          selectedIndustry,
+          selectedCountry,
+        };
+      } else {
+        // No riskProfile exists, create default one
+        riskProfile = {
+          selectedIndustry,
+          selectedCountry,
+          unleveredBeta: 0,
+          leveredBeta: 0,
+          equityRiskPremium: 0,
+          countryRiskPremium: 0,
+          deRatio: 0,
+          adjustedDefaultSpread: 0,
+          companySpread: 0.05,
+          riskFreeRate: 0.0444,
+          corporateTaxRate: 0.25,
+        };
       }
+
+      // Use Zustand's setState to load the saved model
+      useModelStore.setState({
+        model: {
+          ...initialModelData,
+          riskProfile,
+        },
+        calculatedFinancials: initialResultsData,
+      });
+
+      setHasInitialized(true);
+
+      // Recalculate to ensure everything is in sync
+      setTimeout(() => {
+        calculateFinancials();
+      }, 150);
+    } catch (error) {
+      console.error('Error loading valuation data:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error loading valuation',
+        description: 'Failed to load valuation data for editing.',
+      });
     }
-  }, [isEditMode, initialModelData, initialResultsData, toast, calculateFinancials, industry, country]);
+  }, [hasInitialized, initialModelData, initialResultsData, toast, calculateFinancials, industry, country]);
 
   const handleSave = async () => {
     setIsSaving(true);
