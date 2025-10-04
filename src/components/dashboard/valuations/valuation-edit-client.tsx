@@ -13,6 +13,10 @@ import { FootballFieldChart } from './football-field-chart';
 import { ScenarioList } from './scenario-list';
 import { betasStatic } from '@/app/valuation/betasStatic';
 import { countryRiskPremiumStatic } from '@/app/valuation/countryRiskPremiumStatic';
+import {
+  AdvancedValuationForm,
+  type AdvancedValuationState,
+} from '@/components/shared/valuation/advanced-valuation-form';
 
 import type { FinancialModel, CalculatedFinancials, ScenarioListItem } from '@/lib/valuation.types';
 
@@ -50,8 +54,46 @@ export default function ValuationEditClient({
   const [editMode, setEditMode] = useState<'simple' | 'advanced' | 'full'>('simple');
   const [componentKey, setComponentKey] = useState(0); // Force re-mount when entering edit mode
   const [scenarios, setScenarios] = useState<ScenarioListItem[]>([]);
+  const [isCalculating, setIsCalculating] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+
+  // Advanced form state
+  const [advState, setAdvState] = useState<AdvancedValuationState>({
+    advYears: 5,
+    advRevenueInputMethod: 'growth',
+    growthMode: 'uniform',
+    advUniformGrowth: '',
+    revenueDirectList: Array.from({ length: 5 }, () => ''),
+    growthPerYearList: Array.from({ length: 4 }, () => ''),
+    advLTG: '',
+    ebitdaInputType: 'percent',
+    ebitdaPctMode: 'ramp',
+    advEbitdaUniformPct: '',
+    advEbitdaStart: '',
+    advEbitdaTarget: '',
+    ebitdaPercentPerYearList: Array.from({ length: 5 }, () => ''),
+    ebitdaDirectList: Array.from({ length: 5 }, () => ''),
+    capexMethod: 'percentOfRevenue',
+    capexPercentMode: 'uniform',
+    advCapexPct: '',
+    capexPercentsList: Array.from({ length: 5 }, () => ''),
+    capexDirectList: Array.from({ length: 5 }, () => ''),
+    nwcMethod: 'percentOfRevenue',
+    nwcPercentMode: 'uniform',
+    advNwcPct: '',
+    nwcPercentsList: Array.from({ length: 5 }, () => ''),
+    nwcDirectList: Array.from({ length: 5 }, () => ''),
+    daMethod: 'percentOfRevenue',
+    daPercentMode: 'uniform',
+    advDaPct: '',
+    daPercentsList: Array.from({ length: 5 }, () => ''),
+    daDirectList: Array.from({ length: 5 }, () => ''),
+    taxesMethod: 'percentOfEBIT',
+    taxesPct: '',
+    taxesDirectList: Array.from({ length: 5 }, () => ''),
+    advStep: 1,
+  });
 
   const {
     model,
@@ -65,6 +107,7 @@ export default function ValuationEditClient({
     updateCapex,
     updateNetWorkingCapital,
     updateDA,
+    updatePeriods,
   } = useModelStore();
 
   const industries = useMemo(() => Object.keys(betasStatic), []);
@@ -415,6 +458,34 @@ export default function ValuationEditClient({
     return calculatedFinancials.ebitdaMargin?.[0] || 0;
   };
 
+  // Helper functions for advanced mode
+  const buildArrayFromList = (years: number, list: string[]): number[] => {
+    const arr: number[] = [];
+    for (let i = 0; i < years; i++) {
+      const v = parseFloat((list[i] || '').trim());
+      arr.push(Number.isFinite(v) ? v : 0);
+    }
+    return arr;
+  };
+
+  const buildIndividualPercentsMap = (years: number, list: string[]): { [k: number]: number } => {
+    const arr = buildArrayFromList(years, list);
+    const map: { [k: number]: number } = {};
+    for (let i = 0; i < years; i++) map[i] = arr[i] ?? 0;
+    return map;
+  };
+
+  const buildMarginArray = (startPct: number, targetPct: number, years: number, delta: number) => {
+    const s = Math.max(0, startPct + delta);
+    const t = Math.max(0, targetPct + delta);
+    const arr: number[] = [];
+    for (let i = 0; i < years; i++) {
+      const ratio = years === 1 ? 0 : i / (years - 1);
+      arr.push(s + (t - s) * ratio);
+    }
+    return arr.map((v) => Math.min(100, Math.max(0, v)));
+  };
+
   // Simple mode handlers
   const handleSimpleUpdate = () => {
     const industryData = model.riskProfile?.selectedIndustry
@@ -443,6 +514,192 @@ export default function ValuationEditClient({
     updateTerminalValue({ method: 'multiples', multipleMetric: 'ebitda', multipleValue: 10 });
 
     setTimeout(() => calculateFinancials(), 100);
+  };
+
+  // Advanced mode handler
+  const handleAdvancedUpdate = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    const revenue0 = getLastYearRevenue();
+    if (!(revenue0 > 0) || advState.advYears < 2) return;
+
+    setIsCalculating(true);
+
+    const industryData = model.riskProfile?.selectedIndustry
+      ? betasStatic[model.riskProfile.selectedIndustry as keyof typeof betasStatic]
+      : null;
+    const countryData = model.riskProfile?.selectedCountry
+      ? countryRiskPremiumStatic[model.riskProfile.selectedCountry as keyof typeof countryRiskPremiumStatic]
+      : null;
+
+    setTimeout(() => {
+      // Update periods
+      updatePeriods({ numberOfYears: advState.advYears, startYear: new Date().getFullYear() });
+
+      // Update risk profile if industry/country selected
+      if (industryData && countryData) {
+        updateRiskProfile({
+          unleveredBeta: industryData?.unleveredBeta ?? 0,
+          leveredBeta: industryData
+            ? industryData.unleveredBeta *
+              (1 + (1 - (countryData?.corporateTaxRate ?? 0)) * (industryData.dERatio ?? 0))
+            : 0,
+          equityRiskPremium: countryData?.equityRiskPremium ?? 0,
+          countryRiskPremium: countryData?.countryRiskPremium ?? 0,
+          deRatio: industryData?.dERatio ?? 0,
+          adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
+          corporateTaxRate: countryData?.corporateTaxRate ?? 0.25,
+        });
+      }
+
+      // Revenue
+      if (advState.advRevenueInputMethod === 'growth') {
+        if (advState.growthMode === 'uniform') {
+          const g = advState.advUniformGrowth.trim() !== '' ? parseFloat(advState.advUniformGrowth) : 0;
+          updateRevenue({
+            inputType: 'consolidated',
+            consolidated: { inputMethod: 'growth', growthMethod: 'uniform', baseValue: revenue0, growthRate: g },
+          });
+        } else {
+          const arr = buildArrayFromList(Math.max(advState.advYears - 1, 1), advState.growthPerYearList);
+          const individualGrowthRates: { [k: number]: number } = {};
+          for (let i = 1; i < advState.advYears; i++) {
+            individualGrowthRates[i] = arr[i - 1] ?? 0;
+          }
+          updateRevenue({
+            inputType: 'consolidated',
+            consolidated: {
+              inputMethod: 'growth',
+              growthMethod: 'individual',
+              baseValue: revenue0,
+              individualGrowthRates,
+            },
+          });
+        }
+      } else {
+        const yearlyValues = buildArrayFromList(advState.advYears, advState.revenueDirectList);
+        updateRevenue({ inputType: 'consolidated', consolidated: { inputMethod: 'direct', yearlyValues } });
+      }
+
+      // Terminal value
+      const ltg = advState.advLTG.trim() !== '' ? parseFloat(advState.advLTG) : 0;
+      updateTerminalValue({ method: 'growth', growthRate: ltg });
+
+      // EBITDA via OpEx
+      if (advState.ebitdaInputType === 'percent') {
+        let marginArr: number[] = [];
+        if (advState.ebitdaPctMode === 'uniform') {
+          const m = advState.advEbitdaUniformPct.trim() !== '' ? parseFloat(advState.advEbitdaUniformPct) : 0;
+          marginArr = Array.from({ length: advState.advYears }, () => m);
+        } else if (advState.ebitdaPctMode === 'perYear') {
+          const parts = buildArrayFromList(advState.advYears, advState.ebitdaPercentPerYearList);
+          marginArr = Array.from({ length: advState.advYears }, (_, i) =>
+            i < parts.length ? parts[i] || 0 : parts[parts.length - 1] || 0,
+          );
+        } else {
+          const startM = parseFloat(advState.advEbitdaStart || '0');
+          const targetM = parseFloat(advState.advEbitdaTarget || advState.advEbitdaStart || '0');
+          marginArr = buildMarginArray(startM, targetM, advState.advYears, 0);
+        }
+        const individualPercents: { [k: number]: number } = {};
+        for (let i = 0; i < advState.advYears; i++) {
+          individualPercents[i] = Math.max(0, 100 - (marginArr[i] || 0));
+        }
+        updateOpEx({
+          inputType: 'consolidated',
+          consolidated: { inputMethod: 'percentOfRevenue', percentMethod: 'individual', individualPercents },
+        });
+      } else {
+        updateOpEx({
+          inputType: 'consolidated',
+          consolidated: { inputMethod: 'direct', yearlyValues: Array(advState.advYears).fill(0) },
+        });
+      }
+
+      // CAPEX
+      if (advState.capexMethod === 'direct') {
+        updateCapex({
+          inputMethod: 'direct',
+          yearlyValues: buildArrayFromList(advState.advYears, advState.capexDirectList),
+        });
+      } else if (advState.capexPercentMode === 'uniform') {
+        updateCapex({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'uniform',
+          percentOfRevenue: parseFloat(advState.advCapexPct || '0'),
+        });
+      } else {
+        updateCapex({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'individual',
+          individualPercents: buildIndividualPercentsMap(advState.advYears, advState.capexPercentsList),
+        });
+      }
+
+      // NWC
+      if (advState.nwcMethod === 'direct') {
+        updateNetWorkingCapital({
+          inputMethod: 'direct',
+          yearlyValues: buildArrayFromList(advState.advYears, advState.nwcDirectList),
+        });
+      } else if (advState.nwcPercentMode === 'uniform') {
+        updateNetWorkingCapital({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'uniform',
+          percentOfRevenue: parseFloat(advState.advNwcPct || '0'),
+        });
+      } else {
+        updateNetWorkingCapital({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'individual',
+          individualPercents: buildIndividualPercentsMap(advState.advYears, advState.nwcPercentsList),
+        });
+      }
+
+      // D&A
+      if (advState.daMethod === 'direct') {
+        updateDA({
+          inputMethod: 'direct',
+          yearlyValues: buildArrayFromList(advState.advYears, advState.daDirectList),
+        });
+      } else if (advState.daPercentMode === 'uniform') {
+        updateDA({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'uniform',
+          percentOfRevenue: parseFloat(advState.advDaPct || '0'),
+        });
+      } else {
+        updateDA({
+          inputMethod: 'percentOfRevenue',
+          percentMethod: 'individual',
+          individualPercents: buildIndividualPercentsMap(advState.advYears, advState.daPercentsList),
+        });
+      }
+
+      // Taxes
+      if (advState.taxesMethod === 'direct') {
+        updateTaxes({
+          inputMethod: 'direct',
+          yearlyValues: buildArrayFromList(advState.advYears, advState.taxesDirectList),
+        });
+      } else {
+        const taxPct = advState.taxesPct.trim() !== '' ? parseFloat(advState.taxesPct) : 0;
+        updateTaxes({ inputMethod: 'percentOfEBIT', percentMethod: 'uniform', percentOfEBIT: taxPct });
+      }
+
+      calculateFinancials();
+
+      // Adjust OpEx if using direct EBITDA
+      if (advState.ebitdaInputType === 'direct') {
+        const currentRevenue = useModelStore.getState().calculatedFinancials.revenue;
+        const targetEbitda = buildArrayFromList(advState.advYears, advState.ebitdaDirectList);
+        const opexValues = currentRevenue.map((rev, i) => Math.max(0, (rev || 0) - (targetEbitda[i] || 0)));
+        updateOpEx({ inputType: 'consolidated', consolidated: { inputMethod: 'direct', yearlyValues: opexValues } });
+        calculateFinancials();
+      }
+
+      setIsCalculating(false);
+    }, 100);
   };
 
   // Edit mode - show editing interface with mode selector
@@ -560,73 +817,29 @@ export default function ValuationEditClient({
           {/* Industry and Country Selector - WACC collapsed for advanced mode */}
           <IndustryCountrySelector key={`advanced-selector-${componentKey}`} waccExpanded={false} readOnly={true} />
 
-          {/* Advanced Form - Same as /free-valuation */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Advanced Valuation Setup</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Configure detailed projections with flexible input methods for revenue, EBITDA, CAPEX, and more.
-            </p>
-
-            {/* Coming Soon Notice */}
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-blue-900 mb-1">Advanced Mode Configuration</h4>
-                  <p className="text-sm text-blue-800 mb-3">Configure multi-year projections with:</p>
-                  <ul className="text-sm text-blue-700 space-y-1 mb-3">
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                      Revenue: Uniform growth, per-year rates, or direct values
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                      EBITDA: Margin ramps, per-year margins, or direct EBITDA values
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                      CAPEX, NWC, D&A: % of revenue (uniform/individual) or direct inputs
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                      Taxes: % of EBIT or direct per-year values
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                      Terminal Value: Long-term growth rate method
-                    </li>
-                  </ul>
-                  <div className="flex gap-2 text-sm">
-                    <button
-                      onClick={() => setEditMode('simple')}
-                      className="px-3 py-1.5 bg-white border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 transition-colors"
-                    >
-                      ← Simple Mode
-                    </button>
-                    <button
-                      onClick={() => setEditMode('full')}
-                      className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      Full DCF Table →
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Temporary: Guide to use Full DCF for now */}
-            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-800">
-                <strong>For now:</strong> Use the <strong>Full DCF</strong> tab above for complete control over all
-                assumptions and line items. A streamlined Advanced interface will be added soon to bridge Simple and
-                Full modes.
-              </p>
-            </div>
-          </div>
+          {/* Advanced Form */}
+          <AdvancedValuationForm
+            companyName={companyName || ''}
+            setCompanyName={() => {}}
+            companyWebsite={''}
+            setCompanyWebsite={() => {}}
+            companyPhone={''}
+            setCompanyPhone={() => {}}
+            phoneCountryCode={'+1'}
+            setPhoneCountryCode={() => {}}
+            industry={model.riskProfile?.selectedIndustry || ''}
+            setIndustry={() => {}}
+            country={model.riskProfile?.selectedCountry || ''}
+            setCountry={() => {}}
+            industries={industries}
+            countries={countries}
+            lastYearRevenue={getLastYearRevenue().toString()}
+            setLastYearRevenue={() => {}}
+            advState={advState}
+            setAdvState={setAdvState}
+            isCalculating={isCalculating}
+            onSubmit={handleAdvancedUpdate}
+          />
         </TabsContent>
 
         <TabsContent value="full" className="space-y-6">
