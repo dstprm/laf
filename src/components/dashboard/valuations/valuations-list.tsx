@@ -351,7 +351,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
 
       {/* Share Dialog */}
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[90vw] max-w-[90vw] sm:max-w-[600px] px-6 sm:px-8">
           <DialogHeader>
             <DialogTitle>Share Valuation Report</DialogTitle>
             <DialogDescription>
@@ -366,8 +366,8 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
               <>
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <p className="text-sm font-medium text-gray-700 mb-2">Share Link</p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 text-sm bg-white px-3 py-2 rounded border border-gray-300 overflow-x-auto">
+                  <div className="flex items-center gap-2 w-full min-w-0">
+                    <code className="flex-1 min-w-0 text-sm bg-white px-3 py-2 rounded border border-gray-300 overflow-x-auto whitespace-nowrap">
                       {`${typeof window !== 'undefined' ? window.location.origin : ''}/reports/${selectedValuation.shareToken}`}
                     </code>
                     <Button onClick={handleCopyLink} variant="outline" size="sm" className="flex-shrink-0">
