@@ -276,14 +276,16 @@ export default function FreeValuationPage() {
   }, [isLoaded, isSignedIn, pendingCalculation]);
 
   // Effect to auto-save valuation when results are ready
+  // Wait for both results AND localScenarios to be ready before auto-saving
+  // The localScenarios are calculated by another useEffect that depends on results
   React.useEffect(() => {
-    if (shouldAutoSave && results && results.length > 0 && isSignedIn && !isSaving) {
-      console.log('Auto-saving valuation...', { results, isSignedIn });
+    if (shouldAutoSave && results && results.length > 0 && isSignedIn && !isSaving && localScenarios.length > 0) {
+      console.log('Auto-saving valuation with scenarios...', { results, localScenarios, isSignedIn });
       setShouldAutoSave(false); // Reset flag
       handleSaveValuation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldAutoSave, results, isSignedIn, isSaving]);
+  }, [shouldAutoSave, results, isSignedIn, isSaving, localScenarios]);
 
   const performSimpleCalculation = (autoSave: boolean = false) => {
     const revenue0 = parseFloat(lastYearRevenue || '0');
