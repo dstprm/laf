@@ -205,3 +205,64 @@ export async function getPublishedValuationByToken(shareToken: string) {
     },
   });
 }
+
+/**
+ * Get a valuation by share token with owner check
+ * Returns an object with:
+ * - valuation: the valuation data (if accessible)
+ * - status: 'not_found' | 'private' | 'accessible'
+ */
+export async function getValuationByTokenWithOwnerCheck(
+  shareToken: string,
+  userId?: string,
+): Promise<{
+  valuation: any | null;
+  status: 'not_found' | 'private' | 'accessible';
+}> {
+  const valuation = await prisma.valuation.findFirst({
+    where: { shareToken },
+    include: {
+      scenarios: {
+        orderBy: { createdAt: 'asc' },
+      },
+    },
+  });
+
+  if (!valuation) {
+    return { valuation: null, status: 'not_found' };
+  }
+
+  // If published, anyone can see it
+  if (valuation.isPublished) {
+    return { valuation, status: 'accessible' };
+  }
+
+  // If not published, only the owner can see it
+  if (userId && valuation.userId === userId) {
+    return { valuation, status: 'accessible' };
+  }
+
+  // Not published and not the owner
+  return { valuation: null, status: 'private' };
+}
+
+/**
+ * Ensure a valuation has a share token (generates one if missing)
+ */
+export async function ensureShareToken(id: string, userId: string) {
+  const valuation = await getValuationById(id, userId);
+  if (!valuation) {
+    throw new Error('Valuation not found');
+  }
+
+  if (valuation.shareToken) {
+    return valuation;
+  }
+
+  // Generate a new share token
+  const shareToken = generateShareToken();
+  return prisma.valuation.update({
+    where: { id, userId },
+    data: { shareToken },
+  });
+}

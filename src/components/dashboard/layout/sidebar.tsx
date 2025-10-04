@@ -1,6 +1,6 @@
 'use client';
 
-import { Album, BarChart3, CreditCard, FileText, Home, Layers, Palette, Shield } from 'lucide-react';
+import { BarChart3, FileText, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -8,35 +8,20 @@ import { useUserAdmin } from '@/hooks/useUserAdmin';
 
 const baseSidebarItems = [
   {
-    title: 'Dashboard',
-    icon: <Home className="h-6 w-6" />,
-    href: '/dashboard',
-  },
-  {
     title: 'Valuations',
     icon: <FileText className="h-6 w-6" />,
     href: '/dashboard/valuations',
   },
-  {
-    title: 'Features',
-    icon: <Layers className="h-6 w-6" />,
-    href: '/dashboard/features',
-  },
-  {
-    title: 'Subscriptions',
-    icon: <Album className="h-6 w-6" />,
-    href: '/dashboard/subscriptions',
-  },
-  {
-    title: 'Payments',
-    icon: <CreditCard className="h-6 w-6" />,
-    href: '/dashboard/payments',
-  },
-  {
-    title: 'Theme Configuration',
-    icon: <Palette className="h-6 w-6" />,
-    href: '/dashboard/settings',
-  },
+  // {
+  //   title: 'Subscriptions',
+  //   icon: <Album className="h-6 w-6" />,
+  //   href: '/dashboard/subscriptions',
+  // },
+  // {
+  //   title: 'Payments',
+  //   icon: <CreditCard className="h-6 w-6" />,
+  //   href: '/dashboard/payments',
+  // },
 ];
 
 const adminSidebarItems = [

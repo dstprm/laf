@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Building, Calculator, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { Globe, Building, Calculator, TrendingUp, ChevronDown, ChevronUp, Lock } from 'lucide-react';
 import { betasStatic } from '../betasStatic';
 import { countryRiskPremiumStatic } from '../countryRiskPremiumStatic';
 import { useModelStore } from '../store/modelStore';
@@ -7,11 +7,13 @@ import { useModelStore } from '../store/modelStore';
 interface IndustryCountrySelectorProps {
   className?: string;
   waccExpanded?: boolean;
+  readOnly?: boolean;
 }
 
 export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = ({
   className = '',
   waccExpanded = true,
+  readOnly = false,
 }) => {
   const { model, updateRiskProfile, updateSelectedIndustry } = useModelStore();
 
@@ -248,7 +250,11 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
           <Calculator className="w-5 h-5 text-blue-600" />
           <h3 className="text-lg font-semibold text-gray-900">Risk Profile & WACC</h3>
         </div>
-        <p className="text-sm text-gray-600 mt-1">Select industry and country to configure discount rate</p>
+        <p className="text-sm text-gray-600 mt-1">
+          {readOnly
+            ? 'Industry and country are locked for this valuation. You can still modify all WACC parameters below.'
+            : 'Select industry and country to configure discount rate'}
+        </p>
       </div>
 
       <div className="p-4 space-y-4">
@@ -258,45 +264,68 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
             <Building className="w-4 h-4 text-blue-600" />
             Industry & Country Selection
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                <Building className="inline w-3 h-3 mr-1" />
-                Industry
-              </label>
-              <select
-                value={selectedIndustry || ''}
-                onChange={(e) => setSelectedIndustry(e.target.value || null)}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Industry</option>
-                {industries.map((industry) => (
-                  <option key={industry} value={industry}>
-                    {industry}
-                  </option>
-                ))}
-              </select>
+          {readOnly ? (
+            <div className="flex flex-wrap gap-3">
+              <div className="flex-1 min-w-[200px]">
+                <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Globe className="w-4 h-4 text-green-700" />
+                    <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Country</span>
+                  </div>
+                  <div className="text-base font-bold text-green-900 text-center">{selectedCountry || 'Not specified'}</div>
+                </div>
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building className="w-4 h-4 text-blue-700" />
+                    <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Industry</span>
+                  </div>
+                  <div className="text-base font-bold text-blue-900 text-center">{selectedIndustry || 'Not specified'}</div>
+                </div>
+              </div>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  <Building className="inline w-3 h-3 mr-1" />
+                  Industry
+                </label>
+                <select
+                  value={selectedIndustry || ''}
+                  onChange={(e) => setSelectedIndustry(e.target.value || null)}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select Industry</option>
+                  {industries.map((industry) => (
+                    <option key={industry} value={industry}>
+                      {industry}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                <Globe className="inline w-3 h-3 mr-1" />
-                Country
-              </label>
-              <select
-                value={selectedCountry || ''}
-                onChange={(e) => setSelectedCountry(e.target.value || null)}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Country</option>
-                {countries.map((country) => (
-                  <option key={country} value={country}>
-                    {country}
-                  </option>
-                ))}
-              </select>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  <Globe className="inline w-3 h-3 mr-1" />
+                  Country
+                </label>
+                <select
+                  value={selectedCountry || ''}
+                  onChange={(e) => setSelectedCountry(e.target.value || null)}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select Country</option>
+                  {countries.map((country) => (
+                    <option key={country} value={country}>
+                      {country}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* WACC Inputs Section - Collapsible */}

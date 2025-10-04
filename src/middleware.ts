@@ -14,6 +14,7 @@ const isPublicRoute = createRouteMatcher([
   '/privacy',
   '/terms',
   '/docs(.*)',
+  '/reports(.*)',
   '/api/paddle/webhook',
   '/api/clerk-webhook',
   '/free-valuation',

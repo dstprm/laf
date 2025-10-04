@@ -216,17 +216,38 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
     }
   };
 
-  const handlePreview = (valuation: Valuation, e: React.MouseEvent) => {
+  const handlePreview = async (valuation: Valuation, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (valuation.isPublished && valuation.shareToken) {
-      // If published, open the public report page
-      window.open(`/reports/${valuation.shareToken}`, '_blank');
-    } else {
-      // If not published, open the dashboard detail page
-      router.push(`/dashboard/valuations/${valuation.id}`);
+    let shareToken = valuation.shareToken;
+
+    // If no share token exists, generate one
+    if (!shareToken) {
+      try {
+        const response = await fetch(`/api/valuations/${valuation.id}/ensure-token`, {
+          method: 'POST',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate share token');
+        }
+
+        const data = await response.json();
+        shareToken = data.shareToken;
+      } catch (error) {
+        console.error('Error generating share token:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to generate preview link',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
+
+    // Always open the report preview page
+    window.open(`/reports/${shareToken}`, '_blank');
   };
 
   if (valuations.length === 0) {
@@ -351,7 +372,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
 
       {/* Share Dialog */}
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[90vw] max-w-[90vw] sm:max-w-[600px] px-6 sm:px-8">
           <DialogHeader>
             <DialogTitle>Share Valuation Report</DialogTitle>
             <DialogDescription>
@@ -366,8 +387,8 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
               <>
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <p className="text-sm font-medium text-gray-700 mb-2">Share Link</p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 text-sm bg-white px-3 py-2 rounded border border-gray-300 overflow-x-auto">
+                  <div className="flex items-center gap-2 w-full min-w-0">
+                    <code className="flex-1 min-w-0 text-sm bg-white px-3 py-2 rounded border border-gray-300 overflow-x-auto whitespace-nowrap">
                       {`${typeof window !== 'undefined' ? window.location.origin : ''}/reports/${selectedValuation.shareToken}`}
                     </code>
                     <Button onClick={handleCopyLink} variant="outline" size="sm" className="flex-shrink-0">

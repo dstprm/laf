@@ -400,7 +400,7 @@ export default function ValuationEditClient({
 
         <TabsContent value="simple" className="space-y-6">
           {/* Industry and Country Selector - WACC collapsed for simple mode */}
-          <IndustryCountrySelector key={`simple-selector-${componentKey}`} waccExpanded={false} />
+          <IndustryCountrySelector key={`simple-selector-${componentKey}`} waccExpanded={false} readOnly={true} />
 
           {/* Simple Inputs */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -482,7 +482,7 @@ export default function ValuationEditClient({
 
         <TabsContent value="advanced" className="space-y-6">
           {/* Industry and Country Selector - WACC collapsed for advanced mode */}
-          <IndustryCountrySelector key={`advanced-selector-${componentKey}`} waccExpanded={false} />
+          <IndustryCountrySelector key={`advanced-selector-${componentKey}`} waccExpanded={false} readOnly={true} />
 
           {/* Advanced Form - Same as /free-valuation */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -555,7 +555,7 @@ export default function ValuationEditClient({
 
         <TabsContent value="full" className="space-y-6">
           {/* Industry and Country Selector - WACC expanded for full DCF */}
-          <IndustryCountrySelector key={`full-selector-${componentKey}`} waccExpanded={true} />
+          <IndustryCountrySelector key={`full-selector-${componentKey}`} waccExpanded={true} readOnly={true} />
 
           {/* Full DCF Table */}
           <DCFTable key={`dcf-table-${componentKey}`} />
