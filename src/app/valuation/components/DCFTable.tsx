@@ -17,7 +17,7 @@ import { NWCInput } from './NWCInput';
 import { TerminalValueInput } from './TerminalValueInput';
 import { EquityValueInput } from './EquityValueInput';
 import { EditableCell } from './EditableCell';
-import { ExcelEmailDialog } from './ExcelEmailDialog';
+// import { ExcelEmailDialog } from './ExcelEmailDialog';
 
 import { IndustrySuggestionsPanel } from './IndustrySuggestionsPanel';
 import { hasSuggestionsForSection, IndustrySuggestions } from '../utils/industryHelper';
@@ -760,7 +760,7 @@ export const DCFTable: React.FC = () => {
         </div>
 
         {/* Get Excel Button */}
-        <div className="mt-3 pt-3 border-t border-gray-200">
+        {/* <div className="mt-3 pt-3 border-t border-gray-200">
           <div className="flex justify-center">
             <ExcelEmailDialog>
               <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors">
@@ -776,7 +776,7 @@ export const DCFTable: React.FC = () => {
               </button>
             </ExcelEmailDialog>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Industry Suggestions Panel */}

@@ -2269,25 +2269,27 @@ export default function FreeValuationPage() {
         </div>
 
         {/* Debug: Pretty print model and calculated financials */}
-        <div className="mt-8 bg-white border border-gray-200 rounded-lg">
-          <div className="px-4 py-2 border-b border-gray-200">
-            <h2 className="text-sm font-semibold text-gray-900">Debug: Model & Calculations</h2>
-          </div>
-          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <div className="text-xs font-medium text-gray-700 mb-2">Model</div>
-              <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
-                {JSON.stringify(model, null, 2)}
-              </pre>
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-8 bg-white border border-gray-200 rounded-lg">
+            <div className="px-4 py-2 border-b border-gray-200">
+              <h2 className="text-sm font-semibold text-gray-900">Debug: Model & Calculations</h2>
             </div>
-            <div>
-              <div className="text-xs font-medium text-gray-700 mb-2">Calculated Financials</div>
-              <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
-                {JSON.stringify(calculatedFinancials, null, 2)}
-              </pre>
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="text-xs font-medium text-gray-700 mb-2">Model</div>
+                <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
+                  {JSON.stringify(model, null, 2)}
+                </pre>
+              </div>
+              <div>
+                <div className="text-xs font-medium text-gray-700 mb-2">Calculated Financials</div>
+                <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
+                  {JSON.stringify(calculatedFinancials, null, 2)}
+                </pre>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Auth Required Dialog */}
         <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
