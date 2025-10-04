@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PhoneCountryCodeSelect } from '@/components/shared/phone-country-code-select';
 import { useToast } from '@/components/ui/use-toast';
-import { ToastAction } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/home/header/header';
 import { useUserInfo } from '@/hooks/useUserInfo';
@@ -170,6 +169,7 @@ export default function FreeValuationPage() {
   const [savedValuationId, setSavedValuationId] = useState<string | null>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [shouldAutoSave, setShouldAutoSave] = useState(false);
 
   // Local scenario state (before saving to database)
   type LocalScenario = {
@@ -259,19 +259,33 @@ export default function FreeValuationPage() {
 
   // Effect to trigger calculation after user logs in
   React.useEffect(() => {
-    if (isSignedIn && pendingCalculation) {
+    if (isLoaded && isSignedIn && pendingCalculation) {
       setShowAuthDialog(false);
-      if (pendingCalculation === 'simple') {
-        performSimpleCalculation();
-      } else if (pendingCalculation === 'advanced') {
-        performAdvancedCalculation();
-      }
-      setPendingCalculation(null);
+      // Small delay to ensure the dialog is closed and state is updated
+      const timer = setTimeout(() => {
+        if (pendingCalculation === 'simple') {
+          performSimpleCalculation(true); // Pass true to indicate auto-save
+        } else if (pendingCalculation === 'advanced') {
+          performAdvancedCalculation(true); // Pass true to indicate auto-save
+        }
+        setPendingCalculation(null);
+      }, 500);
+      return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSignedIn, pendingCalculation]);
+  }, [isLoaded, isSignedIn, pendingCalculation]);
 
-  const performSimpleCalculation = () => {
+  // Effect to auto-save valuation when results are ready
+  React.useEffect(() => {
+    if (shouldAutoSave && results && results.length > 0 && isSignedIn && !isSaving) {
+      console.log('Auto-saving valuation...', { results, isSignedIn });
+      setShouldAutoSave(false); // Reset flag
+      handleSaveValuation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldAutoSave, results, isSignedIn, isSaving]);
+
+  const performSimpleCalculation = (autoSave: boolean = false) => {
     const revenue0 = parseFloat(lastYearRevenue || '0');
     if (!industry || !country || !(revenue0 > 0)) {
       setResults(null);
@@ -352,6 +366,12 @@ export default function FreeValuationPage() {
 
       setResults(computed);
       setIsCalculating(false);
+
+      // Set flag to auto-save if triggered after login
+      if (autoSave && isSignedIn) {
+        console.log('Setting shouldAutoSave flag to true', { autoSave, isSignedIn });
+        setShouldAutoSave(true);
+      }
     }, 3000);
   };
 
@@ -543,7 +563,7 @@ export default function FreeValuationPage() {
     }
   };
 
-  const performAdvancedCalculation = () => {
+  const performAdvancedCalculation = (autoSave: boolean = false) => {
     const revenue0 = parseFloat(lastYearRevenue || '0');
     if (!(revenue0 > 0) || advYears < 2) {
       setResults(null);
@@ -799,6 +819,12 @@ export default function FreeValuationPage() {
         },
       ]);
       setIsCalculating(false);
+
+      // Set flag to auto-save if triggered after login
+      if (autoSave && isSignedIn) {
+        console.log('Setting shouldAutoSave flag to true (advanced)', { autoSave, isSignedIn });
+        setShouldAutoSave(true);
+      }
     }, 3000);
   };
 
@@ -870,7 +896,8 @@ export default function FreeValuationPage() {
       return;
     }
 
-    performSimpleCalculation();
+    // If already signed in, auto-save after calculation
+    performSimpleCalculation(true);
   };
 
   const handleSubmitAdvanced = (e: React.FormEvent) => {
@@ -889,7 +916,8 @@ export default function FreeValuationPage() {
       return;
     }
 
-    performAdvancedCalculation();
+    // If already signed in, auto-save after calculation
+    performAdvancedCalculation(true);
   };
 
   const handleSaveValuation = async () => {
@@ -917,25 +945,48 @@ export default function FreeValuationPage() {
         companyPhone: fullPhoneNumber,
       };
 
-      const response = await fetch('/api/valuations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      let savedValuation;
+      if (savedValuationId) {
+        // Update existing valuation
+        const response = await fetch(`/api/valuations/${savedValuationId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save valuation');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update valuation');
+        }
+
+        savedValuation = await response.json();
+
+        toast({
+          title: 'Valuation updated',
+          description: 'Your valuation has been updated successfully.',
+        });
+      } else {
+        // Create new valuation
+        const response = await fetch('/api/valuations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save valuation');
+        }
+
+        savedValuation = await response.json();
+        setSavedValuationId(savedValuation.id);
+
+        // Save local scenarios after valuation is created
+        await saveLocalScenarios(savedValuation.id);
+
+        // Show success dialog instead of toast
+        setSuccessDialogOpen(true);
       }
-
-      const savedValuation = await response.json();
-      setSavedValuationId(savedValuation.id);
-
-      // Save local scenarios after valuation is created
-      await saveLocalScenarios(savedValuation.id);
-
-      // Show success dialog instead of toast
-      setSuccessDialogOpen(true);
     } catch (error) {
       console.error('Failed to save valuation:', error);
       toast({
@@ -1273,11 +1324,24 @@ export default function FreeValuationPage() {
                     </div>
                   )}
 
-                  {isSignedIn && !savedValuationId && (
-                    <div className="mt-4 flex justify-end">
-                      <Button onClick={handleSaveValuation} disabled={isSaving}>
-                        {isSaving ? 'Saving...' : 'Save Valuation'}
+                  {isSignedIn && (
+                    <div className="mt-4 flex justify-end gap-3">
+                      <Button variant="outline" onClick={() => router.push('/dashboard/valuations')}>
+                        <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                          />
+                        </svg>
+                        Go to Dashboard
                       </Button>
+                      {savedValuationId && (
+                        <Button onClick={handleSaveValuation} disabled={isSaving}>
+                          {isSaving ? 'Updating...' : 'Update Valuation'}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </>
@@ -2176,11 +2240,24 @@ export default function FreeValuationPage() {
                     </div>
                   )}
 
-                  {isSignedIn && !savedValuationId && (
-                    <div className="mt-4 flex justify-end">
-                      <Button onClick={handleSaveValuation} disabled={isSaving}>
-                        {isSaving ? 'Saving...' : 'Save Valuation'}
+                  {isSignedIn && (
+                    <div className="mt-4 flex justify-end gap-3">
+                      <Button variant="outline" onClick={() => router.push('/dashboard/valuations')}>
+                        <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                          />
+                        </svg>
+                        Go to Dashboard
                       </Button>
+                      {savedValuationId && (
+                        <Button onClick={handleSaveValuation} disabled={isSaving}>
+                          {isSaving ? 'Updating...' : 'Update Valuation'}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </>
@@ -2227,9 +2304,10 @@ export default function FreeValuationPage() {
                     card: 'shadow-none',
                   },
                 }}
-                routing="hash"
-                forceRedirectUrl="/free-valuation"
+                routing="virtual"
+                signUpFallbackRedirectUrl="/free-valuation"
                 fallbackRedirectUrl="/free-valuation"
+                forceRedirectUrl="/free-valuation"
               />
             </div>
           </DialogContent>
