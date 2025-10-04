@@ -24,7 +24,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(model.riskProfile?.selectedIndustry || null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(model.riskProfile?.selectedCountry || null);
   const [isWaccExpanded, setIsWaccExpanded] = useState<boolean>(waccExpanded);
-  const [isSyncing, setIsSyncing] = useState<boolean>(false); // Prevent circular updates
+  const isSyncingRef = React.useRef<boolean>(false); // Use ref to prevent circular updates
 
   // Risk profile inputs - store as strings to allow proper typing
   const [unleveredBetaStr, setUnleveredBetaStr] = useState<string>(model.riskProfile?.unleveredBeta?.toString() || '0');
@@ -66,15 +66,24 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
 
   // Force sync on mount and when riskProfile changes (important for when loading saved data)
   useEffect(() => {
+    console.log('[IndustryCountrySelector] Sync effect triggered', {
+      hasRiskProfile: !!model.riskProfile,
+      industry: model.riskProfile?.selectedIndustry,
+      country: model.riskProfile?.selectedCountry,
+    });
+
     if (!model.riskProfile) {
+      console.log('[IndustryCountrySelector] No riskProfile yet, skipping sync');
       return;
     }
 
     const newIndustry = model.riskProfile.selectedIndustry || null;
     const newCountry = model.riskProfile.selectedCountry || null;
 
+    console.log('[IndustryCountrySelector] Syncing with store:', { newIndustry, newCountry });
+
     // Set isSyncing to prevent the update effect from triggering
-    setIsSyncing(true);
+    isSyncingRef.current = true;
 
     // Force update even if values appear the same
     setSelectedIndustry(newIndustry);
@@ -91,8 +100,12 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     setRiskFreeRateStr(formatPercent(model.riskProfile.riskFreeRate || 0.0444));
     setCorporateTaxRateStr(formatPercent(model.riskProfile.corporateTaxRate || 0.25));
 
-    // Reset isSyncing after state updates
-    setTimeout(() => setIsSyncing(false), 0);
+    // Reset isSyncing after a short delay to ensure state updates have completed
+    setTimeout(() => {
+      isSyncingRef.current = false;
+    }, 100);
+
+    console.log('[IndustryCountrySelector] ✅ Sync complete');
   }, [model.riskProfile]); // Re-run when riskProfile changes
 
   // Sync with model when it changes (important for when loading saved data)
@@ -139,10 +152,12 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     // Execute all updates if there are any changes
     if (updates.length > 0) {
       console.log(`Syncing ${updates.length} risk profile fields from store to UI`);
-      setIsSyncing(true);
+      isSyncingRef.current = true;
       updates.forEach((update) => update());
       // Reset sync flag after updates complete
-      setTimeout(() => setIsSyncing(false), 50);
+      setTimeout(() => {
+        isSyncingRef.current = false;
+      }, 100);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -204,7 +219,8 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
 
   // Update store whenever any value changes (but not during sync)
   useEffect(() => {
-    if (!isSyncing) {
+    if (!isSyncingRef.current) {
+      console.log('[IndustryCountrySelector] Updating store with local changes');
       // Update both the risk profile and global selectedIndustry for DCF suggestions
       updateSelectedIndustry(selectedIndustry);
       updateRiskProfile({
@@ -220,7 +236,10 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
         riskFreeRate,
         corporateTaxRate,
       });
+    } else {
+      console.log('[IndustryCountrySelector] Skipping store update (syncing from store)');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedIndustry,
     selectedCountry,
@@ -233,9 +252,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     companySpread,
     riskFreeRate,
     corporateTaxRate,
-    isSyncing,
-    updateRiskProfile,
-    updateSelectedIndustry,
+    // Don't include updateRiskProfile and updateSelectedIndustry to avoid infinite loops
   ]);
 
   // Calculate Cost of Equity and Cost of Debt

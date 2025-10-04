@@ -35,7 +35,15 @@ export default function ValuationEditClient({
   country,
   enterpriseValue,
 }: ValuationEditClientProps) {
-  // Removed excessive debug logging
+  console.log('[ValuationEditClient] Component rendered', {
+    hasModelData: !!initialModelData,
+    hasResultsData: !!initialResultsData,
+    hasRiskProfile: !!initialModelData?.riskProfile,
+    riskProfileIndustry: initialModelData?.riskProfile?.selectedIndustry,
+    riskProfileCountry: initialModelData?.riskProfile?.selectedCountry,
+    propsIndustry: industry,
+    propsCountry: country,
+  });
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -66,10 +74,21 @@ export default function ValuationEditClient({
   const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
+    console.log('[ValuationEditClient] Initialization useEffect triggered', {
+      hasInitialized,
+      hasModelData: !!initialModelData,
+      hasResultsData: !!initialResultsData,
+    });
+
     // Only initialize once
-    if (hasInitialized || !initialModelData || !initialResultsData) return;
+    if (hasInitialized || !initialModelData || !initialResultsData) {
+      console.log('[ValuationEditClient] Skipping initialization (already done or missing data)');
+      return;
+    }
 
     try {
+      console.log('[ValuationEditClient] Starting initialization...');
+
       // Get the selected industry and country (fallback to denormalized values)
       const selectedIndustry = initialModelData.riskProfile?.selectedIndustry || industry || null;
       const selectedCountry = initialModelData.riskProfile?.selectedCountry || country || null;
@@ -83,10 +102,17 @@ export default function ValuationEditClient({
         initialModelData.riskProfile.countryRiskPremium === 0 &&
         initialModelData.riskProfile.deRatio === 0;
 
+      console.log('[ValuationEditClient] WACC check:', {
+        hasDefaultWaccParams,
+        selectedIndustry,
+        selectedCountry,
+      });
+
       let riskProfile;
 
       // If WACC params are defaults but we have industry/country, recalculate from static data
       if (hasDefaultWaccParams && selectedIndustry && selectedCountry) {
+        console.log('[ValuationEditClient] Recalculating WACC from industry/country data');
         const industryData = betasStatic[selectedIndustry as keyof typeof betasStatic];
         const countryData = countryRiskPremiumStatic[selectedCountry as keyof typeof countryRiskPremiumStatic];
 
@@ -150,21 +176,31 @@ export default function ValuationEditClient({
         calculatedFinancials: initialResultsData,
       });
 
+      console.log('[ValuationEditClient] ✅ Initialization complete! Final riskProfile:', {
+        selectedIndustry: riskProfile.selectedIndustry,
+        selectedCountry: riskProfile.selectedCountry,
+        unleveredBeta: riskProfile.unleveredBeta,
+        leveredBeta: riskProfile.leveredBeta,
+        wacc: 'will be calculated',
+      });
+
       setHasInitialized(true);
 
       // Recalculate to ensure everything is in sync
       setTimeout(() => {
+        console.log('[ValuationEditClient] Triggering financial recalculation...');
         calculateFinancials();
       }, 150);
     } catch (error) {
-      console.error('Error loading valuation data:', error);
+      console.error('[ValuationEditClient] ❌ Error loading valuation data:', error);
       toast({
         variant: 'destructive',
         title: 'Error loading valuation',
         description: 'Failed to load valuation data for editing.',
       });
     }
-  }, [hasInitialized, initialModelData, initialResultsData, toast, calculateFinancials, industry, country]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasInitialized, initialModelData, initialResultsData, industry, country]);
 
   const handleSave = async () => {
     setIsSaving(true);
