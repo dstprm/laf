@@ -8,8 +8,8 @@ import { HeroSection } from '@/components/home/hero-section/hero-section';
 // import { Brands } from '@/components/home/sections/brands';
 import { FeaturesSection } from '@/components/home/sections/features';
 import { HowItWorks } from '@/components/home/sections/how-it-works';
-import { Stats } from '@/components/home/sections/stats';
-import { Testimonials } from '@/components/home/sections/testimonials';
+// import { Stats } from '@/components/home/sections/stats';
+// import { Testimonials } from '@/components/home/sections/testimonials';
 import { Faq } from '@/components/home/sections/faq';
 import { Cta } from '@/components/home/sections/cta';
 import { ContactSection } from '@/components/home/sections/contact';
@@ -34,8 +34,8 @@ export function HomePage() {
         <FeaturesSection />
         <ServiceComparison />
         <HowItWorks />
-        <Stats />
-        <Testimonials />
+        {/* <Stats />
+        <Testimonials /> */}
         <Faq />
         <ContactSection />
         <Cta />
