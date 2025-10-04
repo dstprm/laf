@@ -216,17 +216,38 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
     }
   };
 
-  const handlePreview = (valuation: Valuation, e: React.MouseEvent) => {
+  const handlePreview = async (valuation: Valuation, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (valuation.isPublished && valuation.shareToken) {
-      // If published, open the public report page
-      window.open(`/reports/${valuation.shareToken}`, '_blank');
-    } else {
-      // If not published, open the dashboard detail page
-      router.push(`/dashboard/valuations/${valuation.id}`);
+    let shareToken = valuation.shareToken;
+
+    // If no share token exists, generate one
+    if (!shareToken) {
+      try {
+        const response = await fetch(`/api/valuations/${valuation.id}/ensure-token`, {
+          method: 'POST',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate share token');
+        }
+
+        const data = await response.json();
+        shareToken = data.shareToken;
+      } catch (error) {
+        console.error('Error generating share token:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to generate preview link',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
+
+    // Always open the report preview page
+    window.open(`/reports/${shareToken}`, '_blank');
   };
 
   if (valuations.length === 0) {

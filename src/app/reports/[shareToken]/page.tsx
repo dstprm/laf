@@ -1,9 +1,12 @@
 import { notFound } from 'next/navigation';
-import { getPublishedValuationByToken } from '@/utils/database/valuation';
+import { getValuationByTokenWithOwnerCheck } from '@/utils/database/valuation';
 import { ValuationReport } from '@/components/dashboard/valuations/valuation-report';
+import { ReportPublishBanner } from '@/components/dashboard/valuations/report-publish-banner';
 import Link from 'next/link';
 import Header from '@/components/home/header/header';
 import { Footer } from '@/components/home/footer/footer';
+import { auth } from '@clerk/nextjs/server';
+import { getUserByClerkId } from '@/utils/database/user';
 
 interface ReportPageProps {
   params: Promise<{
@@ -14,13 +17,25 @@ interface ReportPageProps {
 export default async function PublicReportPage({ params }: ReportPageProps) {
   const { shareToken } = await params;
 
-  // Fetch the published valuation
-  const valuation = await getPublishedValuationByToken(shareToken);
+  // Get the current user (if authenticated)
+  const { userId: clerkUserId } = await auth();
+  let currentUserId: string | undefined;
 
-  // If not found or not published, show 404
-  if (!valuation || !valuation.isPublished) {
+  if (clerkUserId) {
+    const user = await getUserByClerkId(clerkUserId);
+    currentUserId = user?.id;
+  }
+
+  // Fetch the valuation with owner check
+  const valuation = await getValuationByTokenWithOwnerCheck(shareToken, currentUserId);
+
+  // If not found or not accessible, show 404
+  if (!valuation) {
     notFound();
   }
+
+  // Check if the current user is the owner
+  const isOwner = currentUserId === valuation.userId;
 
   return (
     <>
@@ -30,6 +45,9 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
       <Header user={null} />
 
       <div className="min-h-screen bg-gray-50">
+        {/* Publish Status Banner (only visible to owner) */}
+        <ReportPublishBanner valuationId={valuation.id} isPublished={valuation.isPublished} isOwner={isOwner} />
+
         {/* Page Title */}
         <div className="bg-white border-b border-gray-200 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -79,9 +97,19 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
 // Generate metadata for the page
 export async function generateMetadata({ params }: ReportPageProps) {
   const { shareToken } = await params;
-  const valuation = await getPublishedValuationByToken(shareToken);
 
-  if (!valuation || !valuation.isPublished) {
+  // Get the current user (if authenticated) for owner check
+  const { userId: clerkUserId } = await auth();
+  let currentUserId: string | undefined;
+
+  if (clerkUserId) {
+    const user = await getUserByClerkId(clerkUserId);
+    currentUserId = user?.id;
+  }
+
+  const valuation = await getValuationByTokenWithOwnerCheck(shareToken, currentUserId);
+
+  if (!valuation) {
     return {
       title: 'Report Not Found',
     };
