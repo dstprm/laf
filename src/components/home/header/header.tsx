@@ -142,7 +142,7 @@ export default function Header({ user }: Props) {
             <LightDarkToggle />
             {user?.id ? (
               <Button variant={'secondary'} asChild={true}>
-                <Link href={'/dashboard'}>Panel</Link>
+                <Link href={'/dashboard/valuations'}>Panel</Link>
               </Button>
             ) : (
               <Button asChild={true} className={cn('transition-colors bg-white text-black hover:bg-white/90')}>
@@ -202,7 +202,7 @@ export default function Header({ user }: Props) {
                   {user?.id ? (
                     <SheetClose asChild>
                       <Button className="w-full" asChild>
-                        <Link href={'/dashboard'}>Panel</Link>
+                        <Link href={'/dashboard/valuations'}>Panel</Link>
                       </Button>
                     </SheetClose>
                   ) : (

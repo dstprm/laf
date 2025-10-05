@@ -6,7 +6,7 @@ interface Props {
 
 export default async function LoginPage({ searchParams }: Props) {
   const params = await searchParams;
-  const redirectUrl = params.return_url || '/dashboard';
+  const redirectUrl = params.return_url || '/dashboard/valuations';
 
   return (
     <div className="flex min-h-screen items-center justify-center">
