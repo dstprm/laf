@@ -128,14 +128,16 @@ export function SimpleValuationForm({
               onChange={(e) => setLastYearRevenue(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
-            <button
-              type="button"
-              className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-              disabled={!(parseFloat(lastYearRevenue || '0') > 0)}
-              onClick={() => setStep(2)}
-            >
-              Next
-            </button>
+            {step === 1 && (
+              <button
+                type="button"
+                className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                disabled={!(parseFloat(lastYearRevenue || '0') > 0)}
+                onClick={() => setStep(2)}
+              >
+                Next
+              </button>
+            )}
           </div>
         </div>
 
@@ -153,14 +155,16 @@ export function SimpleValuationForm({
               onChange={(e) => setRevenueGrowthPct(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
-            <button
-              type="button"
-              className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-              disabled={revenueGrowthPct.trim() === ''}
-              onClick={() => setStep(3)}
-            >
-              Next
-            </button>
+            {step === 2 && (
+              <button
+                type="button"
+                className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                disabled={revenueGrowthPct.trim() === ''}
+                onClick={() => setStep(3)}
+              >
+                Next
+              </button>
+            )}
           </div>
         </div>
 
