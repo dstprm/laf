@@ -28,6 +28,7 @@ interface ValuationEditClientProps {
   industry?: string | null;
   country?: string | null;
   enterpriseValue?: number | null;
+  preferredEditMode?: 'simple' | 'advanced' | 'full';
 }
 
 export default function ValuationEditClient({
@@ -38,6 +39,7 @@ export default function ValuationEditClient({
   industry,
   country,
   enterpriseValue,
+  preferredEditMode,
 }: ValuationEditClientProps) {
   console.log('[ValuationEditClient] Component rendered', {
     hasModelData: !!initialModelData,
@@ -51,7 +53,7 @@ export default function ValuationEditClient({
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [editMode, setEditMode] = useState<'simple' | 'advanced' | 'full'>('simple');
+  const [editMode, setEditMode] = useState<'simple' | 'advanced' | 'full'>(preferredEditMode || 'simple');
   const [componentKey, setComponentKey] = useState(0); // Force re-mount when entering edit mode
   const [scenarios, setScenarios] = useState<ScenarioListItem[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -730,7 +732,22 @@ export default function ValuationEditClient({
       </div>
 
       {/* Mode Selector Tabs */}
-      <Tabs value={editMode} onValueChange={(v) => setEditMode(v as 'simple' | 'advanced' | 'full')}>
+      <Tabs
+        value={editMode}
+        onValueChange={async (v) => {
+          const mode = v as 'simple' | 'advanced' | 'full';
+          setEditMode(mode);
+          try {
+            await fetch(`/api/valuations/${valuationId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ preferredEditMode: mode }),
+            });
+          } catch (e) {
+            // non-blocking
+          }
+        }}
+      >
         <TabsList className="grid w-full grid-cols-3 max-w-md">
           <TabsTrigger value="simple">Simple</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>

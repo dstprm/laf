@@ -760,6 +760,7 @@ export default function FreeValuationPage() {
         companyName: companyName.trim() || undefined,
         companyWebsite: companyWebsite.trim() || undefined,
         companyPhone: fullPhoneNumber,
+        preferredEditMode: activeTab === 'advanced' ? 'advanced' : 'simple',
       };
 
       let savedValuation;

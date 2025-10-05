@@ -99,6 +99,7 @@ export interface ValuationRecord {
   companyWebsite: string | null;
   companyPhone: string | null;
   reportComment: string | null;
+  preferredEditMode?: 'simple' | 'advanced' | 'full' | null;
   isPublished?: boolean;
   shareToken?: string | null;
   createdAt: Date;
@@ -120,6 +121,7 @@ export interface CreateValuationInput {
   companyWebsite?: string;
   companyPhone?: string;
   reportComment?: string;
+  preferredEditMode?: 'simple' | 'advanced' | 'full';
 }
 
 /**
@@ -137,6 +139,7 @@ export interface UpdateValuationInput {
   companyWebsite?: string;
   companyPhone?: string;
   reportComment?: string;
+  preferredEditMode?: 'simple' | 'advanced' | 'full';
 }
 
 /**
