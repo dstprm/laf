@@ -18,7 +18,7 @@ import {
   type AdvancedValuationState,
 } from '@/components/shared/valuation/advanced-valuation-form';
 
-import type { FinancialModel, CalculatedFinancials, ScenarioListItem } from '@/lib/valuation.types';
+import type { FinancialModel, CalculatedFinancials, ScenarioListItem, RiskProfile } from '@/lib/valuation.types';
 
 interface ValuationEditClientProps {
   valuationId: string;
@@ -152,7 +152,7 @@ export default function ValuationEditClient({
         selectedCountry,
       });
 
-      let riskProfile;
+      let riskProfile: RiskProfile;
 
       // If WACC params are defaults but we have industry/country, recalculate from static data
       if (hasDefaultWaccParams && selectedIndustry && selectedCountry) {
@@ -182,7 +182,7 @@ export default function ValuationEditClient({
         } else {
           // Fallback to existing data with updated industry/country
           riskProfile = {
-            ...initialModelData.riskProfile,
+            ...(initialModelData.riskProfile as RiskProfile),
             selectedIndustry,
             selectedCountry,
           };
@@ -846,6 +846,8 @@ export default function ValuationEditClient({
             isCalculating={isCalculating}
             onSubmit={handleAdvancedUpdate}
             hideDeRatio={true}
+            hideBusinessInfo={true}
+            hideIndustryCountry={true}
           />
         </TabsContent>
 

@@ -91,6 +91,10 @@ interface AdvancedValuationFormProps {
 
   // Optional: hide D/E ratio input (e.g., in dashboard where it's in WACC section)
   hideDeRatio?: boolean;
+  // Optional: hide the Business Information section (e.g., in dashboard edit)
+  hideBusinessInfo?: boolean;
+  // Optional: hide the Industry & Country selectors (e.g., managed elsewhere in dashboard)
+  hideIndustryCountry?: boolean;
 }
 
 export function AdvancedValuationForm({
@@ -115,6 +119,8 @@ export function AdvancedValuationForm({
   isCalculating,
   onSubmit,
   hideDeRatio = false,
+  hideBusinessInfo = false,
+  hideIndustryCountry = false,
 }: AdvancedValuationFormProps) {
   // Get industry average D/E ratio for reference
   const industryAvgDeRatio = industry ? (betasStatic[industry as keyof typeof betasStatic]?.dERatio ?? null) : null;
@@ -133,50 +139,54 @@ export function AdvancedValuationForm({
   return (
     <form onSubmit={onSubmit} className="bg-white border border-gray-200 rounded-lg p-4 space-y-6">
       {/* Business Information Section */}
-      <BusinessInfoForm
-        companyName={companyName}
-        setCompanyName={setCompanyName}
-        companyWebsite={companyWebsite}
-        setCompanyWebsite={setCompanyWebsite}
-        companyPhone={companyPhone}
-        setCompanyPhone={setCompanyPhone}
-        phoneCountryCode={phoneCountryCode}
-        setPhoneCountryCode={setPhoneCountryCode}
-      />
+      {!hideBusinessInfo && (
+        <BusinessInfoForm
+          companyName={companyName}
+          setCompanyName={setCompanyName}
+          companyWebsite={companyWebsite}
+          setCompanyWebsite={setCompanyWebsite}
+          companyPhone={companyPhone}
+          setCompanyPhone={setCompanyPhone}
+          phoneCountryCode={phoneCountryCode}
+          setPhoneCountryCode={setPhoneCountryCode}
+        />
+      )}
 
       {/* Industry & Country */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
-          <select
-            value={industry}
-            onChange={(e) => setIndustry(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          >
-            <option value="">Select...</option>
-            {industries.map((i) => (
-              <option key={i} value={i}>
-                {i}
-              </option>
-            ))}
-          </select>
+      {!hideIndustryCountry && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+            <select
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="">Select...</option>
+              {industries.map((i) => (
+                <option key={i} value={i}>
+                  {i}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+            <select
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="">Select...</option>
+              {countries.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-          <select
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          >
-            <option value="">Select...</option>
-            {countries.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      )}
 
       {/* Step 1: Revenue */}
       <div
