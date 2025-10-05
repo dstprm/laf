@@ -746,7 +746,6 @@ export default function FreeValuationPage() {
 
     setIsSaving(true);
     try {
-      const baseScenario = results?.find((r) => r.id === 'base');
       const defaultName = `Valuation - ${new Date().toLocaleDateString()}`;
       const valuationDisplayName = companyName.trim() || defaultName;
       const fullPhoneNumber = companyPhone.trim() ? `${phoneCountryCode} ${companyPhone}` : undefined;
@@ -755,7 +754,7 @@ export default function FreeValuationPage() {
         name: valuationDisplayName,
         modelData: model,
         resultsData: calculatedFinancials,
-        enterpriseValue: baseScenario?.enterpriseValue || calculatedFinancials.enterpriseValue,
+        enterpriseValue: calculatedFinancials.enterpriseValue,
         industry: industry || undefined,
         country: country || undefined,
         companyName: companyName.trim() || undefined,

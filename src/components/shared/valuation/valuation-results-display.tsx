@@ -90,10 +90,6 @@ export function ValuationResultsDisplay({
           <div key={r.id} className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="text-sm text-gray-600">{r.name} scenario</div>
             <div className="text-2xl font-semibold text-gray-900 mt-1">{currency(r.enterpriseValue)}</div>
-            <div className="text-xs text-gray-600 mt-2">
-              <div>EBITDA margin: {r.ebitdaMarginPct}%</div>
-              <div>Revenue growth: {r.revenueGrowthPct}%/yr</div>
-            </div>
           </div>
         ))}
       </div>
