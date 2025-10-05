@@ -21,6 +21,8 @@ import {
 } from '@/components/shared/valuation/advanced-valuation-form';
 import { ValuationResultsDisplay } from '@/components/shared/valuation/valuation-results-display';
 import { CalculationLoading } from '@/components/shared/valuation/calculation-loading';
+import { calculateSimpleScenario, calculateAllSensitivities, type SimpleScenarioParams } from '@/lib/valuation-helpers';
+import { buildArrayFromList, buildIndividualPercentsMap } from '@/lib/array-helpers';
 
 type Scenario = {
   id: string;
@@ -119,23 +121,6 @@ export default function FreeValuationPage() {
       daDirectList: Array.from({ length: prev.advYears }, (_, i) => prev.daDirectList[i] ?? ''),
     }));
   }, [advState.advYears]);
-
-  // Helpers to build arrays/maps from per-year lists
-  const buildArrayFromList = (years: number, list: string[]): number[] => {
-    const arr: number[] = [];
-    for (let i = 0; i < years; i++) {
-      const v = parseFloat((list[i] || '').trim());
-      arr.push(Number.isFinite(v) ? v : 0);
-    }
-    return arr;
-  };
-  const buildIndividualPercentsMap = (years: number, list: string[]): { [k: number]: number } => {
-    const arr = buildArrayFromList(years, list);
-    const map: { [k: number]: number } = {};
-    for (let i = 0; i < years; i++) map[i] = arr[i] ?? 0;
-    return map;
-  };
-  // intentionally not used directly after simplifying compute path
 
   const scenarios: Scenario[] = useMemo(() => {
     const baseMargin = parseFloat(ebitdaMarginPct || '0');
@@ -258,66 +243,19 @@ export default function FreeValuationPage() {
     setIsCalculating(true);
     setStep(4);
 
-    const industryData = betasStatic[industry as keyof typeof betasStatic];
-    const countryData = countryRiskPremiumStatic[country as keyof typeof countryRiskPremiumStatic];
-
-    const computeEVForScenario = (scenario: Scenario): number => {
-      // Simple valuation assumes no debt (D/E ratio = 0)
-      // Levered beta equals unlevered beta when there's no debt
-      const unleveredBeta = industryData?.unleveredBeta ?? 0;
-
-      updateRiskProfile({
-        selectedIndustry: industry,
-        selectedCountry: country,
-        unleveredBeta: unleveredBeta,
-        leveredBeta: unleveredBeta, // No debt, so levered = unlevered
-        equityRiskPremium: countryData?.equityRiskPremium ?? 0,
-        countryRiskPremium: countryData?.countryRiskPremium ?? 0,
-        deRatio: 0, // Assume no debt for simple valuation
-        adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
-        companySpread: model.riskProfile?.companySpread ?? 0.05,
-        riskFreeRate: model.riskProfile?.riskFreeRate ?? 0.0444,
-        corporateTaxRate: countryData?.corporateTaxRate ?? model.riskProfile?.corporateTaxRate ?? 0.25,
-      });
-
-      updateRevenue({
-        inputType: 'consolidated',
-        consolidated: {
-          inputMethod: 'growth',
-          growthMethod: 'uniform',
-          baseValue: revenue0,
-          growthRate: scenario.revenueGrowthPct,
-        },
-      });
-
-      const targetOpexPercentOfRevenue = Math.max(0, 100 - scenario.ebitdaMarginPct);
-      updateOpEx({
-        inputType: 'consolidated',
-        consolidated: {
-          inputMethod: 'percentOfRevenue',
-          percentMethod: 'uniform',
-          percentOfRevenue: targetOpexPercentOfRevenue,
-        },
-      });
-
-      updateTaxes({
-        inputMethod: 'percentOfEBIT',
-        percentMethod: 'uniform',
-        percentOfEBIT: (countryData?.corporateTaxRate ?? 0.25) * 100,
-      });
-
-      updateTerminalValue({ method: 'multiples', multipleMetric: 'ebitda', multipleValue: 10 });
-
-      calculateFinancials();
-      const ev = useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
-      return ev;
-    };
-
     setTimeout(() => {
+      // Calculate all three scenarios using helper function
       const computed = scenarios.map((s) => ({
         id: s.id,
         name: s.name,
-        enterpriseValue: computeEVForScenario(s),
+        enterpriseValue: calculateSimpleScenario({
+          industry,
+          country,
+          baseRevenue: revenue0,
+          revenueGrowthPct: s.revenueGrowthPct,
+          ebitdaMarginPct: s.ebitdaMarginPct,
+          deRatio: 0, // Simple valuation assumes no debt
+        }),
         ebitdaMarginPct: s.ebitdaMarginPct,
         revenueGrowthPct: s.revenueGrowthPct,
       }));
@@ -325,7 +263,14 @@ export default function FreeValuationPage() {
       // Recompute base case to set store to base case values for graphs and saving
       const baseScenario = scenarios.find((s) => s.id === 'base');
       if (baseScenario) {
-        computeEVForScenario(baseScenario);
+        calculateSimpleScenario({
+          industry,
+          country,
+          baseRevenue: revenue0,
+          revenueGrowthPct: baseScenario.revenueGrowthPct,
+          ebitdaMarginPct: baseScenario.ebitdaMarginPct,
+          deRatio: 0,
+        });
       }
 
       // Use calculatedFinancials.enterpriseValue as truth source for base case
@@ -363,233 +308,23 @@ export default function FreeValuationPage() {
     }
 
     const revenue0 = parseFloat(lastYearRevenue || '0');
-    const industryData = betasStatic[industry as keyof typeof betasStatic];
-    const countryData = countryRiskPremiumStatic[country as keyof typeof countryRiskPremiumStatic];
+    const deRatio = activeTab === 'simple' ? 0 : parseFloat((advState.deRatio || '0').replace(',', '.'));
 
-    // Helper to calculate EV with modified parameters using actual model store
-    const calculateSensitivityEV = (growthDelta: number, marginDelta: number, waccDelta: number = 0): number => {
-      // Update risk profile with WACC adjustment
-      const unleveredBeta = industryData?.unleveredBeta ?? 0;
-
-      // For Simple mode: assume no debt (D/E = 0)
-      // For Advanced mode: use the D/E ratio from advState
-      const deRatio = activeTab === 'simple' ? 0 : parseFloat((advState.deRatio || '0').replace(',', '.'));
-      const corporateTaxRate = countryData?.corporateTaxRate ?? 0.25;
-      const leveredBeta = unleveredBeta * (1 + (1 - corporateTaxRate) * deRatio);
-
-      // When D/E = 0, WACC = Cost of Equity only, so we need to adjust equity risk premium
-      // When D/E > 0, we adjust company spread (cost of debt)
-      const baseCompanySpread = model.riskProfile?.companySpread ?? 0.05;
-      const baseEquityRiskPremium = countryData?.equityRiskPremium ?? 0;
-
-      let adjustedCompanySpread = baseCompanySpread;
-      let adjustedEquityRiskPremium = baseEquityRiskPremium;
-
-      if (deRatio === 0) {
-        // No debt: adjust equity risk premium to affect cost of equity (which is 100% of WACC)
-        adjustedEquityRiskPremium = baseEquityRiskPremium + waccDelta;
-      } else {
-        // Has debt: adjust company spread to affect cost of debt
-        adjustedCompanySpread = baseCompanySpread + waccDelta;
-      }
-
-      console.log('calculateSensitivityEV called:', {
-        growthDelta,
-        marginDelta,
-        waccDelta,
-        deRatio,
-        baseCompanySpread,
-        adjustedCompanySpread,
-        baseEquityRiskPremium,
-        adjustedEquityRiskPremium,
-        unleveredBeta,
-        leveredBeta,
-      });
-
-      updateRiskProfile({
-        selectedIndustry: industry,
-        selectedCountry: country,
-        unleveredBeta: unleveredBeta,
-        leveredBeta: leveredBeta,
-        equityRiskPremium: adjustedEquityRiskPremium,
-        countryRiskPremium: countryData?.countryRiskPremium ?? 0,
-        deRatio: deRatio,
-        adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
-        companySpread: adjustedCompanySpread,
-        riskFreeRate: model.riskProfile?.riskFreeRate ?? 0.0444,
-        corporateTaxRate: corporateTaxRate,
-      });
-
-      // Update revenue with growth adjustment
-      const adjustedGrowth = baseScenario.revenueGrowthPct + growthDelta;
-      updateRevenue({
-        inputType: 'consolidated',
-        consolidated: {
-          inputMethod: 'growth',
-          growthMethod: 'uniform',
-          baseValue: revenue0,
-          growthRate: adjustedGrowth,
-        },
-      });
-
-      // Update OpEx with margin adjustment
-      const adjustedMargin = Math.max(0, Math.min(100, baseScenario.ebitdaMarginPct + marginDelta));
-      const targetOpexPercentOfRevenue = Math.max(0, 100 - adjustedMargin);
-      updateOpEx({
-        inputType: 'consolidated',
-        consolidated: {
-          inputMethod: 'percentOfRevenue',
-          percentMethod: 'uniform',
-          percentOfRevenue: targetOpexPercentOfRevenue,
-        },
-      });
-
-      updateTaxes({
-        inputMethod: 'percentOfEBIT',
-        percentMethod: 'uniform',
-        percentOfEBIT: (countryData?.corporateTaxRate ?? 0.25) * 100,
-      });
-
-      updateTerminalValue({ method: 'multiples', multipleMetric: 'ebitda', multipleValue: 10 });
-
-      calculateFinancials();
-      const ev = useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
-
-      console.log('calculateSensitivityEV result:', {
-        growthDelta,
-        marginDelta,
-        waccDelta,
-        enterpriseValue: ev,
-      });
-
-      return ev;
+    // Calculate all sensitivities using helper function
+    const baseParams: SimpleScenarioParams = {
+      industry,
+      country,
+      baseRevenue: revenue0,
+      revenueGrowthPct: baseScenario.revenueGrowthPct,
+      ebitdaMarginPct: baseScenario.ebitdaMarginPct,
+      deRatio,
     };
 
-    // Calculate each sensitivity scenario
-    // Note: For growth and margin, higher inputs = higher EV
-    // For WACC, higher WACC = lower EV (inverse relationship)
-    const growthLow = calculateSensitivityEV(-5, 0, 0);
-    const growthHigh = calculateSensitivityEV(5, 0, 0);
-
-    const marginLow = calculateSensitivityEV(0, -5, 0);
-    const marginHigh = calculateSensitivityEV(0, 5, 0);
-
-    const waccHigh = calculateSensitivityEV(0, 0, 0.02); // Higher WACC → Lower EV
-    const waccLow = calculateSensitivityEV(0, 0, -0.02); // Lower WACC → Higher EV
-
-    // Determine actual min/max from calculated values (handles inverse relationships)
-    const growthMin = Math.min(growthLow, growthHigh);
-    const growthMax = Math.max(growthLow, growthHigh);
-
-    const marginMin = Math.min(marginLow, marginHigh);
-    const marginMax = Math.max(marginLow, marginHigh);
-
-    const waccMin = Math.min(waccHigh, waccLow);
-    const waccMax = Math.max(waccHigh, waccLow);
-
-    // Validate that all values are finite and min < max
-    const isValidScenario = (min: number, max: number): boolean => {
-      return Number.isFinite(min) && Number.isFinite(max) && min < max && min > 0 && max > 0;
-    };
-
-    // Debug logging for sensitivity values
-    console.log('=== Final Sensitivity Analysis Values ===');
-    console.log('Growth:', {
-      low: growthLow,
-      high: growthHigh,
-      min: growthMin,
-      max: growthMax,
-      valid: isValidScenario(growthMin, growthMax),
-      passesValidation: growthMin < growthMax,
-    });
-    console.log('Margin:', {
-      low: marginLow,
-      high: marginHigh,
-      min: marginMin,
-      max: marginMax,
-      valid: isValidScenario(marginMin, marginMax),
-      passesValidation: marginMin < marginMax,
-    });
-    console.log('WACC:', {
-      waccHigh_producesLowerEV: waccHigh,
-      waccLow_producesHigherEV: waccLow,
-      min: waccMin,
-      max: waccMax,
-      valid: isValidScenario(waccMin, waccMax),
-      passesValidation: waccMin < waccMax,
-    });
-    console.log('==========================================');
+    const sensitivityScenarios = calculateAllSensitivities(baseParams);
+    setLocalScenarios(sensitivityScenarios);
 
     // Restore base case after sensitivity calculations
-    const baseScenarioData = scenarios.find((s) => s.id === 'base');
-    if (baseScenarioData) {
-      const unleveredBeta = industryData?.unleveredBeta ?? 0;
-
-      // For Simple mode: assume no debt (D/E = 0)
-      // For Advanced mode: use the D/E ratio from advState
-      const deRatio = activeTab === 'simple' ? 0 : parseFloat((advState.deRatio || '0').replace(',', '.'));
-      const corporateTaxRate = countryData?.corporateTaxRate ?? 0.25;
-      const leveredBeta = unleveredBeta * (1 + (1 - corporateTaxRate) * deRatio);
-
-      updateRiskProfile({
-        selectedIndustry: industry,
-        selectedCountry: country,
-        unleveredBeta: unleveredBeta,
-        leveredBeta: leveredBeta,
-        equityRiskPremium: countryData?.equityRiskPremium ?? 0, // Restore base ERP
-        countryRiskPremium: countryData?.countryRiskPremium ?? 0,
-        deRatio: deRatio,
-        adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
-        companySpread: model.riskProfile?.companySpread ?? 0.05, // Restore base company spread
-        riskFreeRate: model.riskProfile?.riskFreeRate ?? 0.0444,
-        corporateTaxRate: corporateTaxRate,
-      });
-
-      updateRevenue({
-        inputType: 'consolidated',
-        consolidated: {
-          inputMethod: 'growth',
-          growthMethod: 'uniform',
-          baseValue: revenue0,
-          growthRate: baseScenario.revenueGrowthPct,
-        },
-      });
-
-      const targetOpexPercentOfRevenue = Math.max(0, 100 - baseScenario.ebitdaMarginPct);
-      updateOpEx({
-        inputType: 'consolidated',
-        consolidated: {
-          inputMethod: 'percentOfRevenue',
-          percentMethod: 'uniform',
-          percentOfRevenue: targetOpexPercentOfRevenue,
-        },
-      });
-
-      calculateFinancials();
-    }
-
-    const sensitivityScenarios: LocalScenario[] = [
-      {
-        name: 'Revenue Growth (±5%)',
-        description: 'Sensitivity analysis: Revenue Growth (±5%)',
-        minValue: growthMin,
-        maxValue: growthMax,
-      },
-      {
-        name: 'EBITDA Margin (±5%)',
-        description: 'Sensitivity analysis: EBITDA Margin (±5%)',
-        minValue: marginMin,
-        maxValue: marginMax,
-      },
-      {
-        name: 'WACC Sensitivity (±2%)',
-        description: 'Sensitivity analysis: WACC Sensitivity (±2%)',
-        minValue: waccMin,
-        maxValue: waccMax,
-      },
-    ];
-
-    setLocalScenarios(sensitivityScenarios);
+    calculateSimpleScenario(baseParams);
 
     // Extract overall min and max from all sensitivity scenarios
     const allMinValues = sensitivityScenarios.map((s) => s.minValue).filter((v) => Number.isFinite(v) && v > 0);
