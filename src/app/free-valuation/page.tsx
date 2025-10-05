@@ -368,16 +368,45 @@ export default function FreeValuationPage() {
       const corporateTaxRate = countryData?.corporateTaxRate ?? 0.25;
       const leveredBeta = unleveredBeta * (1 + (1 - corporateTaxRate) * deRatio);
 
+      // When D/E = 0, WACC = Cost of Equity only, so we need to adjust equity risk premium
+      // When D/E > 0, we adjust company spread (cost of debt)
+      const baseCompanySpread = model.riskProfile?.companySpread ?? 0.05;
+      const baseEquityRiskPremium = countryData?.equityRiskPremium ?? 0;
+
+      let adjustedCompanySpread = baseCompanySpread;
+      let adjustedEquityRiskPremium = baseEquityRiskPremium;
+
+      if (deRatio === 0) {
+        // No debt: adjust equity risk premium to affect cost of equity (which is 100% of WACC)
+        adjustedEquityRiskPremium = baseEquityRiskPremium + waccDelta;
+      } else {
+        // Has debt: adjust company spread to affect cost of debt
+        adjustedCompanySpread = baseCompanySpread + waccDelta;
+      }
+
+      console.log('calculateSensitivityEV called:', {
+        growthDelta,
+        marginDelta,
+        waccDelta,
+        deRatio,
+        baseCompanySpread,
+        adjustedCompanySpread,
+        baseEquityRiskPremium,
+        adjustedEquityRiskPremium,
+        unleveredBeta,
+        leveredBeta,
+      });
+
       updateRiskProfile({
         selectedIndustry: industry,
         selectedCountry: country,
         unleveredBeta: unleveredBeta,
         leveredBeta: leveredBeta,
-        equityRiskPremium: countryData?.equityRiskPremium ?? 0,
+        equityRiskPremium: adjustedEquityRiskPremium,
         countryRiskPremium: countryData?.countryRiskPremium ?? 0,
         deRatio: deRatio,
         adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
-        companySpread: (model.riskProfile?.companySpread ?? 0.05) + waccDelta,
+        companySpread: adjustedCompanySpread,
         riskFreeRate: model.riskProfile?.riskFreeRate ?? 0.0444,
         corporateTaxRate: corporateTaxRate,
       });
@@ -415,18 +444,72 @@ export default function FreeValuationPage() {
       updateTerminalValue({ method: 'multiples', multipleMetric: 'ebitda', multipleValue: 10 });
 
       calculateFinancials();
-      return useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
+      const ev = useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
+
+      console.log('calculateSensitivityEV result:', {
+        growthDelta,
+        marginDelta,
+        waccDelta,
+        enterpriseValue: ev,
+      });
+
+      return ev;
     };
 
     // Calculate each sensitivity scenario
-    const waccMin = calculateSensitivityEV(0, 0, 0.02);
-    const waccMax = calculateSensitivityEV(0, 0, -0.02);
+    // Note: For growth and margin, higher inputs = higher EV
+    // For WACC, higher WACC = lower EV (inverse relationship)
+    const growthLow = calculateSensitivityEV(-5, 0, 0);
+    const growthHigh = calculateSensitivityEV(5, 0, 0);
 
-    const marginMin = calculateSensitivityEV(0, -5, 0);
-    const marginMax = calculateSensitivityEV(0, 5, 0);
+    const marginLow = calculateSensitivityEV(0, -5, 0);
+    const marginHigh = calculateSensitivityEV(0, 5, 0);
 
-    const growthMin = calculateSensitivityEV(-5, 0, 0);
-    const growthMax = calculateSensitivityEV(5, 0, 0);
+    const waccHigh = calculateSensitivityEV(0, 0, 0.02); // Higher WACC → Lower EV
+    const waccLow = calculateSensitivityEV(0, 0, -0.02); // Lower WACC → Higher EV
+
+    // Determine actual min/max from calculated values (handles inverse relationships)
+    const growthMin = Math.min(growthLow, growthHigh);
+    const growthMax = Math.max(growthLow, growthHigh);
+
+    const marginMin = Math.min(marginLow, marginHigh);
+    const marginMax = Math.max(marginLow, marginHigh);
+
+    const waccMin = Math.min(waccHigh, waccLow);
+    const waccMax = Math.max(waccHigh, waccLow);
+
+    // Validate that all values are finite and min < max
+    const isValidScenario = (min: number, max: number): boolean => {
+      return Number.isFinite(min) && Number.isFinite(max) && min < max && min > 0 && max > 0;
+    };
+
+    // Debug logging for sensitivity values
+    console.log('=== Final Sensitivity Analysis Values ===');
+    console.log('Growth:', {
+      low: growthLow,
+      high: growthHigh,
+      min: growthMin,
+      max: growthMax,
+      valid: isValidScenario(growthMin, growthMax),
+      passesValidation: growthMin < growthMax,
+    });
+    console.log('Margin:', {
+      low: marginLow,
+      high: marginHigh,
+      min: marginMin,
+      max: marginMax,
+      valid: isValidScenario(marginMin, marginMax),
+      passesValidation: marginMin < marginMax,
+    });
+    console.log('WACC:', {
+      waccHigh_producesLowerEV: waccHigh,
+      waccLow_producesHigherEV: waccLow,
+      min: waccMin,
+      max: waccMax,
+      valid: isValidScenario(waccMin, waccMax),
+      passesValidation: waccMin < waccMax,
+    });
+    console.log('==========================================');
 
     // Restore base case after sensitivity calculations
     const baseScenarioData = scenarios.find((s) => s.id === 'base');
@@ -444,11 +527,11 @@ export default function FreeValuationPage() {
         selectedCountry: country,
         unleveredBeta: unleveredBeta,
         leveredBeta: leveredBeta,
-        equityRiskPremium: countryData?.equityRiskPremium ?? 0,
+        equityRiskPremium: countryData?.equityRiskPremium ?? 0, // Restore base ERP
         countryRiskPremium: countryData?.countryRiskPremium ?? 0,
         deRatio: deRatio,
         adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
-        companySpread: model.riskProfile?.companySpread ?? 0.05,
+        companySpread: model.riskProfile?.companySpread ?? 0.05, // Restore base company spread
         riskFreeRate: model.riskProfile?.riskFreeRate ?? 0.0444,
         corporateTaxRate: corporateTaxRate,
       });
@@ -505,6 +588,10 @@ export default function FreeValuationPage() {
   const saveLocalScenarios = async (valuationId: string) => {
     if (localScenarios.length === 0) return;
 
+    console.log('=== Saving Local Scenarios ===');
+    console.log('Number of scenarios:', localScenarios.length);
+    console.log('Scenarios to save:', localScenarios);
+
     try {
       // Save each local scenario to the database
       const scenarioPromises = localScenarios.map(async (scenario) => {
@@ -515,6 +602,12 @@ export default function FreeValuationPage() {
           maxValue: scenario.maxValue,
         };
 
+        console.log(`Saving scenario "${scenario.name}":`, {
+          minValue: scenario.minValue,
+          maxValue: scenario.maxValue,
+          isValid: scenario.minValue < scenario.maxValue,
+        });
+
         const response = await fetch(`/api/valuations/${valuationId}/scenarios`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -522,7 +615,13 @@ export default function FreeValuationPage() {
         });
 
         if (!response.ok) {
-          console.error(`Failed to save scenario: ${scenario.name}`);
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error(`Failed to save scenario: ${scenario.name}`, {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData,
+            scenarioData,
+          });
           return null;
         }
 
