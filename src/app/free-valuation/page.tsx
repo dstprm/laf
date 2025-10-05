@@ -328,7 +328,16 @@ export default function FreeValuationPage() {
         computeEVForScenario(baseScenario);
       }
 
-      setResults(computed);
+      // Use calculatedFinancials.enterpriseValue as truth source for base case
+      const baseEV = useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
+      const updatedComputed = computed.map((result) => {
+        if (result.id === 'base') {
+          return { ...result, enterpriseValue: baseEV };
+        }
+        return result;
+      });
+
+      setResults(updatedComputed);
       setIsCalculating(false);
 
       // Set flag to auto-save if triggered after login
@@ -581,8 +590,44 @@ export default function FreeValuationPage() {
     ];
 
     setLocalScenarios(sensitivityScenarios);
+
+    // Extract overall min and max from all sensitivity scenarios
+    const allMinValues = sensitivityScenarios.map((s) => s.minValue).filter((v) => Number.isFinite(v) && v > 0);
+    const allMaxValues = sensitivityScenarios.map((s) => s.maxValue).filter((v) => Number.isFinite(v) && v > 0);
+
+    // Use calculatedFinancials.enterpriseValue as the truth source for base case
+    const baseEV = calculatedFinancials.enterpriseValue || 0;
+    const overallMin = allMinValues.length > 0 ? Math.min(...allMinValues) : baseEV;
+    const overallMax = allMaxValues.length > 0 ? Math.max(...allMaxValues) : baseEV;
+
+    // Check if we need to update results (prevent infinite loop)
+    const bearResult = results.find((r) => r.id === 'bear');
+    const bullResult = results.find((r) => r.id === 'bull');
+    const baseResult = results.find((r) => r.id === 'base');
+    const needsUpdate =
+      bearResult?.enterpriseValue !== overallMin ||
+      bullResult?.enterpriseValue !== overallMax ||
+      baseResult?.enterpriseValue !== baseEV;
+
+    // Update results with sensitivity-based low and high values, and base from calculatedFinancials
+    if (needsUpdate) {
+      setResults((prevResults) => {
+        if (!prevResults) return prevResults;
+        return prevResults.map((result) => {
+          if (result.id === 'bear') {
+            return { ...result, enterpriseValue: overallMin };
+          } else if (result.id === 'bull') {
+            return { ...result, enterpriseValue: overallMax };
+          } else if (result.id === 'base') {
+            // Always use calculatedFinancials as truth source for base case
+            return { ...result, enterpriseValue: baseEV };
+          }
+          return result;
+        });
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results]);
+  }, [results, calculatedFinancials.enterpriseValue]);
 
   // Helper function to save scenarios after valuation is created
   const saveLocalScenarios = async (valuationId: string) => {
@@ -649,29 +694,17 @@ export default function FreeValuationPage() {
     const industryData = betasStatic[industry as keyof typeof betasStatic];
     const countryData = countryRiskPremiumStatic[country as keyof typeof countryRiskPremiumStatic];
 
-    const buildMarginArray = (startPct: number, targetPct: number, years: number, delta: number) => {
-      const s = Math.max(0, startPct + delta);
-      const t = Math.max(0, targetPct + delta);
-      const arr: number[] = [];
-      for (let i = 0; i < years; i++) {
-        const ratio = years === 1 ? 0 : i / (years - 1);
-        arr.push(s + (t - s) * ratio);
-      }
-      return arr.map((v) => Math.min(100, Math.max(0, v)));
-    };
-
     const parsePerYearGrowth = (): number[] | null => {
       const arr = buildArrayFromList(Math.max(advState.advYears - 1, 1), advState.growthPerYearList);
       if (arr.length >= advState.advYears - 1) return arr.slice(0, advState.advYears - 1);
       return null;
     };
 
-    const computeEVForScenarioAdvanced = (growthDelta: number, marginDelta: number): number => {
+    // Function to setup the model with base case parameters
+    const setupBaseCase = () => {
       // Optional: update risk profile if industry/country selected
-      // Advanced valuation allows manual D/E ratio input from advState
       if (industry || country) {
         const unleveredBeta = industryData?.unleveredBeta ?? 0;
-        // Parse D/E ratio from advState (normalize commas to periods for decimal parsing)
         const deRatio = parseFloat((advState.deRatio || '0').replace(',', '.'));
         const corporateTaxRate = countryData?.corporateTaxRate ?? 0.25;
         const leveredBeta = unleveredBeta * (1 + (1 - corporateTaxRate) * deRatio);
@@ -693,7 +726,7 @@ export default function FreeValuationPage() {
       // Revenue
       if (advState.advRevenueInputMethod === 'growth') {
         if (advState.growthMode === 'uniform') {
-          const g = (advState.advUniformGrowth.trim() !== '' ? parseFloat(advState.advUniformGrowth) : 0) + growthDelta;
+          const g = advState.advUniformGrowth.trim() !== '' ? parseFloat(advState.advUniformGrowth) : 0;
           updateRevenue({
             inputType: 'consolidated',
             consolidated: { inputMethod: 'growth', growthMethod: 'uniform', baseValue: revenue0, growthRate: g },
@@ -703,7 +736,7 @@ export default function FreeValuationPage() {
           if (arr) {
             const individualGrowthRates: { [k: number]: number } = {};
             for (let i = 1; i < advState.advYears; i++) {
-              individualGrowthRates[i] = (arr[i - 1] ?? 0) + growthDelta;
+              individualGrowthRates[i] = arr[i - 1] ?? 0;
             }
             updateRevenue({
               inputType: 'consolidated',
@@ -717,12 +750,7 @@ export default function FreeValuationPage() {
           } else {
             updateRevenue({
               inputType: 'consolidated',
-              consolidated: {
-                inputMethod: 'growth',
-                growthMethod: 'uniform',
-                baseValue: revenue0,
-                growthRate: growthDelta,
-              },
+              consolidated: { inputMethod: 'growth', growthMethod: 'uniform', baseValue: revenue0, growthRate: 0 },
             });
           }
         }
@@ -739,18 +767,22 @@ export default function FreeValuationPage() {
       if (advState.ebitdaInputType === 'percent') {
         let marginArr: number[] = [];
         if (advState.ebitdaPctMode === 'uniform') {
-          const m =
-            (advState.advEbitdaUniformPct.trim() !== '' ? parseFloat(advState.advEbitdaUniformPct) : 0) + marginDelta;
+          const m = advState.advEbitdaUniformPct.trim() !== '' ? parseFloat(advState.advEbitdaUniformPct) : 0;
           marginArr = Array.from({ length: advState.advYears }, () => m);
         } else if (advState.ebitdaPctMode === 'perYear') {
           const parts = buildArrayFromList(advState.advYears, advState.ebitdaPercentPerYearList);
           marginArr = Array.from({ length: advState.advYears }, (_, i) =>
-            i < parts.length ? (parts[i] || 0) + marginDelta : (parts[parts.length - 1] || 0) + marginDelta,
+            i < parts.length ? parts[i] || 0 : parts[parts.length - 1] || 0,
           );
         } else {
           const startM = parseFloat(advState.advEbitdaStart || '0');
           const targetM = parseFloat(advState.advEbitdaTarget || advState.advEbitdaStart || '0');
-          marginArr = buildMarginArray(startM, targetM, advState.advYears, marginDelta);
+          const arr: number[] = [];
+          for (let i = 0; i < advState.advYears; i++) {
+            const ratio = advState.advYears === 1 ? 0 : i / (advState.advYears - 1);
+            arr.push(startM + (targetM - startM) * ratio);
+          }
+          marginArr = arr.map((v) => Math.min(100, Math.max(0, v)));
         }
         const individualPercents: { [k: number]: number } = {};
         for (let i = 0; i < advState.advYears; i++) {
@@ -850,32 +882,29 @@ export default function FreeValuationPage() {
         updateOpEx({ inputType: 'consolidated', consolidated: { inputMethod: 'direct', yearlyValues: opexValues } });
         calculateFinancials();
       }
-
-      return useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
     };
 
     setTimeout(() => {
-      const baseEV = computeEVForScenarioAdvanced(0, 0);
-      const lowEV = computeEVForScenarioAdvanced(-5, -5);
-      const highEV = computeEVForScenarioAdvanced(5, 5);
+      // Calculate base case
+      setupBaseCase();
+      const baseEV = useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
 
-      // Recompute base case to set store to base case values for graphs and saving
-      computeEVForScenarioAdvanced(0, 0);
-
+      // For advanced mode, we'll use the sensitivity scenarios from the useEffect
+      // For now, just create placeholder results that will be populated by the sensitivity analysis
       setResults([
         {
           id: 'bear',
           name: 'Low',
-          enterpriseValue: lowEV,
+          enterpriseValue: baseEV, // Will be updated by sensitivity analysis
           ebitdaMarginPct:
             advState.ebitdaInputType === 'percent'
               ? advState.ebitdaPctMode === 'uniform'
-                ? Math.max(0, (parseFloat(advState.advEbitdaUniformPct || '0') || 0) - 5)
-                : Math.max(0, parseFloat(advState.advEbitdaStart || '0') - 5)
+                ? parseFloat(advState.advEbitdaUniformPct || '0')
+                : parseFloat(advState.advEbitdaStart || '0')
               : 0,
           revenueGrowthPct:
             advState.advRevenueInputMethod === 'growth' && advState.growthMode === 'uniform'
-              ? (parseFloat(advState.advUniformGrowth || '0') || 0) - 5
+              ? parseFloat(advState.advUniformGrowth || '0')
               : 0,
         },
         {
@@ -896,16 +925,16 @@ export default function FreeValuationPage() {
         {
           id: 'bull',
           name: 'High',
-          enterpriseValue: highEV,
+          enterpriseValue: baseEV, // Will be updated by sensitivity analysis
           ebitdaMarginPct:
             advState.ebitdaInputType === 'percent'
               ? advState.ebitdaPctMode === 'uniform'
-                ? (parseFloat(advState.advEbitdaUniformPct || '0') || 0) + 5
-                : parseFloat(advState.advEbitdaStart || '0') + 5
+                ? parseFloat(advState.advEbitdaUniformPct || '0')
+                : parseFloat(advState.advEbitdaStart || '0')
               : 0,
           revenueGrowthPct:
             advState.advRevenueInputMethod === 'growth' && advState.growthMode === 'uniform'
-              ? (parseFloat(advState.advUniformGrowth || '0') || 0) + 5
+              ? parseFloat(advState.advUniformGrowth || '0')
               : 0,
         },
       ]);
