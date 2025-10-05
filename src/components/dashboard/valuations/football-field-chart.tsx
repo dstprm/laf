@@ -50,6 +50,14 @@ export function FootballFieldChart({
   height = 400,
   className = '',
 }: FootballFieldChartProps) {
+  // Debug logging
+  React.useEffect(() => {
+    console.log('FootballFieldChart: ranges updated', {
+      count: ranges.length,
+      ranges: ranges,
+    });
+  }, [ranges]);
+
   // Prepare data for the chart - need to transform for horizontal bars
   const chartData = ranges.map((range) => ({
     scenario: range.scenario,

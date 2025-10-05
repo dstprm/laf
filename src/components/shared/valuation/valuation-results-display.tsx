@@ -55,11 +55,32 @@ export function ValuationResultsDisplay({
   showYears = 5,
   chartTitle,
 }: ValuationResultsDisplayProps) {
+  // Track database scenarios separately when valuation is saved
+  const [dbScenarios, setDbScenarios] = React.useState<LocalScenario[]>([]);
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('ValuationResultsDisplay: localScenarios updated', {
+      count: localScenarios.length,
+      scenarios: localScenarios,
+    });
+  }, [localScenarios]);
+
+  React.useEffect(() => {
+    console.log('ValuationResultsDisplay: dbScenarios updated', {
+      count: dbScenarios.length,
+      scenarios: dbScenarios,
+    });
+  }, [dbScenarios]);
+
   if (!results) {
     return null;
   }
 
   const baseValue = results?.find((r) => r.id === 'base')?.enterpriseValue || calculatedFinancials.enterpriseValue || 0;
+
+  // Use dbScenarios if valuation is saved, otherwise use localScenarios
+  const scenariosForChart = savedValuationId ? dbScenarios : localScenarios;
 
   return (
     <>
@@ -90,10 +111,10 @@ export function ValuationResultsDisplay({
       )}
 
       {/* Football Field Valuation Chart */}
-      {localScenarios.length > 0 && (
+      {scenariosForChart.length > 0 && (
         <div className="mt-6">
           <FootballFieldChart
-            ranges={localScenarios.map((s) => ({
+            ranges={scenariosForChart.map((s) => ({
               scenario: s.name,
               min: s.minValue,
               max: s.maxValue,
@@ -122,7 +143,17 @@ export function ValuationResultsDisplay({
             baseValue={baseValue}
             baseModel={model}
             baseResults={calculatedFinancials}
-            onScenariosChange={() => {}}
+            onScenariosChange={(scenarios) => {
+              // Convert database scenarios to LocalScenario format
+              const localScenarioFormat = scenarios.map((s) => ({
+                name: s.name,
+                description: s.description || undefined,
+                minValue: s.minValue,
+                maxValue: s.maxValue,
+              }));
+              console.log('ValuationResultsDisplay: Received scenarios from ScenarioList', localScenarioFormat);
+              setDbScenarios(localScenarioFormat);
+            }}
           />
         </div>
       )}
