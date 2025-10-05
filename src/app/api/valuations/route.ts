@@ -31,6 +31,7 @@ export async function POST(req: Request) {
       companyName,
       companyWebsite,
       companyPhone,
+      preferredEditMode,
     } = body;
 
     // Validate required fields
@@ -59,6 +60,7 @@ export async function POST(req: Request) {
       companyName,
       companyWebsite,
       companyPhone,
+      preferredEditMode,
     };
 
     const valuation = await createValuation(valuationData);

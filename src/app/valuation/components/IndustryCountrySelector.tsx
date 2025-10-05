@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Building, Calculator, TrendingUp, ChevronDown, ChevronUp, Lock } from 'lucide-react';
+import { Globe, Building, Calculator, TrendingUp, ChevronDown, ChevronUp, Lock, HelpCircle } from 'lucide-react';
 import { betasStatic } from '../betasStatic';
 import { countryRiskPremiumStatic } from '../countryRiskPremiumStatic';
 import { useModelStore } from '../store/modelStore';
+import { Tooltip } from '@/components/ui/tooltip';
 
 interface IndustryCountrySelectorProps {
   className?: string;
@@ -24,7 +25,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(model.riskProfile?.selectedIndustry || null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(model.riskProfile?.selectedCountry || null);
   const [isWaccExpanded, setIsWaccExpanded] = useState<boolean>(waccExpanded);
-  const [isSyncing, setIsSyncing] = useState<boolean>(false); // Prevent circular updates
+  const isSyncingRef = React.useRef<boolean>(false); // Use ref to prevent circular updates
 
   // Risk profile inputs - store as strings to allow proper typing
   const [unleveredBetaStr, setUnleveredBetaStr] = useState<string>(model.riskProfile?.unleveredBeta?.toString() || '0');
@@ -64,13 +65,31 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   const industries = Object.keys(betasStatic);
   const countries = Object.keys(countryRiskPremiumStatic);
 
-  // Force sync on mount (important for when component re-mounts with new key)
-  useEffect(() => {
-    if (!model.riskProfile) return;
+  // Get industry average D/E ratio for reference
+  const industryAvgDeRatio = selectedIndustry
+    ? (betasStatic[selectedIndustry as keyof typeof betasStatic]?.dERatio ?? null)
+    : null;
 
-    console.log('IndustryCountrySelector mounting - forcing initial sync with store');
+  // Force sync on mount and when riskProfile changes (important for when loading saved data)
+  useEffect(() => {
+    console.log('[IndustryCountrySelector] Sync effect triggered', {
+      hasRiskProfile: !!model.riskProfile,
+      industry: model.riskProfile?.selectedIndustry,
+      country: model.riskProfile?.selectedCountry,
+    });
+
+    if (!model.riskProfile) {
+      console.log('[IndustryCountrySelector] No riskProfile yet, skipping sync');
+      return;
+    }
+
     const newIndustry = model.riskProfile.selectedIndustry || null;
     const newCountry = model.riskProfile.selectedCountry || null;
+
+    console.log('[IndustryCountrySelector] Syncing with store:', { newIndustry, newCountry });
+
+    // Set isSyncing to prevent the update effect from triggering
+    isSyncingRef.current = true;
 
     // Force update even if values appear the same
     setSelectedIndustry(newIndustry);
@@ -87,8 +106,13 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     setRiskFreeRateStr(formatPercent(model.riskProfile.riskFreeRate || 0.0444));
     setCorporateTaxRateStr(formatPercent(model.riskProfile.corporateTaxRate || 0.25));
 
-    console.log('Initial sync complete:', { newIndustry, newCountry });
-  }, []); // Empty deps = run only on mount
+    // Reset isSyncing after a short delay to ensure state updates have completed
+    setTimeout(() => {
+      isSyncingRef.current = false;
+    }, 100);
+
+    console.log('[IndustryCountrySelector] ✅ Sync complete');
+  }, [model.riskProfile]); // Re-run when riskProfile changes
 
   // Sync with model when it changes (important for when loading saved data)
   useEffect(() => {
@@ -134,10 +158,12 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     // Execute all updates if there are any changes
     if (updates.length > 0) {
       console.log(`Syncing ${updates.length} risk profile fields from store to UI`);
-      setIsSyncing(true);
+      isSyncingRef.current = true;
       updates.forEach((update) => update());
       // Reset sync flag after updates complete
-      setTimeout(() => setIsSyncing(false), 50);
+      setTimeout(() => {
+        isSyncingRef.current = false;
+      }, 100);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -154,8 +180,13 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     model.riskProfile?.corporateTaxRate,
   ]); // Sync when any risk profile value changes
 
-  // Update suggestions when industry or country changes
+  // Update suggestions when industry or country changes (but not during sync from saved data)
   useEffect(() => {
+    // Skip if we're syncing from saved data
+    if (isSyncingRef.current) {
+      return;
+    }
+
     if (selectedIndustry && selectedCountry) {
       const industryData = betasStatic[selectedIndustry as keyof typeof betasStatic];
       const countryData = countryRiskPremiumStatic[selectedCountry as keyof typeof countryRiskPremiumStatic];
@@ -171,8 +202,13 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     }
   }, [selectedIndustry, selectedCountry]);
 
-  // Update risk profile when country selection changes to populate tax rate
+  // Update risk profile when country selection changes to populate tax rate (but not during sync from saved data)
   useEffect(() => {
+    // Skip if we're syncing from saved data
+    if (isSyncingRef.current) {
+      return;
+    }
+
     if (selectedCountry && countryRiskPremiumStatic[selectedCountry as keyof typeof countryRiskPremiumStatic]) {
       const countryData = countryRiskPremiumStatic[selectedCountry as keyof typeof countryRiskPremiumStatic];
       setEquityRiskPremiumStr(formatPercent(countryData.equityRiskPremium));
@@ -182,8 +218,13 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     }
   }, [selectedCountry]);
 
-  // Update risk profile when industry selection changes
+  // Update risk profile when industry selection changes (but not during sync from saved data)
   useEffect(() => {
+    // Skip if we're syncing from saved data
+    if (isSyncingRef.current) {
+      return;
+    }
+
     if (selectedIndustry && betasStatic[selectedIndustry as keyof typeof betasStatic]) {
       const industryData = betasStatic[selectedIndustry as keyof typeof betasStatic];
       setUnleveredBetaStr(industryData.unleveredBeta.toString());
@@ -199,7 +240,8 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
 
   // Update store whenever any value changes (but not during sync)
   useEffect(() => {
-    if (!isSyncing) {
+    if (!isSyncingRef.current) {
+      console.log('[IndustryCountrySelector] Updating store with local changes');
       // Update both the risk profile and global selectedIndustry for DCF suggestions
       updateSelectedIndustry(selectedIndustry);
       updateRiskProfile({
@@ -215,7 +257,10 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
         riskFreeRate,
         corporateTaxRate,
       });
+    } else {
+      console.log('[IndustryCountrySelector] Skipping store update (syncing from store)');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedIndustry,
     selectedCountry,
@@ -228,9 +273,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     companySpread,
     riskFreeRate,
     corporateTaxRate,
-    isSyncing,
-    updateRiskProfile,
-    updateSelectedIndustry,
+    // Don't include updateRiskProfile and updateSelectedIndustry to avoid infinite loops
   ]);
 
   // Calculate Cost of Equity and Cost of Debt
@@ -272,7 +315,9 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
                     <Globe className="w-4 h-4 text-green-700" />
                     <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Country</span>
                   </div>
-                  <div className="text-base font-bold text-green-900 text-center">{selectedCountry || 'Not specified'}</div>
+                  <div className="text-base font-bold text-green-900 text-center">
+                    {selectedCountry || 'Not specified'}
+                  </div>
                 </div>
               </div>
               <div className="flex-1 min-w-[200px]">
@@ -281,7 +326,9 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
                     <Building className="w-4 h-4 text-blue-700" />
                     <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Industry</span>
                   </div>
-                  <div className="text-base font-bold text-blue-900 text-center">{selectedIndustry || 'Not specified'}</div>
+                  <div className="text-base font-bold text-blue-900 text-center">
+                    {selectedIndustry || 'Not specified'}
+                  </div>
                 </div>
               </div>
             </div>
@@ -371,15 +418,38 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">D/E Ratio*</label>
+                    <label className="flex items-center gap-1 text-xs font-medium text-gray-700 mb-1">
+                      D/E Ratio*
+                      <Tooltip content="D/E Ratio = Total Debt ÷ Total Equity. Enter as a ratio (not percentage). Examples: 0.5 = $0.50 debt per $1 equity, 1.0 = equal debt and equity, 2.0 = $2 debt per $1 equity.">
+                        <HelpCircle className="w-3 h-3 text-gray-400 hover:text-gray-600" />
+                      </Tooltip>
+                    </label>
                     <input
                       type="number"
                       step="0.01"
+                      min="0"
                       value={deRatioStr}
                       onChange={(e) => setDeRatioStr(e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full px-2 py-1.5 text-sm border rounded-md shadow-sm focus:outline-none focus:ring-1 ${
+                        parseFloat(deRatioStr) > 5
+                          ? 'border-amber-500 focus:ring-amber-500 bg-amber-50'
+                          : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                      }`}
                       placeholder="0.00"
                     />
+                    {industryAvgDeRatio !== null && (
+                      <div className="mt-0.5 text-[10px] text-gray-500">
+                        Industry avg: {industryAvgDeRatio.toFixed(2)}
+                      </div>
+                    )}
+                    {parseFloat(deRatioStr) > 5 && (
+                      <div className="mt-1 text-[10px] text-amber-700 bg-amber-50 p-1.5 rounded border border-amber-200">
+                        ⚠️ Very high leverage (&gt; 5). Please verify.
+                      </div>
+                    )}
+                    <div className="mt-0.5 text-[10px] text-gray-500">
+                      Enter as ratio: 0.5 = moderate, 1.0 = equal, 2.0 = high
+                    </div>
                   </div>
 
                   <div>

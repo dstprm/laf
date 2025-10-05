@@ -24,6 +24,7 @@ interface CreateValuationData {
   companyWebsite?: string;
   companyPhone?: string;
   reportComment?: string;
+  preferredEditMode?: 'simple' | 'advanced' | 'full';
 }
 
 interface UpdateValuationData {
@@ -37,6 +38,7 @@ interface UpdateValuationData {
   companyWebsite?: string;
   companyPhone?: string;
   reportComment?: string;
+  preferredEditMode?: 'simple' | 'advanced' | 'full';
 }
 
 /**
@@ -56,6 +58,7 @@ export async function createValuation(data: CreateValuationData) {
       companyWebsite: data.companyWebsite,
       companyPhone: data.companyPhone,
       reportComment: data.reportComment,
+      preferredEditMode: data.preferredEditMode,
     },
   });
 }
@@ -120,6 +123,7 @@ export async function updateValuation(id: string, userId: string, data: UpdateVa
       ...(data.companyWebsite !== undefined && { companyWebsite: data.companyWebsite }),
       ...(data.companyPhone !== undefined && { companyPhone: data.companyPhone }),
       ...(data.reportComment !== undefined && { reportComment: data.reportComment }),
+      ...(data.preferredEditMode !== undefined && { preferredEditMode: data.preferredEditMode }),
     },
   });
 }

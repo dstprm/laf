@@ -112,6 +112,7 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
           industry={valuation.industry}
           country={valuation.country}
           enterpriseValue={valuation.enterpriseValue}
+          preferredEditMode={valuation.preferredEditMode ?? undefined}
         />
       </div>
     </DashboardPageWrapper>

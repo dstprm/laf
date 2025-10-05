@@ -43,7 +43,11 @@ export function ScenarioListLocal({ scenarios, onChange, baseModel, baseResults,
   };
 
   const handleLocalCreate = (scenario: LocalScenario) => {
-    onChange([...scenarios, scenario]);
+    console.log('ScenarioListLocal: Creating new scenario', scenario);
+    console.log('ScenarioListLocal: Current scenarios', scenarios);
+    const updated = [...scenarios, scenario];
+    console.log('ScenarioListLocal: Updated scenarios', updated);
+    onChange(updated);
   };
 
   const formatCurrency = (value: number) => {

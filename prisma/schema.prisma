@@ -122,29 +122,31 @@ model ContactRequest {
 
 /// Valuations created by users via the free valuation tool
 model Valuation {
-    id              String   @id @default(cuid())
-    userId          String   @map("user_id")
-    name            String?
+    id                String   @id @default(cuid())
+    userId            String   @map("user_id")
+    name              String?
     /// Complete input model data (FinancialModel from modelStore)
-    modelData       Json     @map("model_data")
+    modelData         Json     @map("model_data")
     /// Calculated financial results (CalculatedFinancials from modelStore)
-    resultsData     Json     @map("results_data")
+    resultsData       Json     @map("results_data")
     /// Denormalized enterprise value for easy querying
-    enterpriseValue Float?   @map("enterprise_value")
+    enterpriseValue   Float?   @map("enterprise_value")
     /// Denormalized industry for filtering
-    industry        String?
+    industry          String?
     /// Denormalized country for filtering
-    country         String?
+    country           String?
     /// Company business information
-    companyName     String?  @map("company_name")
-    companyWebsite  String?  @map("company_website")
-    companyPhone    String?  @map("company_phone")
+    companyName       String?  @map("company_name")
+    companyWebsite    String?  @map("company_website")
+    companyPhone      String?  @map("company_phone")
+    /// UI preference: which edit mode/tab to open by default ('simple' | 'advanced' | 'full')
+    preferredEditMode String?  @map("preferred_edit_mode")
     /// Report sharing
-    isPublished     Boolean  @default(false) @map("is_published")
-    shareToken      String?  @unique @map("share_token")
-    reportComment   String?  @map("report_comment") @db.Text
-    createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+    isPublished       Boolean  @default(false) @map("is_published")
+    shareToken        String?  @unique @map("share_token")
+    reportComment     String?  @map("report_comment") @db.Text
+    createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
     // Relations
     user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -25,16 +25,29 @@ export function applyVariableAdjustments(
     switch (adjustment.variableId) {
       case 'wacc':
         // WACC adjustment requires recalculating risk profile
-        // We'll adjust the company spread to achieve the target WACC
         if (model.riskProfile && value !== undefined) {
           const targetWacc = value / 100;
           const currentWacc = calculateWacc(model.riskProfile);
           const waccDiff = targetWacc - currentWacc;
 
-          // Adjust company spread (simple approximation)
+          // When D/E = 0, WACC = Cost of Equity only, so adjust equity risk premium
+          // When D/E > 0, adjust company spread to affect cost of debt
+          const equityWeight = 1 / (1 + model.riskProfile.deRatio);
           const debtWeight = model.riskProfile.deRatio / (1 + model.riskProfile.deRatio);
-          const spreadAdjustment = waccDiff / (debtWeight * (1 - model.riskProfile.corporateTaxRate));
-          model.riskProfile.companySpread = Math.max(0, model.riskProfile.companySpread + spreadAdjustment);
+
+          if (model.riskProfile.deRatio === 0 || debtWeight < 0.01) {
+            // No debt or negligible debt: adjust equity risk premium
+            // WACC = Cost of Equity when D/E = 0
+            // Cost of Equity = Rf + Beta × (ERP + CRP)
+            // So: waccDiff = Beta × erpAdjustment
+            const erpAdjustment =
+              model.riskProfile.leveredBeta !== 0 ? waccDiff / model.riskProfile.leveredBeta : waccDiff / 1; // Fallback if beta is 0
+            model.riskProfile.equityRiskPremium = Math.max(0, model.riskProfile.equityRiskPremium + erpAdjustment);
+          } else {
+            // Has significant debt: adjust company spread
+            const spreadAdjustment = waccDiff / (debtWeight * (1 - model.riskProfile.corporateTaxRate));
+            model.riskProfile.companySpread = Math.max(0, model.riskProfile.companySpread + spreadAdjustment);
+          }
         }
         break;
 
