@@ -95,6 +95,8 @@ interface AdvancedValuationFormProps {
   hideBusinessInfo?: boolean;
   // Optional: hide the Industry & Country selectors (e.g., managed elsewhere in dashboard)
   hideIndustryCountry?: boolean;
+  // When true, render all steps expanded and hide Next/Back navigation (dashboard mode)
+  showAllSteps?: boolean;
 }
 
 export function AdvancedValuationForm({
@@ -121,6 +123,7 @@ export function AdvancedValuationForm({
   hideDeRatio = false,
   hideBusinessInfo = false,
   hideIndustryCountry = false,
+  showAllSteps = false,
 }: AdvancedValuationFormProps) {
   // Get industry average D/E ratio for reference
   const industryAvgDeRatio = industry ? (betasStatic[industry as keyof typeof betasStatic]?.dERatio ?? null) : null;
@@ -190,7 +193,7 @@ export function AdvancedValuationForm({
 
       {/* Step 1: Revenue */}
       <div
-        className={`transition-all duration-500 ease-out ${advState.advStep >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'} ${advState.advStep >= 1 ? '' : 'pointer-events-none'}`}
+        className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'} ${showAllSteps || advState.advStep >= 1 ? '' : 'pointer-events-none'}`}
       >
         <div className="mb-2 text-sm font-medium text-gray-700">1. Revenue</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -220,21 +223,23 @@ export function AdvancedValuationForm({
             </select>
           </div>
         </div>
-        <div className="mt-3 flex items-center gap-3">
-          <button
-            type="button"
-            className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-            disabled={!(parseFloat(lastYearRevenue || '0') > 0) || advState.advYears < 2}
-            onClick={() => updateAdvState('advStep', 2)}
-          >
-            Next
-          </button>
-        </div>
+        {!showAllSteps && (
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              type="button"
+              className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+              disabled={!(parseFloat(lastYearRevenue || '0') > 0) || advState.advYears < 2}
+              onClick={() => updateAdvState('advStep', 2)}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Step 2: Revenue growth / direct and LTG */}
       <div
-        className={`transition-all duration-500 ease-out ${advState.advStep >= 2 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+        className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= 2 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
       >
         <div className="mb-2 text-sm font-medium text-gray-700">2. Revenue growth</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -339,37 +344,39 @@ export function AdvancedValuationForm({
             />
           </div>
         )}
-        <div className="mt-3 flex items-center gap-3">
-          <button
-            type="button"
-            className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
-            onClick={() => updateAdvState('advStep', 1)}
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-            disabled={
-              advState.advRevenueInputMethod === 'growth'
-                ? (advState.growthMode === 'uniform'
-                    ? advState.advUniformGrowth.trim() === ''
-                    : advState.growthPerYearList
-                        .slice(0, Math.max(advState.advYears - 1, 1))
-                        .some((v) => v.trim() === '')) || advState.advLTG.trim() === ''
-                : advState.revenueDirectList.slice(0, advState.advYears).some((v) => v.trim() === '') ||
-                  advState.advLTG.trim() === ''
-            }
-            onClick={() => updateAdvState('advStep', 3)}
-          >
-            Next
-          </button>
-        </div>
+        {!showAllSteps && (
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              type="button"
+              className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+              onClick={() => updateAdvState('advStep', 1)}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+              disabled={
+                advState.advRevenueInputMethod === 'growth'
+                  ? (advState.growthMode === 'uniform'
+                      ? advState.advUniformGrowth.trim() === ''
+                      : advState.growthPerYearList
+                          .slice(0, Math.max(advState.advYears - 1, 1))
+                          .some((v) => v.trim() === '')) || advState.advLTG.trim() === ''
+                  : advState.revenueDirectList.slice(0, advState.advYears).some((v) => v.trim() === '') ||
+                    advState.advLTG.trim() === ''
+              }
+              onClick={() => updateAdvState('advStep', 3)}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Step 3: EBITDA */}
       <div
-        className={`transition-all duration-500 ease-out ${advState.advStep >= 3 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+        className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= 3 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
       >
         <div className="mb-2 text-sm font-medium text-gray-700">3. EBITDA</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -482,36 +489,38 @@ export function AdvancedValuationForm({
             )}
           </div>
         )}
-        <div className="mt-3 flex items-center gap-3">
-          <button
-            type="button"
-            className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
-            onClick={() => updateAdvState('advStep', 2)}
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-            disabled={
-              advState.ebitdaInputType === 'percent'
-                ? advState.ebitdaPctMode === 'uniform'
-                  ? advState.advEbitdaUniformPct.trim() === ''
-                  : advState.ebitdaPctMode === 'ramp'
-                    ? advState.advEbitdaStart.trim() === '' || advState.advEbitdaTarget.trim() === ''
-                    : advState.ebitdaPercentPerYearList.slice(0, advState.advYears).some((v) => v.trim() === '')
-                : advState.ebitdaDirectList.slice(0, advState.advYears).some((v) => v.trim() === '')
-            }
-            onClick={() => updateAdvState('advStep', 4)}
-          >
-            Next
-          </button>
-        </div>
+        {!showAllSteps && (
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              type="button"
+              className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+              onClick={() => updateAdvState('advStep', 2)}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+              disabled={
+                advState.ebitdaInputType === 'percent'
+                  ? advState.ebitdaPctMode === 'uniform'
+                    ? advState.advEbitdaUniformPct.trim() === ''
+                    : advState.ebitdaPctMode === 'ramp'
+                      ? advState.advEbitdaStart.trim() === '' || advState.advEbitdaTarget.trim() === ''
+                      : advState.ebitdaPercentPerYearList.slice(0, advState.advYears).some((v) => v.trim() === '')
+                  : advState.ebitdaDirectList.slice(0, advState.advYears).some((v) => v.trim() === '')
+              }
+              onClick={() => updateAdvState('advStep', 4)}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Step 4: Others (CAPEX, NWC, D&A) - Due to size, showing compact version */}
       <div
-        className={`transition-all duration-500 ease-out ${advState.advStep >= 4 ? 'opacity-100 translate-y-0 max-h-[2000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+        className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= 4 ? 'opacity-100 translate-y-0 max-h-[2000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
       >
         <div className="mb-2 text-sm font-medium text-gray-700">4. Others (CAPEX, NWC, D&A)</div>
 
@@ -746,28 +755,30 @@ export function AdvancedValuationForm({
           )}
         </div>
 
-        <div className="mt-3 flex items-center gap-3">
-          <button
-            type="button"
-            className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
-            onClick={() => updateAdvState('advStep', 3)}
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            className="px-3 py-2 bg-blue-600 text-white rounded-md"
-            onClick={() => updateAdvState('advStep', 5)}
-          >
-            Next
-          </button>
-        </div>
+        {!showAllSteps && (
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              type="button"
+              className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+              onClick={() => updateAdvState('advStep', 3)}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              className="px-3 py-2 bg-blue-600 text-white rounded-md"
+              onClick={() => updateAdvState('advStep', 5)}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Step 5: Capital Structure (D/E Ratio) - Only for free-valuation */}
       {!hideDeRatio && (
         <div
-          className={`transition-all duration-500 ease-out ${advState.advStep >= 5 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+          className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= 5 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
         >
           <div className="mb-2 text-sm font-medium text-gray-700">5. Capital Structure</div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -820,28 +831,30 @@ export function AdvancedValuationForm({
             </div>
           </div>
 
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              type="button"
-              className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
-              onClick={() => updateAdvState('advStep', 4)}
-            >
-              Back
-            </button>
-            <button
-              type="button"
-              className="px-3 py-2 bg-blue-600 text-white rounded-md"
-              onClick={() => updateAdvState('advStep', 6)}
-            >
-              Next
-            </button>
-          </div>
+          {!showAllSteps && (
+            <div className="mt-3 flex items-center gap-3">
+              <button
+                type="button"
+                className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+                onClick={() => updateAdvState('advStep', 4)}
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                className="px-3 py-2 bg-blue-600 text-white rounded-md"
+                onClick={() => updateAdvState('advStep', 6)}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* Step 6: Taxes (or Step 5 if hideDeRatio is true) */}
       <div
-        className={`transition-all duration-500 ease-out ${advState.advStep >= (hideDeRatio ? 5 : 6) ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+        className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= (hideDeRatio ? 5 : 6) ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
       >
         <div className="mb-2 text-sm font-medium text-gray-700">{hideDeRatio ? '5' : '6'}. Taxes</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -890,13 +903,15 @@ export function AdvancedValuationForm({
         </div>
 
         <div className="mt-3 flex items-center gap-3">
-          <button
-            type="button"
-            className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
-            onClick={() => updateAdvState('advStep', hideDeRatio ? 4 : 5)}
-          >
-            Back
-          </button>
+          {!showAllSteps && (
+            <button
+              type="button"
+              className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+              onClick={() => updateAdvState('advStep', hideDeRatio ? 4 : 5)}
+            >
+              Back
+            </button>
+          )}
           <button
             type="submit"
             className="px-4 py-2 bg-green-600 text-white rounded-md disabled:opacity-50"

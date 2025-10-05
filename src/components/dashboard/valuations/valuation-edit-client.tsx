@@ -98,6 +98,9 @@ export default function ValuationEditClient({
     advStep: 1,
   });
 
+  // Local state for Advanced form's last year revenue (binds the input)
+  const [lastYearRevenue, setLastYearRevenue] = useState<string>('');
+
   const {
     model,
     calculatedFinancials,
@@ -118,6 +121,7 @@ export default function ValuationEditClient({
 
   // Initialize the model store with saved data when mounting
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [hasPrefilledAdvanced, setHasPrefilledAdvanced] = useState(false);
 
   useEffect(() => {
     console.log('[ValuationEditClient] Initialization useEffect triggered', {
@@ -237,6 +241,14 @@ export default function ValuationEditClient({
         console.log('[ValuationEditClient] Triggering financial recalculation...');
         calculateFinancials();
       }, 150);
+
+      // Initialize local last year revenue input from saved model
+      const initialBaseRevenue =
+        initialModelData?.revenue?.inputType === 'consolidated' &&
+        initialModelData.revenue.consolidated?.inputMethod === 'growth'
+          ? initialModelData.revenue.consolidated.baseValue || 0
+          : (initialResultsData as any)?.revenue?.[0] || 0;
+      setLastYearRevenue(String(initialBaseRevenue || ''));
     } catch (error) {
       console.error('[ValuationEditClient] ❌ Error loading valuation data:', error);
       toast({
@@ -247,6 +259,170 @@ export default function ValuationEditClient({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasInitialized, initialModelData, initialResultsData, industry, country]);
+
+  // Prefill Advanced form state from the saved model once after initialization
+  useEffect(() => {
+    if (!hasInitialized || hasPrefilledAdvanced) return;
+
+    try {
+      const years = (initialModelData as any)?.periods?.numberOfYears || model.periods?.numberOfYears || 5;
+
+      // Clone to avoid mutating state directly
+      const nextAdv: AdvancedValuationState = {
+        ...advState,
+        advYears: years,
+      };
+
+      // Revenue: map saved model into Advanced state
+      if (initialModelData?.revenue?.inputType === 'consolidated') {
+        const cons = initialModelData.revenue.consolidated as any;
+        if (cons?.inputMethod === 'growth') {
+          nextAdv.advRevenueInputMethod = 'growth';
+          if (cons.growthMethod === 'uniform') {
+            nextAdv.growthMode = 'uniform';
+            nextAdv.advUniformGrowth = cons.growthRate != null ? String(cons.growthRate) : '';
+          } else {
+            nextAdv.growthMode = 'perYear';
+            const listLen = Math.max(years - 1, 1);
+            const perYear: string[] = Array.from({ length: listLen }, (_, i) => {
+              const idx = i + 1; // growth rates start from year 1
+              const v = cons.individualGrowthRates?.[idx];
+              return v != null ? String(v) : '';
+            });
+            nextAdv.growthPerYearList = perYear;
+          }
+        } else if (cons?.inputMethod === 'direct') {
+          nextAdv.advRevenueInputMethod = 'direct';
+          const listLen = years;
+          const direct: string[] = Array.from({ length: listLen }, (_, i) => {
+            const v = cons.yearlyValues?.[i];
+            return v != null ? String(v) : '';
+          });
+          nextAdv.revenueDirectList = direct;
+        }
+      }
+
+      // Terminal value (LTG)
+      const tv = (initialModelData as any)?.terminalValue;
+      if (tv?.method === 'growth' && tv?.growthRate != null) {
+        nextAdv.advLTG = String(tv.growthRate);
+      }
+
+      // EBITDA via OpEx percent-of-revenue mapping
+      const opex = (initialModelData as any)?.opex?.consolidated;
+      if (opex?.inputMethod === 'percentOfRevenue') {
+        nextAdv.ebitdaInputType = 'percent';
+        if (opex.percentMethod === 'uniform') {
+          const pct = opex.percentOfRevenue != null ? Number(opex.percentOfRevenue) : 0;
+          nextAdv.ebitdaPctMode = 'uniform';
+          nextAdv.advEbitdaUniformPct = String(Math.max(0, 100 - pct));
+        } else if (opex.percentMethod === 'individual') {
+          nextAdv.ebitdaPctMode = 'perYear';
+          const listLen = years;
+          nextAdv.ebitdaPercentPerYearList = Array.from({ length: listLen }, (_, i) => {
+            const p = opex.individualPercents?.[i];
+            const margin = p != null ? Math.max(0, 100 - Number(p)) : '';
+            return margin === '' ? '' : String(margin);
+          });
+        }
+      } else if (opex?.inputMethod === 'direct') {
+        nextAdv.ebitdaInputType = 'direct';
+        // We cannot reliably reconstruct EBITDA direct from opex direct; leave list blank
+      }
+
+      // CAPEX
+      const capex = (initialModelData as any)?.capex;
+      if (capex?.inputMethod === 'percentOfRevenue') {
+        nextAdv.capexMethod = 'percentOfRevenue';
+        if (capex.percentMethod === 'uniform') {
+          nextAdv.capexPercentMode = 'uniform';
+          nextAdv.advCapexPct = capex.percentOfRevenue != null ? String(capex.percentOfRevenue) : '';
+        } else if (capex.percentMethod === 'individual') {
+          nextAdv.capexPercentMode = 'individual';
+          const listLen = years;
+          nextAdv.capexPercentsList = Array.from({ length: listLen }, (_, i) => {
+            const v = capex.individualPercents?.[i];
+            return v != null ? String(v) : '';
+          });
+        }
+      } else if (capex?.inputMethod === 'direct') {
+        nextAdv.capexMethod = 'direct';
+        const listLen = years;
+        nextAdv.capexDirectList = Array.from({ length: listLen }, (_, i) => {
+          const v = capex.yearlyValues?.[i];
+          return v != null ? String(v) : '';
+        });
+      }
+
+      // NWC
+      const nwc = (initialModelData as any)?.netWorkingCapital;
+      if (nwc?.inputMethod === 'percentOfRevenue') {
+        nextAdv.nwcMethod = 'percentOfRevenue';
+        if (nwc.percentMethod === 'uniform') {
+          nextAdv.nwcPercentMode = 'uniform';
+          nextAdv.advNwcPct = nwc.percentOfRevenue != null ? String(nwc.percentOfRevenue) : '';
+        } else if (nwc.percentMethod === 'individual') {
+          nextAdv.nwcPercentMode = 'individual';
+          const listLen = years;
+          nextAdv.nwcPercentsList = Array.from({ length: listLen }, (_, i) => {
+            const v = nwc.individualPercents?.[i];
+            return v != null ? String(v) : '';
+          });
+        }
+      } else if (nwc?.inputMethod === 'direct') {
+        nextAdv.nwcMethod = 'direct';
+        const listLen = years;
+        nextAdv.nwcDirectList = Array.from({ length: listLen }, (_, i) => {
+          const v = nwc.yearlyValues?.[i];
+          return v != null ? String(v) : '';
+        });
+      }
+
+      // D&A
+      const da = (initialModelData as any)?.da;
+      if (da?.inputMethod === 'percentOfRevenue') {
+        nextAdv.daMethod = 'percentOfRevenue';
+        if (da.percentMethod === 'uniform') {
+          nextAdv.daPercentMode = 'uniform';
+          nextAdv.advDaPct = da.percentOfRevenue != null ? String(da.percentOfRevenue) : '';
+        } else if (da.percentMethod === 'individual') {
+          nextAdv.daPercentMode = 'individual';
+          const listLen = years;
+          nextAdv.daPercentsList = Array.from({ length: listLen }, (_, i) => {
+            const v = da.individualPercents?.[i];
+            return v != null ? String(v) : '';
+          });
+        }
+      } else if (da?.inputMethod === 'direct') {
+        nextAdv.daMethod = 'direct';
+        const listLen = years;
+        nextAdv.daDirectList = Array.from({ length: listLen }, (_, i) => {
+          const v = da.yearlyValues?.[i];
+          return v != null ? String(v) : '';
+        });
+      }
+
+      // Taxes
+      const taxes = (initialModelData as any)?.taxes;
+      if (taxes?.inputMethod === 'percentOfEBIT') {
+        nextAdv.taxesMethod = 'percentOfEBIT';
+        nextAdv.taxesPct = taxes.percentOfEBIT != null ? String(taxes.percentOfEBIT) : '';
+      } else if (taxes?.inputMethod === 'direct') {
+        nextAdv.taxesMethod = 'direct';
+        const listLen = years;
+        nextAdv.taxesDirectList = Array.from({ length: listLen }, (_, i) => {
+          const v = taxes.yearlyValues?.[i];
+          return v != null ? String(v) : '';
+        });
+      }
+
+      setAdvState(nextAdv);
+      setHasPrefilledAdvanced(true);
+    } catch (e) {
+      // best-effort; do not block
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasInitialized, hasPrefilledAdvanced]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -856,8 +1032,20 @@ export default function ValuationEditClient({
             setCountry={() => {}}
             industries={industries}
             countries={countries}
-            lastYearRevenue={getLastYearRevenue().toString()}
-            setLastYearRevenue={() => {}}
+            lastYearRevenue={lastYearRevenue}
+            setLastYearRevenue={(v) => {
+              setLastYearRevenue(v);
+              const base = parseFloat(v || '0');
+              updateRevenue({
+                inputType: 'consolidated',
+                consolidated: {
+                  ...model.revenue.consolidated,
+                  inputMethod: 'growth',
+                  growthMethod: model.revenue.consolidated?.growthMethod || 'uniform',
+                  baseValue: Number.isFinite(base) ? base : 0,
+                },
+              });
+            }}
             advState={advState}
             setAdvState={setAdvState}
             isCalculating={isCalculating}
@@ -865,6 +1053,7 @@ export default function ValuationEditClient({
             hideDeRatio={true}
             hideBusinessInfo={true}
             hideIndustryCountry={true}
+            showAllSteps={true}
           />
         </TabsContent>
 
