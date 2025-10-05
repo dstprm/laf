@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Building, Calculator, TrendingUp, ChevronDown, ChevronUp, Lock } from 'lucide-react';
+import { Globe, Building, Calculator, TrendingUp, ChevronDown, ChevronUp, Lock, HelpCircle } from 'lucide-react';
 import { betasStatic } from '../betasStatic';
 import { countryRiskPremiumStatic } from '../countryRiskPremiumStatic';
 import { useModelStore } from '../store/modelStore';
+import { Tooltip } from '@/components/ui/tooltip';
 
 interface IndustryCountrySelectorProps {
   className?: string;
@@ -63,6 +64,11 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   // Get available industries and countries
   const industries = Object.keys(betasStatic);
   const countries = Object.keys(countryRiskPremiumStatic);
+
+  // Get industry average D/E ratio for reference
+  const industryAvgDeRatio = selectedIndustry
+    ? (betasStatic[selectedIndustry as keyof typeof betasStatic]?.dERatio ?? null)
+    : null;
 
   // Force sync on mount and when riskProfile changes (important for when loading saved data)
   useEffect(() => {
@@ -397,15 +403,38 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">D/E Ratio*</label>
+                    <label className="flex items-center gap-1 text-xs font-medium text-gray-700 mb-1">
+                      D/E Ratio*
+                      <Tooltip content="D/E Ratio = Total Debt ÷ Total Equity. Enter as a ratio (not percentage). Examples: 0.5 = $0.50 debt per $1 equity, 1.0 = equal debt and equity, 2.0 = $2 debt per $1 equity.">
+                        <HelpCircle className="w-3 h-3 text-gray-400 hover:text-gray-600" />
+                      </Tooltip>
+                    </label>
                     <input
                       type="number"
                       step="0.01"
+                      min="0"
                       value={deRatioStr}
                       onChange={(e) => setDeRatioStr(e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full px-2 py-1.5 text-sm border rounded-md shadow-sm focus:outline-none focus:ring-1 ${
+                        parseFloat(deRatioStr) > 5
+                          ? 'border-amber-500 focus:ring-amber-500 bg-amber-50'
+                          : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                      }`}
                       placeholder="0.00"
                     />
+                    {industryAvgDeRatio !== null && (
+                      <div className="mt-0.5 text-[10px] text-gray-500">
+                        Industry avg: {industryAvgDeRatio.toFixed(2)}
+                      </div>
+                    )}
+                    {parseFloat(deRatioStr) > 5 && (
+                      <div className="mt-1 text-[10px] text-amber-700 bg-amber-50 p-1.5 rounded border border-amber-200">
+                        ⚠️ Very high leverage (&gt; 5). Please verify.
+                      </div>
+                    )}
+                    <div className="mt-0.5 text-[10px] text-gray-500">
+                      Enter as ratio: 0.5 = moderate, 1.0 = equal, 2.0 = high
+                    </div>
                   </div>
 
                   <div>

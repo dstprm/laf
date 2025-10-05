@@ -1,7 +1,10 @@
 'use client';
 
 import React from 'react';
+import { HelpCircle, Calculator } from 'lucide-react';
 import { BusinessInfoForm } from './business-info-form';
+import { betasStatic } from '@/app/valuation/betasStatic';
+import { Tooltip } from '@/components/ui/tooltip';
 
 export interface AdvancedValuationState {
   // Revenue inputs
@@ -48,6 +51,9 @@ export interface AdvancedValuationState {
   taxesPct: string;
   taxesDirectList: string[];
 
+  // WACC / Risk Profile inputs
+  deRatio: string; // Debt-to-Equity ratio
+
   // UI state
   advStep: number;
 }
@@ -82,6 +88,9 @@ interface AdvancedValuationFormProps {
   // Form controls
   isCalculating: boolean;
   onSubmit: (e: React.FormEvent) => void;
+
+  // Optional: hide D/E ratio input (e.g., in dashboard where it's in WACC section)
+  hideDeRatio?: boolean;
 }
 
 export function AdvancedValuationForm({
@@ -105,7 +114,10 @@ export function AdvancedValuationForm({
   setAdvState,
   isCalculating,
   onSubmit,
+  hideDeRatio = false,
 }: AdvancedValuationFormProps) {
+  // Get industry average D/E ratio for reference
+  const industryAvgDeRatio = industry ? (betasStatic[industry as keyof typeof betasStatic]?.dERatio ?? null) : null;
   const updateAdvState = <K extends keyof AdvancedValuationState>(key: K, value: AdvancedValuationState[K]) => {
     setAdvState((prev) => ({ ...prev, [key]: value }));
   };
@@ -742,11 +754,86 @@ export function AdvancedValuationForm({
         </div>
       </div>
 
-      {/* Step 5: Taxes */}
+      {/* Step 5: Capital Structure (D/E Ratio) - Only for free-valuation */}
+      {!hideDeRatio && (
+        <div
+          className={`transition-all duration-500 ease-out ${advState.advStep >= 5 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+        >
+          <div className="mb-2 text-sm font-medium text-gray-700">5. Capital Structure</div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-1">
+                <Calculator className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <div className="max-w-xs">
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+                    Debt-to-Equity Ratio
+                    <Tooltip content="D/E Ratio = Total Debt ÷ Total Equity. Enter as a ratio (not percentage). For example: 0.5 = $0.50 debt per $1 equity, 1.0 = equal debt and equity, 2.0 = $2 debt per $1 equity.">
+                      <HelpCircle className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+                    </Tooltip>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={advState.deRatio}
+                    onChange={(e) => updateAdvState('deRatio', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                      parseFloat(advState.deRatio) > 5
+                        ? 'border-amber-500 focus:ring-amber-500 bg-amber-50'
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
+                    placeholder="0.00"
+                  />
+                  {industryAvgDeRatio !== null && (
+                    <div className="mt-1 text-xs text-gray-600">
+                      Industry average:{' '}
+                      <span className="font-medium text-blue-700">{industryAvgDeRatio.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {parseFloat(advState.deRatio) > 5 && (
+                    <div className="mt-1 flex items-start gap-1 text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">
+                      <span className="font-semibold">⚠️</span>
+                      <span>
+                        Very high leverage (D/E &gt; 5). This indicates extreme debt levels. Please verify this is
+                        correct.
+                      </span>
+                    </div>
+                  )}
+                  <p className="mt-2 text-xs text-gray-600">
+                    <span className="font-medium">Enter as ratio:</span> 0 = no debt, 0.5 = moderate, 1.0 = equal
+                    debt/equity, 2.0 = high leverage
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              type="button"
+              className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
+              onClick={() => updateAdvState('advStep', 4)}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              className="px-3 py-2 bg-blue-600 text-white rounded-md"
+              onClick={() => updateAdvState('advStep', 6)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 6: Taxes (or Step 5 if hideDeRatio is true) */}
       <div
-        className={`transition-all duration-500 ease-out ${advState.advStep >= 5 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
+        className={`transition-all duration-500 ease-out ${advState.advStep >= (hideDeRatio ? 5 : 6) ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
       >
-        <div className="mb-2 text-sm font-medium text-gray-700">5. Taxes</div>
+        <div className="mb-2 text-sm font-medium text-gray-700">{hideDeRatio ? '5' : '6'}. Taxes</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
@@ -796,7 +883,7 @@ export function AdvancedValuationForm({
           <button
             type="button"
             className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
-            onClick={() => updateAdvState('advStep', 4)}
+            onClick={() => updateAdvState('advStep', hideDeRatio ? 4 : 5)}
           >
             Back
           </button>

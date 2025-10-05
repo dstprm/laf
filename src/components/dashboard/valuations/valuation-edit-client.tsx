@@ -92,6 +92,7 @@ export default function ValuationEditClient({
     taxesMethod: 'percentOfEBIT',
     taxesPct: '',
     taxesDirectList: Array.from({ length: 5 }, () => ''),
+    deRatio: '0', // Default to no debt (D/E ratio managed in WACC section)
     advStep: 1,
   });
 
@@ -496,15 +497,16 @@ export default function ValuationEditClient({
       : null;
 
     // Update risk profile if industry/country selected
+    // Simple mode assumes no debt (D/E ratio = 0)
     if (industryData && countryData) {
+      const unleveredBeta = industryData?.unleveredBeta ?? 0;
+
       updateRiskProfile({
-        unleveredBeta: industryData?.unleveredBeta ?? 0,
-        leveredBeta: industryData
-          ? industryData.unleveredBeta * (1 + (1 - (countryData?.corporateTaxRate ?? 0)) * (industryData.dERatio ?? 0))
-          : 0,
+        unleveredBeta: unleveredBeta,
+        leveredBeta: unleveredBeta, // No debt, so levered = unlevered
         equityRiskPremium: countryData?.equityRiskPremium ?? 0,
         countryRiskPremium: countryData?.countryRiskPremium ?? 0,
-        deRatio: industryData?.dERatio ?? 0,
+        deRatio: 0, // Assume no debt for simple mode
         adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
         corporateTaxRate: countryData?.corporateTaxRate ?? 0.25,
       });
@@ -537,18 +539,22 @@ export default function ValuationEditClient({
       updatePeriods({ numberOfYears: advState.advYears, startYear: new Date().getFullYear() });
 
       // Update risk profile if industry/country selected
+      // In dashboard edit mode, we preserve the saved D/E ratio from the model
+      // (which was set either in Advanced mode as 0, or manually in Full DCF mode)
       if (industryData && countryData) {
+        const unleveredBeta = industryData?.unleveredBeta ?? 0;
+        const currentDeRatio = model.riskProfile?.deRatio ?? 0; // Preserve saved D/E ratio or default to 0
+        const corporateTaxRate = countryData?.corporateTaxRate ?? 0.25;
+        const leveredBeta = unleveredBeta * (1 + (1 - corporateTaxRate) * currentDeRatio);
+
         updateRiskProfile({
-          unleveredBeta: industryData?.unleveredBeta ?? 0,
-          leveredBeta: industryData
-            ? industryData.unleveredBeta *
-              (1 + (1 - (countryData?.corporateTaxRate ?? 0)) * (industryData.dERatio ?? 0))
-            : 0,
+          unleveredBeta: unleveredBeta,
+          leveredBeta: leveredBeta,
           equityRiskPremium: countryData?.equityRiskPremium ?? 0,
           countryRiskPremium: countryData?.countryRiskPremium ?? 0,
-          deRatio: industryData?.dERatio ?? 0,
+          deRatio: currentDeRatio, // Preserve saved D/E ratio from model
           adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
-          corporateTaxRate: countryData?.corporateTaxRate ?? 0.25,
+          corporateTaxRate: corporateTaxRate,
         });
       }
 
@@ -817,7 +823,7 @@ export default function ValuationEditClient({
           {/* Industry and Country Selector - WACC collapsed for advanced mode */}
           <IndustryCountrySelector key={`advanced-selector-${componentKey}`} waccExpanded={false} readOnly={true} />
 
-          {/* Advanced Form */}
+          {/* Advanced Form - hide D/E ratio input since it's in WACC section */}
           <AdvancedValuationForm
             companyName={companyName || ''}
             setCompanyName={() => {}}
@@ -839,6 +845,7 @@ export default function ValuationEditClient({
             setAdvState={setAdvState}
             isCalculating={isCalculating}
             onSubmit={handleAdvancedUpdate}
+            hideDeRatio={true}
           />
         </TabsContent>
 

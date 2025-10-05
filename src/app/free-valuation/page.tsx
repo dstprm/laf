@@ -95,6 +95,7 @@ export default function FreeValuationPage() {
     taxesMethod: 'percentOfEBIT',
     taxesPct: '',
     taxesDirectList: Array.from({ length: 5 }, () => ''),
+    deRatio: '0', // Default to no debt
     advStep: 1,
   });
 
@@ -240,7 +241,6 @@ export default function FreeValuationPage() {
   // The localScenarios are calculated by another useEffect that depends on results
   React.useEffect(() => {
     if (shouldAutoSave && results && results.length > 0 && isSignedIn && !isSaving && localScenarios.length > 0) {
-      console.log('Auto-saving valuation with scenarios...', { results, localScenarios, isSignedIn });
       setShouldAutoSave(false); // Reset flag
       handleSaveValuation();
     }
@@ -262,16 +262,18 @@ export default function FreeValuationPage() {
     const countryData = countryRiskPremiumStatic[country as keyof typeof countryRiskPremiumStatic];
 
     const computeEVForScenario = (scenario: Scenario): number => {
+      // Simple valuation assumes no debt (D/E ratio = 0)
+      // Levered beta equals unlevered beta when there's no debt
+      const unleveredBeta = industryData?.unleveredBeta ?? 0;
+
       updateRiskProfile({
         selectedIndustry: industry,
         selectedCountry: country,
-        unleveredBeta: industryData?.unleveredBeta ?? 0,
-        leveredBeta: industryData
-          ? industryData.unleveredBeta * (1 + (1 - (countryData?.corporateTaxRate ?? 0)) * (industryData.dERatio ?? 0))
-          : 0,
+        unleveredBeta: unleveredBeta,
+        leveredBeta: unleveredBeta, // No debt, so levered = unlevered
         equityRiskPremium: countryData?.equityRiskPremium ?? 0,
         countryRiskPremium: countryData?.countryRiskPremium ?? 0,
-        deRatio: industryData?.dERatio ?? 0,
+        deRatio: 0, // Assume no debt for simple valuation
         adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
         companySpread: model.riskProfile?.companySpread ?? 0.05,
         riskFreeRate: model.riskProfile?.riskFreeRate ?? 0.0444,
@@ -358,20 +360,26 @@ export default function FreeValuationPage() {
     // Helper to calculate EV with modified parameters using actual model store
     const calculateSensitivityEV = (growthDelta: number, marginDelta: number, waccDelta: number = 0): number => {
       // Update risk profile with WACC adjustment
+      const unleveredBeta = industryData?.unleveredBeta ?? 0;
+
+      // For Simple mode: assume no debt (D/E = 0)
+      // For Advanced mode: use the D/E ratio from advState
+      const deRatio = activeTab === 'simple' ? 0 : parseFloat((advState.deRatio || '0').replace(',', '.'));
+      const corporateTaxRate = countryData?.corporateTaxRate ?? 0.25;
+      const leveredBeta = unleveredBeta * (1 + (1 - corporateTaxRate) * deRatio);
+
       updateRiskProfile({
         selectedIndustry: industry,
         selectedCountry: country,
-        unleveredBeta: industryData?.unleveredBeta ?? 0,
-        leveredBeta: industryData
-          ? industryData.unleveredBeta * (1 + (1 - (countryData?.corporateTaxRate ?? 0)) * (industryData.dERatio ?? 0))
-          : 0,
+        unleveredBeta: unleveredBeta,
+        leveredBeta: leveredBeta,
         equityRiskPremium: countryData?.equityRiskPremium ?? 0,
         countryRiskPremium: countryData?.countryRiskPremium ?? 0,
-        deRatio: industryData?.dERatio ?? 0,
+        deRatio: deRatio,
         adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
         companySpread: (model.riskProfile?.companySpread ?? 0.05) + waccDelta,
         riskFreeRate: model.riskProfile?.riskFreeRate ?? 0.0444,
-        corporateTaxRate: countryData?.corporateTaxRate ?? model.riskProfile?.corporateTaxRate ?? 0.25,
+        corporateTaxRate: corporateTaxRate,
       });
 
       // Update revenue with growth adjustment
@@ -423,20 +431,26 @@ export default function FreeValuationPage() {
     // Restore base case after sensitivity calculations
     const baseScenarioData = scenarios.find((s) => s.id === 'base');
     if (baseScenarioData) {
+      const unleveredBeta = industryData?.unleveredBeta ?? 0;
+
+      // For Simple mode: assume no debt (D/E = 0)
+      // For Advanced mode: use the D/E ratio from advState
+      const deRatio = activeTab === 'simple' ? 0 : parseFloat((advState.deRatio || '0').replace(',', '.'));
+      const corporateTaxRate = countryData?.corporateTaxRate ?? 0.25;
+      const leveredBeta = unleveredBeta * (1 + (1 - corporateTaxRate) * deRatio);
+
       updateRiskProfile({
         selectedIndustry: industry,
         selectedCountry: country,
-        unleveredBeta: industryData?.unleveredBeta ?? 0,
-        leveredBeta: industryData
-          ? industryData.unleveredBeta * (1 + (1 - (countryData?.corporateTaxRate ?? 0)) * (industryData.dERatio ?? 0))
-          : 0,
+        unleveredBeta: unleveredBeta,
+        leveredBeta: leveredBeta,
         equityRiskPremium: countryData?.equityRiskPremium ?? 0,
         countryRiskPremium: countryData?.countryRiskPremium ?? 0,
-        deRatio: industryData?.dERatio ?? 0,
+        deRatio: deRatio,
         adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
         companySpread: model.riskProfile?.companySpread ?? 0.05,
         riskFreeRate: model.riskProfile?.riskFreeRate ?? 0.0444,
-        corporateTaxRate: countryData?.corporateTaxRate ?? model.riskProfile?.corporateTaxRate ?? 0.25,
+        corporateTaxRate: corporateTaxRate,
       });
 
       updateRevenue({
@@ -555,18 +569,22 @@ export default function FreeValuationPage() {
 
     const computeEVForScenarioAdvanced = (growthDelta: number, marginDelta: number): number => {
       // Optional: update risk profile if industry/country selected
+      // Advanced valuation allows manual D/E ratio input from advState
       if (industry || country) {
+        const unleveredBeta = industryData?.unleveredBeta ?? 0;
+        // Parse D/E ratio from advState (normalize commas to periods for decimal parsing)
+        const deRatio = parseFloat((advState.deRatio || '0').replace(',', '.'));
+        const corporateTaxRate = countryData?.corporateTaxRate ?? 0.25;
+        const leveredBeta = unleveredBeta * (1 + (1 - corporateTaxRate) * deRatio);
+
         updateRiskProfile({
           selectedIndustry: industry || null,
           selectedCountry: country || null,
-          unleveredBeta: industryData?.unleveredBeta ?? 0,
-          leveredBeta: industryData
-            ? industryData.unleveredBeta *
-              (1 + (1 - (countryData?.corporateTaxRate ?? 0)) * (industryData.dERatio ?? 0))
-            : 0,
+          unleveredBeta: unleveredBeta,
+          leveredBeta: leveredBeta,
           equityRiskPremium: countryData?.equityRiskPremium ?? 0,
           countryRiskPremium: countryData?.countryRiskPremium ?? 0,
-          deRatio: industryData?.dERatio ?? 0,
+          deRatio: deRatio,
           adjustedDefaultSpread: countryData?.adjDefaultSpread ?? 0,
         });
       }
@@ -796,7 +814,6 @@ export default function FreeValuationPage() {
 
       // Set flag to auto-save if triggered after login
       if (autoSave && isSignedIn) {
-        console.log('Setting shouldAutoSave flag to true (advanced)', { autoSave, isSignedIn });
         setShouldAutoSave(true);
       }
     }, 3000);
@@ -870,9 +887,6 @@ export default function FreeValuationPage() {
       const defaultName = `Valuation - ${new Date().toLocaleDateString()}`;
       const valuationDisplayName = companyName.trim() || defaultName;
       const fullPhoneNumber = companyPhone.trim() ? `${phoneCountryCode} ${companyPhone}` : undefined;
-
-      // Log the model data to verify riskProfile is included
-      console.log('Saving valuation with riskProfile:', model.riskProfile);
 
       const payload: CreateValuationInput = {
         name: valuationDisplayName,
