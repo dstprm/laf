@@ -180,8 +180,13 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     model.riskProfile?.corporateTaxRate,
   ]); // Sync when any risk profile value changes
 
-  // Update suggestions when industry or country changes
+  // Update suggestions when industry or country changes (but not during sync from saved data)
   useEffect(() => {
+    // Skip if we're syncing from saved data
+    if (isSyncingRef.current) {
+      return;
+    }
+
     if (selectedIndustry && selectedCountry) {
       const industryData = betasStatic[selectedIndustry as keyof typeof betasStatic];
       const countryData = countryRiskPremiumStatic[selectedCountry as keyof typeof countryRiskPremiumStatic];
@@ -197,8 +202,13 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     }
   }, [selectedIndustry, selectedCountry]);
 
-  // Update risk profile when country selection changes to populate tax rate
+  // Update risk profile when country selection changes to populate tax rate (but not during sync from saved data)
   useEffect(() => {
+    // Skip if we're syncing from saved data
+    if (isSyncingRef.current) {
+      return;
+    }
+
     if (selectedCountry && countryRiskPremiumStatic[selectedCountry as keyof typeof countryRiskPremiumStatic]) {
       const countryData = countryRiskPremiumStatic[selectedCountry as keyof typeof countryRiskPremiumStatic];
       setEquityRiskPremiumStr(formatPercent(countryData.equityRiskPremium));
@@ -208,8 +218,13 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     }
   }, [selectedCountry]);
 
-  // Update risk profile when industry selection changes
+  // Update risk profile when industry selection changes (but not during sync from saved data)
   useEffect(() => {
+    // Skip if we're syncing from saved data
+    if (isSyncingRef.current) {
+      return;
+    }
+
     if (selectedIndustry && betasStatic[selectedIndustry as keyof typeof betasStatic]) {
       const industryData = betasStatic[selectedIndustry as keyof typeof betasStatic];
       setUnleveredBetaStr(industryData.unleveredBeta.toString());
