@@ -1,18 +1,12 @@
 import { cn } from '@/lib/utils';
 
 const items = [
-  'DCF y múltiplos',
+  'Flujos descontados y múltiplos',
   'Comparables por industria',
-  'Datos actualizados',
-  'Prima de riesgo país',
   'Rango de valoración',
   'Informe exportable',
-  'Supuestos claros',
-  'Sensibilidad',
-  'Gratis por ahora',
-  'Modo oscuro/claro',
-  'Hecho para founders',
-  'Listo en minutos',
+  'Análisis de sensibilidad',
+  'Versión gratuita en minutos',
 ];
 
 interface SectionProps {

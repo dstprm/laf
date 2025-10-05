@@ -86,22 +86,21 @@ export function HeroSection() {
 
       <div className={'mx-auto w-full max-w-5xl text-center'}>
         <p className="mx-auto mb-5 inline-flex rounded-full border border-white/20 bg-white/5 px-3.5 py-1.5 text-xs font-medium tracking-wide text-white/80 backdrop-blur-sm">
-          Tu socio experto en valuación de empresas
+          Expertos en valuación de empresas y modelamiento financiero
         </p>
         <h1
           className={
             'text-[48px] leading-[52px] md:text-[68px] md:leading-[76px] tracking-[-2px] font-bold text-white drop-shadow-2xl mb-6'
           }
         >
-          Valuaciones profesionales
+          Valuaciones profesionales y modelamiento financiero
           <br />
           para decisiones inteligentes.
         </h1>
         <p
           className={'mx-auto max-w-2xl text-[17px] leading-[26px] md:text-[19px] md:leading-[30px] text-white/85 mb-8'}
         >
-          Obtén una valuación profesional de tu empresa con métodos DCF y múltiplos, o solicita un análisis exhaustivo
-          personalizado.
+          La forma moderna de entender cuánto vale tu empresa
         </p>
 
         <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
