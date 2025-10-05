@@ -4,6 +4,7 @@ import React from 'react';
 import { HelpCircle, Calculator } from 'lucide-react';
 import { BusinessInfoForm } from './business-info-form';
 import { betasStatic } from '@/app/valuation/betasStatic';
+import { countryRiskPremiumStatic } from '@/app/valuation/countryRiskPremiumStatic';
 import { Tooltip } from '@/components/ui/tooltip';
 
 export interface AdvancedValuationState {
@@ -127,6 +128,9 @@ export function AdvancedValuationForm({
 }: AdvancedValuationFormProps) {
   // Get industry average D/E ratio for reference
   const industryAvgDeRatio = industry ? (betasStatic[industry as keyof typeof betasStatic]?.dERatio ?? null) : null;
+  const countryAvgTaxRate = country
+    ? (countryRiskPremiumStatic[country as keyof typeof countryRiskPremiumStatic]?.corporateTaxRate ?? null)
+    : null;
   const updateAdvState = <K extends keyof AdvancedValuationState>(key: K, value: AdvancedValuationState[K]) => {
     setAdvState((prev) => ({ ...prev, [key]: value }));
   };
@@ -225,14 +229,16 @@ export function AdvancedValuationForm({
         </div>
         {!showAllSteps && (
           <div className="mt-3 flex items-center gap-3">
-            <button
-              type="button"
-              className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-              disabled={!(parseFloat(lastYearRevenue || '0') > 0) || advState.advYears < 2}
-              onClick={() => updateAdvState('advStep', 2)}
-            >
-              Next
-            </button>
+            {advState.advStep === 1 && (
+              <button
+                type="button"
+                className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                disabled={!(parseFloat(lastYearRevenue || '0') > 0) || advState.advYears < 2}
+                onClick={() => updateAdvState('advStep', 2)}
+              >
+                Next
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -353,23 +359,25 @@ export function AdvancedValuationForm({
             >
               Back
             </button>
-            <button
-              type="button"
-              className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-              disabled={
-                advState.advRevenueInputMethod === 'growth'
-                  ? (advState.growthMode === 'uniform'
-                      ? advState.advUniformGrowth.trim() === ''
-                      : advState.growthPerYearList
-                          .slice(0, Math.max(advState.advYears - 1, 1))
-                          .some((v) => v.trim() === '')) || advState.advLTG.trim() === ''
-                  : advState.revenueDirectList.slice(0, advState.advYears).some((v) => v.trim() === '') ||
-                    advState.advLTG.trim() === ''
-              }
-              onClick={() => updateAdvState('advStep', 3)}
-            >
-              Next
-            </button>
+            {advState.advStep === 2 && (
+              <button
+                type="button"
+                className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                disabled={
+                  advState.advRevenueInputMethod === 'growth'
+                    ? (advState.growthMode === 'uniform'
+                        ? advState.advUniformGrowth.trim() === ''
+                        : advState.growthPerYearList
+                            .slice(0, Math.max(advState.advYears - 1, 1))
+                            .some((v) => v.trim() === '')) || advState.advLTG.trim() === ''
+                    : advState.revenueDirectList.slice(0, advState.advYears).some((v) => v.trim() === '') ||
+                      advState.advLTG.trim() === ''
+                }
+                onClick={() => updateAdvState('advStep', 3)}
+              >
+                Next
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -498,22 +506,24 @@ export function AdvancedValuationForm({
             >
               Back
             </button>
-            <button
-              type="button"
-              className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-              disabled={
-                advState.ebitdaInputType === 'percent'
-                  ? advState.ebitdaPctMode === 'uniform'
-                    ? advState.advEbitdaUniformPct.trim() === ''
-                    : advState.ebitdaPctMode === 'ramp'
-                      ? advState.advEbitdaStart.trim() === '' || advState.advEbitdaTarget.trim() === ''
-                      : advState.ebitdaPercentPerYearList.slice(0, advState.advYears).some((v) => v.trim() === '')
-                  : advState.ebitdaDirectList.slice(0, advState.advYears).some((v) => v.trim() === '')
-              }
-              onClick={() => updateAdvState('advStep', 4)}
-            >
-              Next
-            </button>
+            {advState.advStep === 3 && (
+              <button
+                type="button"
+                className="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+                disabled={
+                  advState.ebitdaInputType === 'percent'
+                    ? advState.ebitdaPctMode === 'uniform'
+                      ? advState.advEbitdaUniformPct.trim() === ''
+                      : advState.ebitdaPctMode === 'ramp'
+                        ? advState.advEbitdaStart.trim() === '' || advState.advEbitdaTarget.trim() === ''
+                        : advState.ebitdaPercentPerYearList.slice(0, advState.advYears).some((v) => v.trim() === '')
+                    : advState.ebitdaDirectList.slice(0, advState.advYears).some((v) => v.trim() === '')
+                }
+                onClick={() => updateAdvState('advStep', 4)}
+              >
+                Next
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -764,13 +774,15 @@ export function AdvancedValuationForm({
             >
               Back
             </button>
-            <button
-              type="button"
-              className="px-3 py-2 bg-blue-600 text-white rounded-md"
-              onClick={() => updateAdvState('advStep', 5)}
-            >
-              Next
-            </button>
+            {advState.advStep === 4 && (
+              <button
+                type="button"
+                className="px-3 py-2 bg-blue-600 text-white rounded-md"
+                onClick={() => updateAdvState('advStep', 5)}
+              >
+                Next
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -840,13 +852,15 @@ export function AdvancedValuationForm({
               >
                 Back
               </button>
-              <button
-                type="button"
-                className="px-3 py-2 bg-blue-600 text-white rounded-md"
-                onClick={() => updateAdvState('advStep', 6)}
-              >
-                Next
-              </button>
+              {advState.advStep === 5 && (
+                <button
+                  type="button"
+                  className="px-3 py-2 bg-blue-600 text-white rounded-md"
+                  onClick={() => updateAdvState('advStep', 6)}
+                >
+                  Next
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -880,6 +894,12 @@ export function AdvancedValuationForm({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="e.g. 25"
               />
+              {countryAvgTaxRate !== null && (
+                <div className="mt-1 text-xs text-gray-600">
+                  Country average:{' '}
+                  <span className="font-medium text-blue-700">{(countryAvgTaxRate * 100).toFixed(1)}%</span>
+                </div>
+              )}
             </div>
           ) : (
             <div className="md:col-span-2">
