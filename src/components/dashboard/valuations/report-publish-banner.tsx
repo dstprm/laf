@@ -32,24 +32,24 @@ export function ReportPublishBanner({ valuationId, isPublished, isOwner }: Repor
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to ${currentStatus ? 'unpublish' : 'publish'} report`);
+        throw new Error(`Error al cambiar el estado de publicación`);
       }
 
       const newStatus = !currentStatus;
       setCurrentStatus(newStatus);
 
       toast({
-        title: newStatus ? 'Report published!' : 'Report unpublished',
-        description: newStatus ? 'Your report is now publicly accessible.' : 'Your report is now private.',
+        title: newStatus ? 'Reporte publicado!' : 'Reporte despublicado',
+        description: newStatus ? 'Tu reporte ahora es público.' : 'Tu reporte ahora es privado.',
       });
 
       // Refresh the page to update the status
       router.refresh();
     } catch (error) {
-      console.error('Error toggling publish status:', error);
+      console.error('Error al cambiar el estado de publicación', error);
       toast({
         title: 'Error',
-        description: `Failed to ${currentStatus ? 'unpublish' : 'publish'} report`,
+        description: `Error al cambiar el estado de publicación`,
         variant: 'destructive',
       });
     } finally {
@@ -73,12 +73,12 @@ export function ReportPublishBanner({ valuationId, isPublished, isOwner }: Repor
             )}
             <div>
               <h3 className={`text-sm font-semibold ${currentStatus ? 'text-green-900' : 'text-yellow-900'}`}>
-                {currentStatus ? 'This report is public' : 'This report is private'}
+                {currentStatus ? 'Es reporte público' : 'Es reporte privado.'}
               </h3>
               <p className={`text-sm ${currentStatus ? 'text-green-700' : 'text-yellow-700'}`}>
                 {currentStatus
-                  ? 'Anyone with the link can view this report.'
-                  : 'Only you can see this report. Publish it to share with others.'}
+                  ? 'Cualquiera con el enlace puede ver este reporte.'
+                  : 'Solo tú puedes ver este reporte. Publícalo para compartirlo con otros.'}
               </p>
             </div>
           </div>
@@ -96,19 +96,19 @@ export function ReportPublishBanner({ valuationId, isPublished, isOwner }: Repor
             {publishing ? (
               <>
                 <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                {currentStatus ? 'Unpublishing...' : 'Publishing...'}
+                {currentStatus ? 'Despublicando...' : 'Publicando...'}
               </>
             ) : (
               <>
                 {currentStatus ? (
                   <>
                     <EyeOff className="h-4 w-4 mr-2" />
-                    Unpublish
+                    Despublicar
                   </>
                 ) : (
                   <>
                     <Eye className="h-4 w-4 mr-2" />
-                    Publish Report
+                    Publicar Reporte.
                   </>
                 )}
               </>
