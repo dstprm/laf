@@ -15,9 +15,9 @@ export default function NotFound() {
           <div className="mb-8">
             <h1 className="text-9xl font-bold text-gray-200">404</h1>
             <div className="-mt-4">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Page Not Found</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Página no encontrada</h2>
               <p className="text-gray-600 mb-8">
-                Sorry, we couldn't find the page you're looking for. It may have been moved or deleted.
+                Lo sentimos, no pudimos encontrar la página que estás buscando. Puede que haya sido movida o eliminada.
               </p>
             </div>
           </div>
@@ -27,14 +27,14 @@ export default function NotFound() {
               href="/"
               className="block w-full px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
             >
-              Go to Homepage
+              Ir a la página principal
             </Link>
 
             <Link
               href="/free-valuation"
               className="block w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
             >
-              Create a Valuation
+              Crear una valuación
             </Link>
           </div>
         </div>

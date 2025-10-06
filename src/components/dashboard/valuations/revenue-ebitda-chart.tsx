@@ -49,7 +49,7 @@ export function RevenueEbitdaChart({
   revenues,
   ebitdaMargins,
   years,
-  title = 'Revenue & EBITDA Margin',
+  title = 'Ingresos y Margen EBITDA',
   height = 400,
   className = '',
 }: RevenueEbitdaChartProps) {
@@ -58,7 +58,7 @@ export function RevenueEbitdaChart({
     const ebitdaMargin = ebitdaMargins[index] || 0;
     const ebitda = revenue * (ebitdaMargin / 100);
     return {
-      year: years?.[index] || `Year ${index + 1}`,
+      year: years?.[index] || `Año ${index + 1}`,
       revenue: revenue,
       ebitda: ebitda,
       ebitdaMargin: ebitdaMargin,
@@ -105,7 +105,7 @@ export function RevenueEbitdaChart({
               stroke="#3b82f6"
               style={{ fontSize: '12px', fontWeight: 500 }}
               tickFormatter={formatCurrency}
-              label={{ value: 'Revenue', angle: -90, position: 'insideLeft', style: { fontSize: '12px' } }}
+              label={{ value: 'Ingresos', angle: -90, position: 'insideLeft', style: { fontSize: '12px' } }}
             />
             <YAxis
               yAxisId="right"
@@ -113,7 +113,7 @@ export function RevenueEbitdaChart({
               stroke="#10b981"
               style={{ fontSize: '12px', fontWeight: 500 }}
               tickFormatter={formatPercent}
-              label={{ value: 'EBITDA Margin (%)', angle: 90, position: 'insideRight', style: { fontSize: '12px' } }}
+              label={{ value: 'Margen EBITDA (%)', angle: 90, position: 'insideRight', style: { fontSize: '12px' } }}
             />
             <Tooltip
               contentStyle={{
@@ -130,13 +130,13 @@ export function RevenueEbitdaChart({
                       <p className="font-semibold text-gray-900 mb-2">{data.year}</p>
                       <div className="space-y-1">
                         <p className="text-sm text-gray-700">
-                          <span className="font-medium">Revenue:</span> {formatCurrency(data.revenue)}
+                          <span className="font-medium">Ingresos:</span> {formatCurrency(data.revenue)}
                         </p>
                         <p className="text-sm text-gray-700">
                           <span className="font-medium">EBITDA:</span> {formatCurrency(data.ebitda)}
                         </p>
                         <p className="text-sm text-gray-700">
-                          <span className="font-medium">EBITDA Margin:</span> {formatPercent(data.ebitdaMargin)}
+                          <span className="font-medium">Margen EBITDA:</span> {formatPercent(data.ebitdaMargin)}
                         </p>
                       </div>
                     </div>
@@ -146,12 +146,12 @@ export function RevenueEbitdaChart({
               }}
             />
             <Legend wrapperStyle={{ paddingTop: '10px' }} iconType="square" />
-            <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            <Bar yAxisId="left" dataKey="revenue" name="Ingresos" fill="#3b82f6" radius={[4, 4, 0, 0]} />
             <Line
               yAxisId="right"
               type="monotone"
               dataKey="ebitdaMargin"
-              name="EBITDA Margin"
+              name="Margen EBITDA"
               stroke="#10b981"
               strokeWidth={3}
               dot={{ fill: '#10b981', r: 5 }}

@@ -36,7 +36,7 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
       console.error('Failed to fetch scenarios:', error);
       toast({
         variant: 'destructive',
-        title: 'Failed to load scenarios',
+        title: 'Error al cargar escenarios',
         description: error instanceof Error ? error.message : 'Please try again.',
       });
     } finally {
@@ -50,7 +50,7 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
   }, [valuationId]);
 
   const handleDelete = async (scenarioId: string) => {
-    if (!confirm('Are you sure you want to delete this scenario?')) {
+    if (!confirm('¿Estás seguro de querer eliminar este escenario?')) {
       return;
     }
 
@@ -64,7 +64,7 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
       }
 
       toast({
-        title: 'Scenario deleted',
+        title: 'Escenario eliminado',
         description: 'The scenario has been successfully deleted.',
       });
 
@@ -73,7 +73,7 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
       console.error('Failed to delete scenario:', error);
       toast({
         variant: 'destructive',
-        title: 'Failed to delete scenario',
+        title: 'Error al eliminar escenario',
         description: error instanceof Error ? error.message : 'Please try again.',
       });
     }
@@ -98,8 +98,8 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Scenarios</CardTitle>
-          <CardDescription>Loading scenarios...</CardDescription>
+          <CardTitle>Escenarios</CardTitle>
+          <CardDescription>Cargando escenarios...</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -110,17 +110,17 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Scenarios</CardTitle>
-            <CardDescription>Custom sensitivity scenarios for valuation analysis</CardDescription>
+            <CardTitle>Escenarios</CardTitle>
+            <CardDescription>Escenarios de sensibilidad para análisis de valuación</CardDescription>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>Create Scenario</Button>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>Crear Escenario</Button>
         </div>
       </CardHeader>
       <CardContent>
         {scenarios.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            <p>No scenarios created yet.</p>
-            <p className="text-sm mt-2">Create a scenario to see different valuation ranges.</p>
+            <p>No se han creado escenarios aún.</p>
+            <p className="text-sm mt-2">Crea un escenario para ver diferentes rangos de valuación.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -134,10 +134,10 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
                   {scenario.description && <p className="text-sm text-gray-600 mt-1">{scenario.description}</p>}
                   <div className="mt-2 flex items-center gap-4 text-sm">
                     <span className="text-gray-700">
-                      Range: <span className="font-medium">{formatRange(scenario.minValue, scenario.maxValue)}</span>
+                      Rango: <span className="font-medium">{formatRange(scenario.minValue, scenario.maxValue)}</span>
                     </span>
                     <span className="text-gray-500">
-                      Spread: {formatCurrency(scenario.maxValue - scenario.minValue)}
+                      Spread: {formatCurrency(scenario.maxValue - scenario.minValue)} %
                     </span>
                   </div>
                 </div>

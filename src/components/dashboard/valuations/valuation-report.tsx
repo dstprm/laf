@@ -133,7 +133,7 @@ export function ValuationReport({
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 shadow-md">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold">{companyName || name || 'Valuation Report'}</h1>
+              <h1 className="text-3xl font-bold">{companyName || name || 'Informe de Valuación'}</h1>
               {companyName && name && companyName !== name && <p className="text-blue-100 mt-1">{name}</p>}
               <div className="flex items-center gap-4 mt-3 text-sm text-blue-100">
                 {industry && (
@@ -149,7 +149,7 @@ export function ValuationReport({
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm text-blue-100">Report Date</p>
+              <p className="text-sm text-blue-100">Fecha del Reporte</p>
               <p className="text-lg font-semibold">{formatDate(createdAt)}</p>
             </div>
           </div>
@@ -168,7 +168,7 @@ export function ValuationReport({
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            <h3 className="text-base font-bold text-blue-900">Executive Summary</h3>
+            <h3 className="text-base font-bold text-blue-900">Resumen Ejecutivo</h3>
           </div>
           <p className="text-sm text-blue-900 whitespace-pre-wrap leading-relaxed">{reportComment}</p>
         </div>
@@ -177,21 +177,21 @@ export function ValuationReport({
       {/* Enterprise Value Highlight */}
       <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-sm">
         <div className="text-center">
-          <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Enterprise Value (Base Case)</p>
+          <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Enterprise Value (Caso Base)</p>
           <p className="text-4xl font-bold text-blue-600 mt-2">{formatCurrency(enterpriseValue)}</p>
 
           {/* Show scenario range if available */}
           {scenarioRange && (
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="text-xs font-medium text-gray-500 uppercase mb-2">Scenario Range</p>
+              <p className="text-xs font-medium text-gray-500 uppercase mb-2">Rango de Escenarios</p>
               <div className="flex items-center justify-center gap-6">
                 <div>
-                  <p className="text-xs text-gray-500">Low</p>
+                  <p className="text-xs text-gray-500">Bajo</p>
                   <p className="text-lg font-semibold text-gray-700">{formatCurrency(scenarioRange.min)}</p>
                 </div>
                 <div className="text-gray-400">—</div>
                 <div>
-                  <p className="text-xs text-gray-500">High</p>
+                  <p className="text-xs text-gray-500">Alto</p>
                   <p className="text-lg font-semibold text-gray-700">{formatCurrency(scenarioRange.max)}</p>
                 </div>
               </div>
@@ -204,25 +204,25 @@ export function ValuationReport({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {wacc !== null && wacc !== undefined && (
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-            <p className="text-sm font-medium text-gray-600">WACC</p>
+            <p className="text-sm font-medium text-gray-600">WACC.</p>
             <p className="text-2xl font-bold text-gray-900 mt-1">{formatPercent(wacc)}</p>
           </div>
         )}
         {terminalGrowthRate !== null && terminalGrowthRate !== undefined && (
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-            <p className="text-sm font-medium text-gray-600">Terminal Growth Rate</p>
+            <p className="text-sm font-medium text-gray-600">Tasa de Crecimiento Terminal</p>
             <p className="text-2xl font-bold text-gray-900 mt-1">{formatPercent(terminalGrowthRate)}</p>
           </div>
         )}
         {resultsData?.terminalValue && (
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-            <p className="text-sm font-medium text-gray-600">Terminal Value</p>
+            <p className="text-sm font-medium text-gray-600">Valor Terminal</p>
             <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(resultsData.terminalValue)}</p>
           </div>
         )}
         {terminalValuePercent !== null && (
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-            <p className="text-sm font-medium text-gray-600">TV % of EV</p>
+            <p className="text-sm font-medium text-gray-600">TV % de EV</p>
             <p className="text-2xl font-bold text-gray-900 mt-1">{terminalValuePercent.toFixed(1)}%</p>
           </div>
         )}
@@ -230,36 +230,36 @@ export function ValuationReport({
 
       {/* Valuation Multiples */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Implied Valuation Multiples</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Múltiplos de Valuación Implícitos</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {evEbitdaMultipleCurrent !== null && (
             <div>
-              <p className="text-sm font-medium text-gray-600">EV / EBITDA (Current)</p>
+              <p className="text-sm font-medium text-gray-600">EV / EBITDA (Actual)</p>
               <p className="text-2xl font-bold text-blue-600 mt-1">{evEbitdaMultipleCurrent.toFixed(2)}x</p>
-              <p className="text-xs text-gray-500 mt-1">Based on Year 1 EBITDA</p>
+              <p className="text-xs text-gray-500 mt-1">Basado en EBITDA del Año 1</p>
             </div>
           )}
           {evEbitdaMultipleTerminal !== null && (
             <div>
               <p className="text-sm font-medium text-gray-600">EV / EBITDA (Terminal)</p>
               <p className="text-2xl font-bold text-blue-600 mt-1">{evEbitdaMultipleTerminal.toFixed(2)}x</p>
-              <p className="text-xs text-gray-500 mt-1">Based on Year {numberOfYears} EBITDA</p>
+              <p className="text-xs text-gray-500 mt-1">Basado en EBITDA del Año {numberOfYears}</p>
             </div>
           )}
           {lastYearEbitda > 0 && lastYearRevenue > 0 && (
             <div>
-              <p className="text-sm font-medium text-gray-600">Terminal EBITDA Margin</p>
+              <p className="text-sm font-medium text-gray-600">Margen EBITDA Terminal</p>
               <p className="text-2xl font-bold text-green-600 mt-1">
                 {((lastYearEbitda / lastYearRevenue) * 100).toFixed(1)}%
               </p>
-              <p className="text-xs text-gray-500 mt-1">Final projection year</p>
+              <p className="text-xs text-gray-500 mt-1">Año de proyección final</p>
             </div>
           )}
           {lastYearRevenue > 0 && (
             <div>
-              <p className="text-sm font-medium text-gray-600">Terminal Revenue</p>
+              <p className="text-sm font-medium text-gray-600">Ingresos Terminal</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(lastYearRevenue)}</p>
-              <p className="text-xs text-gray-500 mt-1">Year {numberOfYears} projection</p>
+              <p className="text-xs text-gray-500 mt-1">Año {numberOfYears} proyección</p>
             </div>
           )}
         </div>
@@ -271,27 +271,30 @@ export function ValuationReport({
           revenues={revenue.slice(0, numberOfYears)}
           ebitdaMargins={ebitdaMargin.slice(0, numberOfYears)}
           years={periods.slice(0, numberOfYears)}
-          title="Revenue & EBITDA Margin Projection"
+          title="Proyección de Ingresos y Margen EBITDA"
         />
       )}
 
       {/* Football Field Chart - Scenario Analysis */}
       {footballFieldData.length > 0 && (
-        <FootballFieldChart ranges={footballFieldData} title="Valuation Range Analysis (Scenario Analysis)" />
+        <FootballFieldChart
+          ranges={footballFieldData}
+          title="Análisis de Rango de Valuación (Análisis de Escenarios)"
+        />
       )}
 
       {/* Financial Projections Table */}
       {revenue.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-            <h3 className="text-lg font-semibold text-gray-900">Financial Projections</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Proyecciones Financieras</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Metric
+                    Métrica
                   </th>
                   {periods.slice(0, numberOfYears).map((period, idx) => (
                     <th
@@ -305,7 +308,7 @@ export function ValuationReport({
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 <tr>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">Revenue</td>
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">Ingresos</td>
                   {revenue.slice(0, numberOfYears).map((val, idx) => (
                     <td key={idx} className="px-4 py-3 text-sm text-right text-gray-600">
                       {formatCurrency(val)}
@@ -321,7 +324,7 @@ export function ValuationReport({
                   ))}
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">EBITDA Margin</td>
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">Margen EBITDA</td>
                   {ebitdaMargin.slice(0, numberOfYears).map((val, idx) => (
                     <td key={idx} className="px-4 py-3 text-sm text-right text-gray-600">
                       {formatPercent(val)}
@@ -330,7 +333,7 @@ export function ValuationReport({
                 </tr>
                 {freeCashFlow.length > 0 && (
                   <tr className="bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">Free Cash Flow</td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">Flujo de Caja Libre</td>
                     {freeCashFlow.slice(0, numberOfYears).map((val, idx) => (
                       <td key={idx} className="px-4 py-3 text-sm text-right text-gray-600">
                         {formatCurrency(val)}
@@ -346,29 +349,29 @@ export function ValuationReport({
 
       {/* Key Assumptions */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Assumptions</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Suposiciones Clave</h3>
 
         {/* General Assumptions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
-            <p className="text-sm font-medium text-gray-600">Projection Period</p>
-            <p className="text-base text-gray-900 mt-1">{numberOfYears} years</p>
+            <p className="text-sm font-medium text-gray-600">Período de Proyección</p>
+            <p className="text-base text-gray-900 mt-1">{numberOfYears} años</p>
           </div>
           {wacc !== null && wacc !== undefined && (
             <div>
-              <p className="text-sm font-medium text-gray-600">Discount Rate (WACC)</p>
+              <p className="text-sm font-medium text-gray-600">Tasa de Descuento (WACC)</p>
               <p className="text-base text-gray-900 mt-1">{formatPercent(wacc)}</p>
             </div>
           )}
           {terminalGrowthRate !== null && terminalGrowthRate !== undefined && (
             <div>
-              <p className="text-sm font-medium text-gray-600">Terminal Growth Rate</p>
+              <p className="text-sm font-medium text-gray-600">Tasa de Crecimiento Terminal</p>
               <p className="text-base text-gray-900 mt-1">{formatPercent(terminalGrowthRate)}</p>
             </div>
           )}
           {riskProfile?.corporateTaxRate !== null && riskProfile?.corporateTaxRate !== undefined && (
             <div>
-              <p className="text-sm font-medium text-gray-600">Corporate Tax Rate</p>
+              <p className="text-sm font-medium text-gray-600">Tasa de Impuesto Corporativo</p>
               <p className="text-base text-gray-900 mt-1">{formatPercent(riskProfile.corporateTaxRate * 100)}</p>
             </div>
           )}
@@ -378,19 +381,19 @@ export function ValuationReport({
         {waccComponents && (
           <>
             <div className="border-t border-gray-200 pt-4 mb-4">
-              <h4 className="text-md font-semibold text-gray-900 mb-3">WACC Components</h4>
+              <h4 className="text-md font-semibold text-gray-900 mb-3">Componentes de WACC</h4>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="bg-blue-50 rounded-lg p-3">
-                <p className="text-sm font-medium text-blue-900 mb-2">Cost of Equity</p>
+                <p className="text-sm font-medium text-blue-900 mb-2">Costo de Equity</p>
                 <p className="text-lg font-bold text-blue-700">{formatPercent(waccComponents.costOfEquity * 100)}</p>
                 <div className="mt-2 space-y-1 text-xs text-blue-800">
                   <div className="flex justify-between">
-                    <span>Risk-Free Rate:</span>
+                    <span>Tasa Libre de Riesgo:</span>
                     <span className="font-medium">{formatPercent(riskProfile.riskFreeRate * 100)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Levered Beta:</span>
+                    <span>Beta Apalancado:</span>
                     <span className="font-medium">{riskProfile.leveredBeta.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
@@ -398,7 +401,7 @@ export function ValuationReport({
                     <span className="font-medium">{formatPercent(riskProfile.equityRiskPremium * 100)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Country Risk Premium:</span>
+                    <span>Riesgo País:</span>
                     <span className="font-medium">{formatPercent(riskProfile.countryRiskPremium * 100)}</span>
                   </div>
                 </div>
@@ -411,7 +414,7 @@ export function ValuationReport({
                 </p>
                 <div className="mt-2 space-y-1 text-xs text-green-800">
                   <div className="flex justify-between">
-                    <span>Pre-Tax Cost of Debt:</span>
+                    <span>Costo de Deuda Antes de Impuestos:</span>
                     <span className="font-medium">{formatPercent(waccComponents.costOfDebt * 100)}</span>
                   </div>
                   <div className="flex justify-between">
@@ -419,7 +422,7 @@ export function ValuationReport({
                     <span className="font-medium">{formatPercent(riskProfile.adjustedDefaultSpread * 100)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Company Spread:</span>
+                    <span>Spread de Empresa:</span>
                     <span className="font-medium">{formatPercent(riskProfile.companySpread * 100)}</span>
                   </div>
                   <div className="flex justify-between">
@@ -432,20 +435,20 @@ export function ValuationReport({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium text-gray-600">Equity Weight (E/V)</p>
+                <p className="text-sm font-medium text-gray-600">Peso de Equity (E/V)</p>
                 <p className="text-base text-gray-900 mt-1">{(waccComponents.equityWeight * 100).toFixed(1)}%</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Debt Weight (D/V)</p>
+                <p className="text-sm font-medium text-gray-600">Peso de Deuda (D/V)</p>
                 <p className="text-base text-gray-900 mt-1">{(waccComponents.debtWeight * 100).toFixed(1)}%</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">D/E Ratio</p>
+                <p className="text-sm font-medium text-gray-600">D/E Ratio (D/E)</p>
                 <p className="text-base text-gray-900 mt-1">{riskProfile.deRatio.toFixed(2)}</p>
               </div>
               {riskProfile.unleveredBeta !== null && riskProfile.unleveredBeta !== undefined && (
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Unlevered Beta</p>
+                  <p className="text-sm font-medium text-gray-600">Beta Desapalancado</p>
                   <p className="text-base text-gray-900 mt-1">{riskProfile.unleveredBeta.toFixed(2)}</p>
                 </div>
               )}
@@ -457,10 +460,10 @@ export function ValuationReport({
       {/* Disclaimer */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <p className="text-sm text-yellow-800">
-          <strong>Disclaimer:</strong> This valuation report is for informational purposes only and should not be
-          construed as financial advice. All projections and assumptions are based on the inputs provided and may not
-          reflect actual future results. Please consult with a qualified financial professional before making any
-          investment decisions.
+          <strong>Disclaimer:</strong> Este informe de valuación es para fines informativos y no debe ser considerado
+          como asesoría financiera. Todas las proyecciones y suposiciones se basan en los datos proporcionados y pueden
+          no reflejar resultados futuros reales. Por favor, consulte con un profesional financiero calificado antes de
+          tomar decisiones de inversión.
         </p>
       </div>
     </div>

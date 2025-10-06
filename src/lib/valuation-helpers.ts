@@ -284,20 +284,20 @@ export function calculateAllSensitivities(baseParams: SimpleScenarioParams): Sen
 
   return [
     {
-      name: 'Revenue Growth (±5%)',
-      description: 'Sensitivity analysis: Revenue Growth (±5%)',
+      name: 'Crecimiento de ingresos (±5%)',
+      description: 'Análisis de sensibilidad: crecimiento de ingresos (±5%)',
       minValue: Math.min(growthLow, growthHigh),
       maxValue: Math.max(growthLow, growthHigh),
     },
     {
-      name: 'EBITDA Margin (±5%)',
-      description: 'Sensitivity analysis: EBITDA Margin (±5%)',
+      name: 'Margen EBITDA (±5%)',
+      description: 'Análisis de sensibilidad: margen EBITDA (±5%)',
       minValue: Math.min(marginLow, marginHigh),
       maxValue: Math.max(marginLow, marginHigh),
     },
     {
-      name: 'WACC Sensitivity (±2%)',
-      description: 'Sensitivity analysis: WACC Sensitivity (±2%)',
+      name: 'Sensibilidad WACC (±2%)',
+      description: 'Análisis de sensibilidad: WACC (±2%)',
       minValue: Math.min(waccHigh, waccLow),
       maxValue: Math.max(waccHigh, waccLow),
     },

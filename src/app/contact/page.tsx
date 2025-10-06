@@ -13,8 +13,8 @@ export default function ContactPage() {
       <Header user={user} />
       <div className="mx-auto max-w-3xl px-4 sm:px-6 md:px-8 py-16">
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">Contact us</h1>
-          <p className="mt-3 text-muted-foreground">Have a question or feedback? Send us a message.</p>
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">Contáctanos</h1>
+          <p className="mt-3 text-muted-foreground">¿Tienes una pregunta o comentario? Envíanos un mensaje.</p>
         </div>
         <ContactForm source="/contact" className="bg-card border rounded-lg p-6" />
       </div>

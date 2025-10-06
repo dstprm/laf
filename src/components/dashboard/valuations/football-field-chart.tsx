@@ -46,7 +46,7 @@ interface FootballFieldChartProps {
  */
 export function FootballFieldChart({
   ranges,
-  title = 'Valuation Range Analysis',
+  title = 'Análisis de rango de valuación',
   height = 400,
   className = '',
 }: FootballFieldChartProps) {
@@ -161,8 +161,8 @@ export function FootballFieldChart({
         <div className="px-4 py-3 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
           <p className="text-sm text-gray-600 mt-1">
-            Blue bars show valuation ranges • <span className="text-red-500 font-semibold">Red line</span> indicates
-            base case
+            Las barras azules muestran los rangos • La <span className="text-red-500 font-semibold">línea roja</span>{' '}
+            indica el caso base
           </p>
         </div>
       )}
@@ -202,16 +202,16 @@ export function FootballFieldChart({
                       <p className="font-semibold text-gray-900 mb-2">{data.scenario}</p>
                       <div className="space-y-1">
                         <p className="text-sm text-gray-700">
-                          <span className="font-medium">Low:</span> {formatCurrency(data.min)}
+                          <span className="font-medium">Bajo:</span> {formatCurrency(data.min)}
                         </p>
                         <p className="text-sm text-red-600">
                           <span className="font-medium">Base:</span> {formatCurrency(data.base)}
                         </p>
                         <p className="text-sm text-gray-700">
-                          <span className="font-medium">High:</span> {formatCurrency(data.max)}
+                          <span className="font-medium">Alto:</span> {formatCurrency(data.max)}
                         </p>
                         <p className="text-sm text-gray-600 pt-1 border-t border-gray-200">
-                          <span className="font-medium">Range:</span> {formatCurrency(data.max - data.min)}
+                          <span className="font-medium">Rango:</span> {formatCurrency(data.max - data.min)}
                         </p>
                       </div>
                     </div>
@@ -228,23 +228,23 @@ export function FootballFieldChart({
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-xs text-gray-600">Overall Low</p>
+              <p className="text-xs text-gray-600">Mínimo</p>
               <p className="text-sm font-semibold text-gray-900">
                 {formatCurrency(Math.min(...ranges.map((r) => r.min)))}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Overall High</p>
+              <p className="text-xs text-gray-600">Máximo</p>
               <p className="text-sm font-semibold text-gray-900">
                 {formatCurrency(Math.max(...ranges.map((r) => r.max)))}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Base Case</p>
+              <p className="text-xs text-gray-600">Caso base</p>
               <p className="text-sm font-semibold text-red-600">{formatCurrency(ranges[0]?.base || 0)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Valuation Spread</p>
+              <p className="text-xs text-gray-600">Rango de valuación</p>
               <p className="text-sm font-semibold text-gray-900">
                 {formatCurrency(Math.max(...ranges.map((r) => r.max)) - Math.min(...ranges.map((r) => r.min)))}
               </p>

@@ -11,8 +11,8 @@ export function CalculationLoading() {
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
         </svg>
         <div>
-          <div className="text-sm font-medium text-gray-900">Crunching numbers…</div>
-          <div className="text-xs text-gray-600">This will take a few seconds</div>
+          <div className="text-sm font-medium text-gray-900">Calculando...</div>
+          <div className="text-xs text-gray-600">Esto tomará unos segundos</div>
         </div>
       </div>
     </div>

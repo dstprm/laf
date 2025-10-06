@@ -518,11 +518,11 @@ export const DCFTable: React.FC = () => {
       <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h2 className="text-base font-semibold text-gray-900">DCF Financial Model</h2>
+            <h2 className="text-base font-semibold text-gray-900">Modelo Financiero DCF</h2>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-600">
             <CalculatorIcon className="w-3 h-3" />
-            <span>Click rows to configure • Double-click cells to edit</span>
+            <span>Haz clic en filas para configurar • Doble clic en celdas para editar</span>
           </div>
         </div>
       </div>
@@ -536,7 +536,7 @@ export const DCFTable: React.FC = () => {
             ) : (
               <ChevronRightIcon className="w-3 h-3 text-gray-500" />
             )}
-            Financial Projections
+            Proyecciones financieras
           </div>
         </div>
 
@@ -544,7 +544,7 @@ export const DCFTable: React.FC = () => {
           <div className="border-t border-gray-200 bg-gray-50 p-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Start Year</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Año de inicio</label>
                 <input
                   type="number"
                   value={model.periods.startYear}
@@ -558,7 +558,7 @@ export const DCFTable: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Number of Years</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Número de años</label>
                 <input
                   type="number"
                   min="1"
@@ -567,9 +567,9 @@ export const DCFTable: React.FC = () => {
                   onChange={handleYearsChange}
                   onBlur={handleYearsBlur}
                   className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter number of years"
+                  placeholder="Ingresa número de años"
                 />
-                <p className="text-xs text-gray-500 mt-1">Enter 1-100 years</p>
+                <p className="text-xs text-gray-500 mt-1">Ingresa entre 1 y 100 años</p>
               </div>
 
               <div className="flex items-end">
@@ -627,7 +627,7 @@ export const DCFTable: React.FC = () => {
                           </button>
                         )}
                         {!shouldShowChevron(row) && isRowConfigurable(row) && (
-                          <div className="w-3 h-3 flex items-center justify-center" title="Click to configure">
+                          <div className="w-3 h-3 flex items-center justify-center" title="Haz clic para configurar">
                             <Cog className="w-3 h-3 text-blue-500 opacity-60" />
                           </div>
                         )}
@@ -658,7 +658,9 @@ export const DCFTable: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {row.id === 'revenueGrowth' && (
-                          <span className="text-xs text-gray-500 font-medium whitespace-nowrap">YoY Growth</span>
+                          <span className="text-xs text-gray-500 font-medium whitespace-nowrap">
+                            Crecimiento interanual
+                          </span>
                         )}
                       </div>
                     </div>
@@ -717,16 +719,16 @@ export const DCFTable: React.FC = () => {
                                 <span className="text-white text-xs font-bold">{row.label.charAt(0)}</span>
                               </div>
                               <div>
-                                <h3 className="text-sm font-semibold text-gray-900">Configure {row.label}</h3>
+                                <h3 className="text-sm font-semibold text-gray-900">Configurar {row.label}</h3>
                                 <p className="text-xs text-gray-600">
-                                  Set assumptions and input methods for {row.label.toLowerCase()} calculations
+                                  Define supuestos y métodos de entrada para cálculos de {row.label.toLowerCase()}
                                 </p>
                               </div>
                             </div>
                             <div className="bg-blue-100 border border-blue-200 rounded-lg p-2">
                               <p className="text-xs text-blue-800">
-                                💡 <strong>Tip:</strong> You can also double-click individual cells in the table above
-                                to manually override specific values.
+                                💡 <strong>Consejo:</strong> También puedes hacer doble clic en celdas individuales para
+                                sobrescribir valores manualmente.
                               </p>
                             </div>
                           </div>
@@ -748,14 +750,15 @@ export const DCFTable: React.FC = () => {
       <div className="bg-gray-50 px-4 py-2 border-t border-gray-200">
         <div className="flex items-center justify-between text-xs text-gray-600">
           <span>
-            Projection Period: {model.periods.startYear} - {model.periods.startYear + model.periods.numberOfYears - 1}
+            Periodo de proyección: {model.periods.startYear} -{' '}
+            {model.periods.startYear + model.periods.numberOfYears - 1}
           </span>
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-              Manual Override
+              Valor sobrescrito manualmente
             </span>
-            <span>{tableData.length} line items</span>
+            <span>{tableData.length} renglones</span>
           </div>
         </div>
 

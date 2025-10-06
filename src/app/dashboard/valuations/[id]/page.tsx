@@ -43,7 +43,7 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
   });
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('es-ES', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -62,16 +62,16 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
                 href="/dashboard/valuations"
                 className="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block"
               >
-                ← Back to Valuations
+                ← Volver a Valuaciones
               </Link>
               <h1 className="text-3xl font-bold text-gray-900">
-                {valuation.name || `Valuation - ${formatDate(valuation.createdAt)}`}
+                {valuation.name || `Valuación - ${formatDate(valuation.createdAt)}`}
               </h1>
-              <p className="mt-2 text-gray-600">Created on {formatDate(valuation.createdAt)}</p>
+              <p className="mt-2 text-gray-600">Creado el {formatDate(valuation.createdAt)}</p>
             </div>
           </div>
 
-          {/* Executive Summary Section */}
+          {/* Resumen ejecutivo */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
@@ -84,7 +84,7 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  <h3 className="text-lg font-semibold text-gray-900">Report Executive Summary</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Resumen ejecutivo del informe</h3>
                 </div>
                 <p className="text-sm text-gray-700">
                   {valuation.reportComment ? (
@@ -93,7 +93,7 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
                       {valuation.reportComment.length > 150 ? '...' : ''}"
                     </span>
                   ) : (
-                    'Add an executive summary that will appear at the top of your published report. Perfect for highlighting key insights, conclusions, or context for readers.'
+                    'Agrega un resumen ejecutivo que aparecerá al inicio de tu informe publicado. Ideal para resaltar hallazgos clave, conclusiones o contexto para lectores.'
                   )}
                 </p>
               </div>

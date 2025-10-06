@@ -62,8 +62,8 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
         {/* Page Title */}
         <div className="bg-white border-b border-gray-200 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <h1 className="text-3xl font-bold text-gray-900">Valuation Report</h1>
-            <p className="mt-2 text-sm text-gray-600">Professional DCF analysis and financial projections</p>
+            <h1 className="text-3xl font-bold text-gray-900">Reporte de Valuación</h1>
+            <p className="mt-2 text-sm text-gray-600">Análisis profesional DCF y proyecciones financieras</p>
           </div>
         </div>
 
@@ -85,16 +85,16 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
 
           {/* Call to Action */}
           <div className="mt-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-8 text-center text-white shadow-lg">
-            <h2 className="text-2xl font-bold mb-3">Create Your Own Valuation Report</h2>
+            <h2 className="text-2xl font-bold mb-3">Crea tu propio informe de valuación</h2>
             <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-              Get professional-grade company valuations with our easy-to-use DCF calculator. Save, share, and analyze
-              multiple scenarios.
+              Obtén valuaciones de empresas de alta calidad con nuestro calculador DCF fácil de usar. Guarda, comparte y
+              analiza múltiples escenarios.
             </p>
             <Link
               href="/free-valuation"
               className="inline-flex items-center px-6 py-3 border-2 border-white text-base font-medium rounded-md text-white hover:bg-white hover:text-blue-600 transition-colors"
             >
-              Get Started Free
+              Comienza Gratis
             </Link>
           </div>
         </main>
@@ -122,27 +122,27 @@ export async function generateMetadata({ params }: ReportPageProps) {
 
   if (status === 'not_found') {
     return {
-      title: 'Report Not Found',
+      title: 'Reporte de Valuación no encontrado',
     };
   }
 
   if (status === 'private') {
     return {
-      title: 'Private Report',
-      description: 'This valuation report is private and only accessible to its owner.',
+      title: 'Reporte Privado',
+      description: 'Este informe de valuación es privado y solo accesible para su propietario.',
     };
   }
 
   if (!valuation) {
     return {
-      title: 'Report Not Found',
+      title: 'Reporte de Valuación no encontrado',
     };
   }
 
-  const title = valuation.companyName || valuation.name || 'Valuation Report';
+  const title = valuation.companyName || valuation.name || 'Reporte de Valuación';
 
   return {
-    title: `${title} - Valuation Report`,
-    description: `View the detailed valuation analysis for ${title}. Includes financial projections, scenario analysis, and key assumptions.`,
+    title: `${title} - Reporte de Valuación`,
+    description: `Ve el análisis detallado de la valuación para ${title}. Incluye proyecciones financieras, análisis de escenarios y suposiciones clave.`,
   };
 }

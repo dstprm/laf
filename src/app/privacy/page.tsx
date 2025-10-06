@@ -1,10 +1,12 @@
 export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
-      <h1 className="text-2xl font-semibold">Privacy Policy</h1>
-      <p className="text-sm text-muted-foreground">Replace this content with your product&apos;s Privacy Policy.</p>
+      <h1 className="text-2xl font-semibold">Política de Privacidad</h1>
+      <p className="text-sm text-muted-foreground">
+        Reemplaza este contenido con la Política de Privacidad de tu producto.
+      </p>
       <div className="space-y-3">
-        <h2 className="text-lg font-medium">LLM Prompt (copy, replace placeholders, and paste)</h2>
+        <h2 className="text-lg font-medium">Prompt LLM (copia, reemplaza marcadores y pega)</h2>
         <pre className="rounded-md border p-4 text-xs whitespace-pre-wrap font-mono">
           {`Act as an experienced privacy lawyer. Draft a GDPR- and CCPA-compliant Privacy Policy for a SaaS.
 
@@ -35,7 +37,7 @@ Instructions:
 `}
         </pre>
         <p className="text-xs text-muted-foreground">
-          Placeholders to replace:{' '}
+          Marcadores a reemplazar:{' '}
           {`{PRODUCT_NAME} {COMPANY_NAME} {COMPANY_LEGAL_ENTITY} {JURISDICTION} {BASE_URL} {CONTACT_EMAIL} {DATA_CATEGORIES} {PURPOSES} {LEGAL_BASES} {DATA_PROCESSORS} {RETENTION} {TRANSFERS} {COOKIES} {CHILDREN_POLICY} {SECURITY_MEASURES} {PRIVACY_CONTACT}`}
         </p>
       </div>

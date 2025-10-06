@@ -498,10 +498,10 @@ export default function ValuationEditClient({
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Valuation Summary</h2>
-              <p className="text-sm text-gray-600 mt-1">Overview of key metrics and assumptions</p>
+              <h2 className="text-xl font-semibold text-gray-900">Resumen de Valuación</h2>
+              <p className="text-sm text-gray-600 mt-1">Resumen de las principales métricas y suposiciones</p>
             </div>
-            <Button onClick={() => setIsEditMode(true)}>Edit Valuation</Button>
+            <Button onClick={() => setIsEditMode(true)}>Editar Valuación</Button>
           </div>
 
           {/* Summary Grid */}
@@ -509,23 +509,23 @@ export default function ValuationEditClient({
             {/* Company Info */}
             {(companyName || industry || country) && (
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Company Information</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Información de la Empresa</h3>
                 <dl className="space-y-2">
                   {companyName && (
                     <div className="flex justify-between">
-                      <dt className="text-sm text-gray-500">Company Name</dt>
+                      <dt className="text-sm text-gray-500">Nombre de la Empresa</dt>
                       <dd className="text-sm font-medium text-gray-900">{companyName}</dd>
                     </div>
                   )}
                   {industry && (
                     <div className="flex justify-between">
-                      <dt className="text-sm text-gray-500">Industry</dt>
+                      <dt className="text-sm text-gray-500">Industria</dt>
                       <dd className="text-sm font-medium text-gray-900">{industry}</dd>
                     </div>
                   )}
                   {country && (
                     <div className="flex justify-between">
-                      <dt className="text-sm text-gray-500">Country</dt>
+                      <dt className="text-sm text-gray-500">País</dt>
                       <dd className="text-sm font-medium text-gray-900">{country}</dd>
                     </div>
                   )}
@@ -535,10 +535,10 @@ export default function ValuationEditClient({
 
             {/* Valuation Metrics */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Valuation Metrics</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Métricas de Valuación</h3>
               <dl className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <dt className="text-sm text-gray-500">Enterprise Value</dt>
+                  <dt className="text-sm text-gray-500">Valor Empresarial</dt>
                   <dd className="text-lg font-bold text-green-600">
                     {enterpriseValue
                       ? new Intl.NumberFormat('en-US', {
@@ -551,7 +551,7 @@ export default function ValuationEditClient({
                 </div>
                 {(initialResultsData as any)?.terminalValue && (
                   <div className="flex justify-between">
-                    <dt className="text-sm text-gray-500">Terminal Value</dt>
+                    <dt className="text-sm text-gray-500">Valor Terminal</dt>
                     <dd className="text-sm font-medium text-gray-900">
                       {new Intl.NumberFormat('en-US', {
                         style: 'currency',
@@ -563,7 +563,7 @@ export default function ValuationEditClient({
                 )}
                 {(initialModelData as any)?.periods && (
                   <div className="flex justify-between">
-                    <dt className="text-sm text-gray-500">Projection Period</dt>
+                    <dt className="text-sm text-gray-500">Período de Proyección</dt>
                     <dd className="text-sm font-medium text-gray-900">
                       {(initialModelData as any).periods.numberOfYears} years
                     </dd>
@@ -591,13 +591,13 @@ export default function ValuationEditClient({
                 revenues={(initialResultsData as any).revenue.slice(0, 5)}
                 ebitdaMargins={(initialResultsData as any).ebitdaMargin.slice(0, 5)}
                 years={(initialModelData as any)?.periods?.periodLabels?.slice(0, 5)}
-                title="Revenue & EBITDA Margin Projection"
+                title="Proyección de Ingresos y Margen EBITDA"
               />
             )}
 
             {/* Football Field Chart - only show if there are scenarios */}
             {footballFieldData.length > 0 && (
-              <FootballFieldChart ranges={footballFieldData} title="Scenario Analysis" />
+              <FootballFieldChart ranges={footballFieldData} title="Análisis de Escenarios" />
             )}
           </div>
         )}

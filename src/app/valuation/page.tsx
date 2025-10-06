@@ -17,8 +17,10 @@ export default function Home() {
           <div className="py-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">DCF Financial Model Builder</h1>
-                <p className="mt-2 text-gray-600">Build your discounted cash flow model by defining key assumptions</p>
+                <h1 className="text-3xl font-bold text-gray-900">Constructor de Modelo Financiero DCF</h1>
+                <p className="mt-2 text-gray-600">
+                  Construye tu modelo de flujo de caja descontado definiendo supuestos clave
+                </p>
               </div>
             </div>
           </div>
@@ -37,12 +39,12 @@ export default function Home() {
           <div className="bg-white border border-gray-200 rounded-lg">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Model Data (JSON)</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Datos del modelo (JSON)</h3>
                 <button
                   onClick={() => setJsonPreviewVisibility(false)}
                   className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 transition-colors"
                 >
-                  Close
+                  Cerrar
                 </button>
               </div>
             </div>
