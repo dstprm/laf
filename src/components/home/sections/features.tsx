@@ -30,9 +30,8 @@ export function FeaturesSection() {
     <div className="w-full bg-stone-100">
       <Section id="features">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Ejemplos de uso</div>
           <h2 className="mt-1 text-3xl font-semibold tracking-tight md:text-5xl">Hecho para quienes deciden</h2>
-          <p className="mt-4 text-muted-foreground">Ejemplos frecuentes; la herramienta se adapta a muchos más.</p>
+          <p className="mt-4 text-muted-foreground">Nos adaptamos a diferentes perfiles y casos de uso.</p>
         </div>
         <div className="mt-12 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {useCases.map((f, i) => (
