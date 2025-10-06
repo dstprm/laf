@@ -7,7 +7,7 @@ export function ServiceComparison() {
   const freeFeatures = [
     'Valuación automatizada basada en DCF',
     'Cálculo automático de flujos descontados',
-    'Informe PDF descargable',
+    'Informe one-pager listo para compartir',
     'Resultados en minutos',
     'Análisis de sensibilidad básico',
     'Rango de valoración estimado',
@@ -17,13 +17,12 @@ export function ServiceComparison() {
     'Análisis exhaustivo personalizado',
     'Múltiples métodos: DCF, múltiplos y comparables',
     'Modelos financieros detallados',
+    'Asesoría de M&A',
     'Due diligence completo',
-    'Proyecciones a 5-10 años',
-    'Análisis competitivo profundo',
+    'Asesoría estratégica',
+    'Asesoría de planificación financiera',
     'Presentación ejecutiva para inversionistas',
-    'Asesoría estratégica incluida',
     'Soporte continuo durante el proceso',
-    'Reuniones con el equipo de expertos',
   ];
 
   return (
@@ -73,9 +72,7 @@ export function ServiceComparison() {
               Recomendado para fundraising y M&A
             </div>
             <h3 className="text-2xl font-semibold">Valuación Profesional</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Análisis exhaustivo y personalizado por nuestro equipo de expertos.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Análisis exhaustivo y personalizado.</p>
             <div className="mt-4">
               <span className="text-4xl font-bold">Personalizado</span>
               <p className="text-sm text-muted-foreground mt-1">Cotización basada en tus necesidades</p>

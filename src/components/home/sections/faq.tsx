@@ -21,11 +21,7 @@ export function Faq() {
     },
     {
       q: '¿Puedo exportar el resultado?',
-      a: 'Sí. Ambas opciones incluyen informes descargables: la gratuita genera un PDF con supuestos clave y rango de valoración; la profesional incluye documentos completos y presentaciones ejecutivas.',
-    },
-    {
-      q: '¿Necesito crear una cuenta?',
-      a: 'Puedes probar la valuación gratuita sin registrarte. Crear una cuenta te permite guardar y comparar tus valuaciones, y facilita el seguimiento de tu solicitud de valuación profesional.',
+      a: 'Sí. Puedes compartir un enlace con el resumen de la valuación para que cualquier persona pueda ver el resultado.',
     },
   ];
 
