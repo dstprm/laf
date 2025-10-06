@@ -8,7 +8,7 @@ import { useUserAdmin } from '@/hooks/useUserAdmin';
 
 const baseSidebarItems = [
   {
-    title: 'Valuations',
+    title: 'Valuaciones',
     icon: <FileText className="h-6 w-6" />,
     href: '/dashboard/valuations',
   },
@@ -26,12 +26,12 @@ const baseSidebarItems = [
 
 const adminSidebarItems = [
   {
-    title: 'Analytics',
+    title: 'Analítica',
     icon: <BarChart3 className="h-6 w-6" />,
     href: '/dashboard/analytics',
   },
   {
-    title: 'Admin Panel',
+    title: 'Panel de Admin',
     icon: <Shield className="h-6 w-6" />,
     href: '/dashboard/admin',
   },

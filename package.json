@@ -35,6 +35,7 @@
     "*": "prettier --write --ignore-unknown"
   },
   "dependencies": {
+    "@clerk/localizations": "^3.25.7",
     "@clerk/nextjs": "^6.28.1",
     "@heroicons/react": "^2.1.4",
     "@paddle/paddle-js": "^1.4.2",

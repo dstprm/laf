@@ -145,7 +145,7 @@ export function AdvancedValuationForm({
 
   return (
     <form onSubmit={onSubmit} className="bg-white border border-gray-200 rounded-lg p-4 space-y-6">
-      {/* Business Information Section */}
+      {/* Sección de Información del Negocio */}
       {!hideBusinessInfo && (
         <BusinessInfoForm
           companyName={companyName}
@@ -163,13 +163,13 @@ export function AdvancedValuationForm({
       {!hideIndustryCountry && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Industria</label>
             <select
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
-              <option value="">Select...</option>
+              <option value="">Selecciona...</option>
               {industries.map((i) => (
                 <option key={i} value={i}>
                   {i}
@@ -178,13 +178,13 @@ export function AdvancedValuationForm({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">País</label>
             <select
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
-              <option value="">Select...</option>
+              <option value="">Selecciona...</option>
               {countries.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -199,10 +199,10 @@ export function AdvancedValuationForm({
       <div
         className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'} ${showAllSteps || advState.advStep >= 1 ? '' : 'pointer-events-none'}`}
       >
-        <div className="mb-2 text-sm font-medium text-gray-700">1. Revenue</div>
+        <div className="mb-2 text-sm font-medium text-gray-700">1. Ingresos</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Last year&#39;s revenue (USD)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Ingresos del último año (USD)</label>
             <input
               type="number"
               min="0"
@@ -213,7 +213,7 @@ export function AdvancedValuationForm({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Forecast years</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Años de proyección</label>
             <select
               value={advState.advYears}
               onChange={(e) => updateAdvState('advYears', Number(e.target.value))}
@@ -236,7 +236,7 @@ export function AdvancedValuationForm({
                 disabled={!(parseFloat(lastYearRevenue || '0') > 0) || advState.advYears < 2}
                 onClick={() => updateAdvState('advStep', 2)}
               >
-                Next
+                Siguiente
               </button>
             )}
           </div>
@@ -247,38 +247,38 @@ export function AdvancedValuationForm({
       <div
         className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= 2 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
       >
-        <div className="mb-2 text-sm font-medium text-gray-700">2. Revenue growth</div>
+        <div className="mb-2 text-sm font-medium text-gray-700">2. Crecimiento de ingresos</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Input method</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Método de entrada</label>
             <select
               value={advState.advRevenueInputMethod}
               onChange={(e) => updateAdvState('advRevenueInputMethod', e.target.value as 'growth' | 'direct')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
-              <option value="growth">Growth based</option>
-              <option value="direct">Direct revenue per year</option>
+              <option value="growth">Basado en crecimiento</option>
+              <option value="direct">Ingresos directos por año</option>
             </select>
           </div>
           {advState.advRevenueInputMethod === 'growth' ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Growth mode</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Modo de crecimiento</label>
               <select
                 value={advState.growthMode}
                 onChange={(e) => updateAdvState('growthMode', e.target.value as 'uniform' | 'perYear')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
-                <option value="uniform">Uniform (%/yr)</option>
-                <option value="perYear">Per-year list</option>
+                <option value="uniform">Uniforme (%/año)</option>
+                <option value="perYear">Lista por año</option>
               </select>
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Revenues per year:</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Ingresos por año:</label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {advState.revenueDirectList.map((val, idx) => (
                   <div key={idx} className="flex flex-col">
-                    <span className="text-xs text-gray-500 mb-1">Year {idx + 1}</span>
+                    <span className="text-xs text-gray-500 mb-1">Año {idx + 1}</span>
                     <input
                       type="number"
                       step="0.01"
@@ -296,7 +296,7 @@ export function AdvancedValuationForm({
           <div className="mt-3 grid grid-cols-1 gap-4">
             {advState.growthMode === 'uniform' ? (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Uniform growth (%/yr)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Crecimiento uniforme (%/año)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -325,7 +325,7 @@ export function AdvancedValuationForm({
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Long-term growth (%)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Crecimiento a largo plazo (%)</label>
               <input
                 type="number"
                 step="0.1"
@@ -339,7 +339,7 @@ export function AdvancedValuationForm({
         )}
         {advState.advRevenueInputMethod === 'direct' && (
           <div className="mt-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Long-term growth (%)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Crecimiento a largo plazo (%)</label>
             <input
               type="number"
               step="0.1"
@@ -357,7 +357,7 @@ export function AdvancedValuationForm({
               className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
               onClick={() => updateAdvState('advStep', 1)}
             >
-              Back
+              Atrás
             </button>
             {advState.advStep === 2 && (
               <button
@@ -375,7 +375,7 @@ export function AdvancedValuationForm({
                 }
                 onClick={() => updateAdvState('advStep', 3)}
               >
-                Next
+                Siguiente
               </button>
             )}
           </div>
@@ -389,32 +389,32 @@ export function AdvancedValuationForm({
         <div className="mb-2 text-sm font-medium text-gray-700">3. EBITDA</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Input type</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de entrada</label>
             <select
               value={advState.ebitdaInputType}
               onChange={(e) => updateAdvState('ebitdaInputType', e.target.value as 'percent' | 'direct')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
               <option value="percent">% EBITDA</option>
-              <option value="direct">Direct EBITDA per year</option>
+              <option value="direct">EBITDA directo por año</option>
             </select>
           </div>
           {advState.ebitdaInputType === 'percent' ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">% mode</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Modo %</label>
               <select
                 value={advState.ebitdaPctMode}
                 onChange={(e) => updateAdvState('ebitdaPctMode', e.target.value as 'uniform' | 'perYear' | 'ramp')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
                 <option value="uniform">Uniform</option>
-                <option value="ramp">Start → Target</option>
-                <option value="perYear">Per-year list</option>
+                <option value="ramp">Inicial → Objetivo</option>
+                <option value="perYear">Lista por año</option>
               </select>
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">EBITDA per year:</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">EBITDA por año:</label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {advState.ebitdaDirectList.map((val, idx) => (
                   <div key={idx} className="flex flex-col">
@@ -451,7 +451,7 @@ export function AdvancedValuationForm({
             {advState.ebitdaPctMode === 'ramp' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Start EBITDA margin (%)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Margen EBITDA inicial (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -463,7 +463,7 @@ export function AdvancedValuationForm({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Target EBITDA margin (%)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Margen EBITDA objetivo (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -504,7 +504,7 @@ export function AdvancedValuationForm({
               className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
               onClick={() => updateAdvState('advStep', 2)}
             >
-              Back
+              Atrás
             </button>
             {advState.advStep === 3 && (
               <button
@@ -521,7 +521,7 @@ export function AdvancedValuationForm({
                 }
                 onClick={() => updateAdvState('advStep', 4)}
               >
-                Next
+                Siguiente
               </button>
             )}
           </div>
@@ -532,7 +532,7 @@ export function AdvancedValuationForm({
       <div
         className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= 4 ? 'opacity-100 translate-y-0 max-h-[2000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
       >
-        <div className="mb-2 text-sm font-medium text-gray-700">4. Others (CAPEX, NWC, D&A)</div>
+        <div className="mb-2 text-sm font-medium text-gray-700">4. Otros (CAPEX, NWC, D&A)</div>
 
         {/* CAPEX */}
         <div className="border-b pb-4 mb-4">
@@ -772,7 +772,7 @@ export function AdvancedValuationForm({
               className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
               onClick={() => updateAdvState('advStep', 3)}
             >
-              Back
+              Atrás
             </button>
             {advState.advStep === 4 && (
               <button
@@ -780,19 +780,19 @@ export function AdvancedValuationForm({
                 className="px-3 py-2 bg-blue-600 text-white rounded-md"
                 onClick={() => updateAdvState('advStep', 5)}
               >
-                Next
+                Siguiente
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* Step 5: Capital Structure (D/E Ratio) - Only for free-valuation */}
+      {/* Paso 5: Estructura de capital (D/E) - Solo para valuación gratuita */}
       {!hideDeRatio && (
         <div
           className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= 5 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
         >
-          <div className="mb-2 text-sm font-medium text-gray-700">5. Capital Structure</div>
+          <div className="mb-2 text-sm font-medium text-gray-700">5. Estructura de capital</div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-1">
@@ -801,8 +801,8 @@ export function AdvancedValuationForm({
               <div className="flex-1">
                 <div className="max-w-xs">
                   <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
-                    Debt-to-Equity Ratio
-                    <Tooltip content="D/E Ratio = Total Debt ÷ Total Equity. Enter as a ratio (not percentage). For example: 0.5 = $0.50 debt per $1 equity, 1.0 = equal debt and equity, 2.0 = $2 debt per $1 equity.">
+                    Relación Deuda/Patrimonio (D/E)
+                    <Tooltip content="Relación D/E = Deuda Total ÷ Patrimonio. Ingresa como razón (no porcentaje). Ejemplos: 0.5 = $0.50 de deuda por $1 de patrimonio; 1.0 = deuda y patrimonio iguales; 2.0 = $2 de deuda por $1 de patrimonio.">
                       <HelpCircle className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
                     </Tooltip>
                   </label>
@@ -821,7 +821,7 @@ export function AdvancedValuationForm({
                   />
                   {industryAvgDeRatio !== null && (
                     <div className="mt-1 text-xs text-gray-600">
-                      Industry average:{' '}
+                      Promedio de la industria:{' '}
                       <span className="font-medium text-blue-700">{industryAvgDeRatio.toFixed(2)}</span>
                     </div>
                   )}
@@ -829,14 +829,14 @@ export function AdvancedValuationForm({
                     <div className="mt-1 flex items-start gap-1 text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">
                       <span className="font-semibold">⚠️</span>
                       <span>
-                        Very high leverage (D/E &gt; 5). This indicates extreme debt levels. Please verify this is
-                        correct.
+                        Apalancamiento muy alto (D/E &gt; 5). Indica niveles extremos de deuda. Verifica que sea
+                        correcto.
                       </span>
                     </div>
                   )}
                   <p className="mt-2 text-xs text-gray-600">
-                    <span className="font-medium">Enter as ratio:</span> 0 = no debt, 0.5 = moderate, 1.0 = equal
-                    debt/equity, 2.0 = high leverage
+                    <span className="font-medium">Ingresa como razón:</span> 0 = sin deuda, 0.5 = moderado, 1.0 =
+                    deuda/patrimonio iguales, 2.0 = alto apalancamiento
                   </p>
                 </div>
               </div>
@@ -850,7 +850,7 @@ export function AdvancedValuationForm({
                 className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
                 onClick={() => updateAdvState('advStep', 4)}
               >
-                Back
+                Atrás
               </button>
               {advState.advStep === 5 && (
                 <button
@@ -858,7 +858,7 @@ export function AdvancedValuationForm({
                   className="px-3 py-2 bg-blue-600 text-white rounded-md"
                   onClick={() => updateAdvState('advStep', 6)}
                 >
-                  Next
+                  Siguiente
                 </button>
               )}
             </div>
@@ -866,26 +866,26 @@ export function AdvancedValuationForm({
         </div>
       )}
 
-      {/* Step 6: Taxes (or Step 5 if hideDeRatio is true) */}
+      {/* Step 6: Impuestos (o Step 5 si hideDeRatio es true) */}
       <div
         className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= (hideDeRatio ? 5 : 6) ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}
       >
-        <div className="mb-2 text-sm font-medium text-gray-700">{hideDeRatio ? '5' : '6'}. Taxes</div>
+        <div className="mb-2 text-sm font-medium text-gray-700">{hideDeRatio ? '5' : '6'}. Impuestos</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Método</label>
             <select
               value={advState.taxesMethod}
               onChange={(e) => updateAdvState('taxesMethod', e.target.value as 'percentOfEBIT' | 'direct')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
-              <option value="percentOfEBIT">% of EBIT</option>
-              <option value="direct">Direct per year</option>
+              <option value="percentOfEBIT">% de EBIT</option>
+              <option value="direct">Directo por año</option>
             </select>
           </div>
           {advState.taxesMethod === 'percentOfEBIT' ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tax % of EBIT</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Impuesto % de EBIT</label>
               <input
                 type="number"
                 step="0.1"
@@ -896,14 +896,14 @@ export function AdvancedValuationForm({
               />
               {countryAvgTaxRate !== null && (
                 <div className="mt-1 text-xs text-gray-600">
-                  Country average:{' '}
+                  Promedio del país:{' '}
                   <span className="font-medium text-blue-700">{(countryAvgTaxRate * 100).toFixed(1)}%</span>
                 </div>
               )}
             </div>
           ) : (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Taxes per year:</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Impuestos por año:</label>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 {advState.taxesDirectList.map((val, idx) => (
                   <div key={idx} className="flex flex-col">
@@ -929,7 +929,7 @@ export function AdvancedValuationForm({
               className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md"
               onClick={() => updateAdvState('advStep', hideDeRatio ? 4 : 5)}
             >
-              Back
+              Atrás
             </button>
           )}
           <button
@@ -937,7 +937,7 @@ export function AdvancedValuationForm({
             className="px-4 py-2 bg-green-600 text-white rounded-md disabled:opacity-50"
             disabled={isCalculating}
           >
-            {isCalculating ? 'Calculating...' : 'Estimate'}
+            {isCalculating ? 'Calculando...' : 'Calcular'}
           </button>
         </div>
       </div>

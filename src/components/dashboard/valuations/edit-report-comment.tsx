@@ -38,21 +38,21 @@ export function EditReportComment({ valuationId, initialComment }: EditReportCom
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save comment');
+        throw new Error('Error al guardar comentario');
       }
 
       toast({
-        title: 'Executive summary saved',
-        description: 'Your report executive summary has been updated.',
+        title: 'Resumen Ejecutivo guardado',
+        description: 'Tu resumen ejecutivo ha sido actualizado.',
       });
 
       setIsOpen(false);
       router.refresh();
     } catch (error) {
-      console.error('Error saving executive summary:', error);
+      console.error('Error al guardar resumen ejecutivo:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save executive summary',
+        description: 'Error al guardar resumen ejecutivo',
         variant: 'destructive',
       });
     } finally {
@@ -64,16 +64,17 @@ export function EditReportComment({ valuationId, initialComment }: EditReportCom
     <>
       <Button onClick={() => setIsOpen(true)} variant="default" size="default" className="font-semibold">
         <Pencil className="h-4 w-4 mr-2" />
-        {initialComment ? 'Edit Executive Summary' : 'Add Executive Summary'}
+        {initialComment ? 'Editar Resumen Ejecutivo' : 'Agregar Resumen Ejecutivo'}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Report Executive Summary</DialogTitle>
+            <DialogTitle>Resumen Ejecutivo del Informe</DialogTitle>
             <DialogDescription>
-              Add an executive summary that will be prominently displayed at the top of your published report. Use this
-              to highlight key findings, conclusions, investment thesis, or provide important context for readers.
+              Agrega un resumen ejecutivo que se mostrará prominentemente al inicio de tu informe publicado. Usa esto
+              para resaltar hallazgos clave, conclusiones, tesis de inversión o proporcionar contexto importante para
+              los lectores.
             </DialogDescription>
           </DialogHeader>
 
@@ -81,19 +82,19 @@ export function EditReportComment({ valuationId, initialComment }: EditReportCom
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Enter your executive summary here... (e.g., 'Strong growth trajectory with improving margins. Company well-positioned in expanding market. Valuation reflects 25% upside to current trading levels.')"
+              placeholder="Ingresa tu resumen ejecutivo aquí... (e.g., 'Fuerte crecimiento con márgenes mejorando. La empresa está bien posicionada en el mercado que se está expandiendo. La valuación refleja un 25% de alza sobre los niveles actuales de trading.')"
               className="w-full min-h-[200px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
               maxLength={50000}
             />
-            <p className="text-xs text-gray-500 mt-2">{comment.length.toLocaleString()} / 50,000 characters</p>
+            <p className="text-xs text-gray-500 mt-2">{comment.length.toLocaleString()} / 50,000 caracteres</p>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsOpen(false)}>
-              Cancel
+              Cancelar
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Executive Summary'}
+              {isSaving ? 'Guardando...' : 'Guardar Resumen Ejecutivo'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -45,8 +45,8 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
   const { toast } = useToast();
 
   const formatCurrency = (value: number | null) => {
-    if (value === null || value === undefined) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
+    if (value === null || value === undefined) return 'N/D';
+    return new Intl.NumberFormat('es-ES', {
       style: 'currency',
       currency: 'USD',
       maximumFractionDigits: 0,
@@ -54,7 +54,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('es-ES', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -84,8 +84,8 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       }
 
       toast({
-        title: 'Success',
-        description: 'Valuation deleted successfully',
+        title: 'Éxito',
+        description: 'Valuación eliminada correctamente',
         variant: 'default',
       });
 
@@ -95,7 +95,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       console.error('Error deleting valuation:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete valuation',
+        description: 'No se pudo eliminar la valuación',
         variant: 'destructive',
       });
     } finally {
@@ -128,8 +128,8 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       const data = await response.json();
 
       toast({
-        title: 'Report published!',
-        description: 'Your report is now publicly accessible.',
+        title: '¡Informe publicado!',
+        description: 'Tu informe ahora es público.',
       });
 
       // Update the valuation in state
@@ -167,8 +167,8 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       }
 
       toast({
-        title: 'Report unpublished',
-        description: 'Your report is now private.',
+        title: 'Informe despublicado',
+        description: 'Tu informe ahora es privado.',
       });
 
       // Update the valuation in state
@@ -183,7 +183,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       console.error('Error unpublishing report:', error);
       toast({
         title: 'Error',
-        description: 'Failed to unpublish report',
+        description: 'No se pudo despublicar el informe',
         variant: 'destructive',
       });
     } finally {
@@ -200,8 +200,8 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       toast({
-        title: 'Link copied!',
-        description: 'Share link copied to clipboard.',
+        title: '¡Enlace copiado!',
+        description: 'Enlace de compartir copiado al portapapeles.',
       });
 
       // Reset copied state after 2 seconds
@@ -210,7 +210,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       console.error('Error copying link:', error);
       toast({
         title: 'Error',
-        description: 'Failed to copy link',
+        description: 'No se pudo copiar el enlace',
         variant: 'destructive',
       });
     }
@@ -267,14 +267,14 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
           />
         </svg>
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No valuations</h3>
-        <p className="mt-1 text-sm text-gray-500">Get started by creating a new valuation.</p>
+        <h3 className="mt-2 text-sm font-medium text-gray-900">Sin valuaciones</h3>
+        <p className="mt-1 text-sm text-gray-500">Comienza creando una nueva valuación.</p>
         <div className="mt-6">
           <Link
             href="/free-valuation"
             className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
-            Create Valuation
+            Crear valuación
           </Link>
         </div>
       </div>
@@ -295,7 +295,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="text-base font-semibold text-blue-700 truncate">
-                        {valuation.name || `Valuation - ${formatDate(valuation.createdAt)}`}
+                        {valuation.name || `Valuación - ${formatDate(valuation.createdAt)}`}
                       </p>
                       <div className="mt-2 flex items-center text-sm text-gray-600">
                         {valuation.industry && (
@@ -316,12 +316,12 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                         <p className="mt-1 text-xs text-gray-600">{formatDate(valuation.createdAt)}</p>
                         {valuation.isPublished && (
                           <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                            Published
+                            Publicado
                           </span>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Tooltip content="Preview report">
+                        <Tooltip content="Previsualizar informe">
                           <button
                             onClick={(e) => handlePreview(valuation, e)}
                             className="p-2 text-gray-600 border border-gray-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-md transition-colors"
@@ -329,7 +329,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                             <Eye className="h-4 w-4" />
                           </button>
                         </Tooltip>
-                        <Tooltip content="Share valuation">
+                        <Tooltip content="Compartir valuación">
                           <button
                             onClick={(e) => handleShare(valuation, e)}
                             className="p-2 text-gray-600 border border-gray-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-md transition-colors"
@@ -337,7 +337,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                             <Share2 className="h-4 w-4" />
                           </button>
                         </Tooltip>
-                        <Tooltip content="Delete valuation">
+                        <Tooltip content="Eliminar valuación">
                           <button
                             onClick={(e) => handleDelete(valuation.id, valuation.name, e)}
                             disabled={deletingId === valuation.id}
@@ -363,9 +363,9 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       <Confirmation
         isOpen={confirmOpen}
         onClose={setConfirmOpen}
-        title="Delete valuation?"
-        description={`Are you sure you want to delete "${valuationToDelete?.name || 'this valuation'}"? This action cannot be undone.`}
-        actionText="Delete"
+        title="¿Eliminar valuación?"
+        description={`¿Seguro que quieres eliminar "${valuationToDelete?.name || 'esta valuación'}"? Esta acción no se puede deshacer.`}
+        actionText="Eliminar"
         actionVariant="destructive"
         onConfirm={confirmDelete}
       />
@@ -374,11 +374,11 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent className="w-[90vw] max-w-[90vw] sm:max-w-[600px] px-6 sm:px-8">
           <DialogHeader>
-            <DialogTitle>Share Valuation Report</DialogTitle>
+            <DialogTitle>Compartir informe de valuación</DialogTitle>
             <DialogDescription>
               {selectedValuation?.isPublished
-                ? 'Your report is published and accessible via the link below.'
-                : 'Publish your report to make it publicly accessible and get a shareable link.'}
+                ? 'Tu informe está publicado y accesible mediante el siguiente enlace.'
+                : 'Publica tu informe para hacerlo público y obtener un enlace para compartir.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -386,7 +386,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
             {selectedValuation?.isPublished && selectedValuation?.shareToken ? (
               <>
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Share Link</p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Enlace para compartir</p>
                   <div className="flex items-center gap-2 w-full min-w-0">
                     <code className="flex-1 min-w-0 text-sm bg-white px-3 py-2 rounded border border-gray-300 overflow-x-auto whitespace-nowrap">
                       {`${typeof window !== 'undefined' ? window.location.origin : ''}/reports/${selectedValuation.shareToken}`}
@@ -395,12 +395,12 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                       {copied ? (
                         <>
                           <Check className="h-4 w-4 mr-1" />
-                          Copied
+                          Copiado
                         </>
                       ) : (
                         <>
                           <Copy className="h-4 w-4 mr-1" />
-                          Copy
+                          Copiar
                         </>
                       )}
                     </Button>
@@ -409,15 +409,15 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> Anyone with this link can view your valuation report. The report is read-only
-                    and does not include any personal information.
+                    <strong>Nota:</strong> Cualquiera con este enlace puede ver tu informe de valuación. El informe es
+                    de solo lectura y no incluye información personal.
                   </p>
                 </div>
               </>
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                 <p className="text-sm text-yellow-800">
-                  Your report is currently private. Click "Publish Report" below to generate a shareable link.
+                  Tu informe es privado. Haz clic en "Publicar informe" para generar un enlace compartible.
                 </p>
               </div>
             )}
@@ -427,7 +427,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
             {selectedValuation?.isPublished ? (
               <>
                 <Button variant="outline" onClick={() => setShareDialogOpen(false)} className="w-full sm:w-auto">
-                  Close
+                  Cerrar
                 </Button>
                 <Button
                   variant="destructive"
@@ -435,7 +435,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                   disabled={isPublishing}
                   className="w-full sm:w-auto"
                 >
-                  {isPublishing ? 'Unpublishing...' : 'Unpublish Report'}
+                  {isPublishing ? 'Despublicando...' : 'Despublicar informe'}
                 </Button>
                 {selectedValuation?.shareToken && (
                   <Button
@@ -443,17 +443,17 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                     className="w-full sm:w-auto"
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    View Report
+                    Ver informe
                   </Button>
                 )}
               </>
             ) : (
               <>
                 <Button variant="outline" onClick={() => setShareDialogOpen(false)} className="w-full sm:w-auto">
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button onClick={handlePublish} disabled={isPublishing} className="w-full sm:w-auto">
-                  {isPublishing ? 'Publishing...' : 'Publish Report'}
+                  {isPublishing ? 'Publicando...' : 'Publicar informe'}
                 </Button>
               </>
             )}

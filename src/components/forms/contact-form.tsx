@@ -9,10 +9,10 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 
 const ContactFormSchema = z.object({
-  name: z.string().trim().min(1, 'Please enter your name'),
-  email: z.string().email('Please enter a valid email'),
+  name: z.string().trim().min(1, 'Por favor ingresa tu nombre'),
+  email: z.string().email('Por favor ingresa un email válido'),
   subject: z.string().optional(),
-  message: z.string().trim().min(1, 'Please enter a message'),
+  message: z.string().trim().min(1, 'Por favor ingresa un mensaje'),
   source: z.string().optional(),
   // Honeypot
   company: z.string().max(0).optional(),
@@ -41,8 +41,8 @@ export function ContactForm({ source, className }: ContactFormProps) {
       const first = Object.values(parsed.error.flatten().fieldErrors)[0]?.[0];
       toast({
         variant: 'destructive',
-        title: 'Invalid form',
-        description: first || 'Please fix the errors and try again.',
+        title: 'Formulario inválido',
+        description: first || 'Por favor corrige los errores e inténtalo de nuevo.',
       });
       return;
     }
@@ -56,13 +56,13 @@ export function ContactForm({ source, className }: ContactFormProps) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || 'Failed to send message');
+        throw new Error(data?.error || 'No se pudo enviar el mensaje');
       }
       setFormState({ name: '', email: '', subject: '', message: '', company: '' });
-      toast({ title: 'Message sent', description: 'Thanks for reaching out! We will get back to you shortly.' });
+      toast({ title: 'Mensaje enviado', description: '¡Gracias por escribirnos! Te responderemos a la brevedad.' });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Something went wrong';
-      toast({ variant: 'destructive', title: 'Could not send message', description: message });
+      const message = err instanceof Error ? err.message : 'Algo salió mal';
+      toast({ variant: 'destructive', title: 'No se pudo enviar el mensaje', description: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -72,11 +72,11 @@ export function ContactForm({ source, className }: ContactFormProps) {
     <form onSubmit={handleSubmit} className={className}>
       <div className="grid gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">Nombre</Label>
           <Input
             id="name"
             name="name"
-            placeholder="Your name"
+            placeholder="Tu nombre"
             value={formState.name}
             onChange={(e) => setFormState((s) => ({ ...s, name: e.target.value }))}
             required
@@ -84,7 +84,7 @@ export function ContactForm({ source, className }: ContactFormProps) {
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Correo electrónico</Label>
           <Input
             id="email"
             name="email"
@@ -97,23 +97,23 @@ export function ContactForm({ source, className }: ContactFormProps) {
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="subject">Subject</Label>
+          <Label htmlFor="subject">Asunto</Label>
           <Input
             id="subject"
             name="subject"
-            placeholder="How can we help?"
+            placeholder="¿Cómo podemos ayudarte?"
             value={formState.subject}
             onChange={(e) => setFormState((s) => ({ ...s, subject: e.target.value }))}
             disabled={isSubmitting}
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="message">Message</Label>
+          <Label htmlFor="message">Mensaje</Label>
           <textarea
             id="message"
             name="message"
             rows={5}
-            placeholder="Write your message..."
+            placeholder="Escribe tu mensaje..."
             className="min-h-28 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
             value={formState.message}
             onChange={(e) => setFormState((s) => ({ ...s, message: e.target.value }))}
@@ -123,7 +123,7 @@ export function ContactForm({ source, className }: ContactFormProps) {
         </div>
         {/* Honeypot hidden field */}
         <div className="hidden">
-          <Label htmlFor="company">Company</Label>
+          <Label htmlFor="company">Empresa</Label>
           <input
             id="company"
             name="company"
@@ -135,7 +135,7 @@ export function ContactForm({ source, className }: ContactFormProps) {
         </div>
         <div className="flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Sending…' : 'Send message'}
+            {isSubmitting ? 'Enviando…' : 'Enviar mensaje'}
           </Button>
         </div>
       </div>

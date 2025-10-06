@@ -128,12 +128,12 @@ export default function FreeValuationPage() {
     return [
       {
         id: 'bear',
-        name: 'Low',
+        name: 'Bajo',
         ebitdaMarginPct: Math.max(0, baseMargin - 5),
         revenueGrowthPct: Math.max(0, baseGrowth - 5),
       },
       { id: 'base', name: 'Base', ebitdaMarginPct: baseMargin, revenueGrowthPct: baseGrowth },
-      { id: 'bull', name: 'High', ebitdaMarginPct: baseMargin + 5, revenueGrowthPct: baseGrowth + 5 },
+      { id: 'bull', name: 'Alto', ebitdaMarginPct: baseMargin + 5, revenueGrowthPct: baseGrowth + 5 },
     ];
   }, [ebitdaMarginPct, revenueGrowthPct]);
 
@@ -746,7 +746,7 @@ export default function FreeValuationPage() {
 
     setIsSaving(true);
     try {
-      const defaultName = `Valuation - ${new Date().toLocaleDateString()}`;
+      const defaultName = `Valuación - ${new Date().toLocaleDateString()}`;
       const valuationDisplayName = companyName.trim() || defaultName;
       const fullPhoneNumber = companyPhone.trim() ? `${phoneCountryCode} ${companyPhone}` : undefined;
 
@@ -780,8 +780,8 @@ export default function FreeValuationPage() {
         savedValuation = await response.json();
 
         toast({
-          title: 'Valuation updated',
-          description: 'Your valuation has been updated successfully.',
+          title: 'Valuación actualizada',
+          description: 'Tu valuación se actualizó correctamente.',
         });
       } else {
         // Create new valuation
@@ -809,8 +809,8 @@ export default function FreeValuationPage() {
       console.error('Failed to save valuation:', error);
       toast({
         variant: 'destructive',
-        title: 'Failed to save valuation',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: 'No se pudo guardar la valuación',
+        description: error instanceof Error ? error.message : 'Por favor intenta nuevamente.',
       });
     } finally {
       setIsSaving(false);
@@ -833,8 +833,8 @@ export default function FreeValuationPage() {
       const data = await response.json();
 
       toast({
-        title: 'Report published!',
-        description: 'Your report is now publicly accessible.',
+        title: '¡Informe publicado!',
+        description: 'Tu informe ahora es público.',
       });
 
       // Open the report in a new tab
@@ -851,7 +851,7 @@ export default function FreeValuationPage() {
       console.error('Error publishing report:', error);
       toast({
         title: 'Error',
-        description: 'Failed to publish report',
+        description: 'No se pudo publicar el informe',
         variant: 'destructive',
       });
     } finally {
@@ -868,8 +868,8 @@ export default function FreeValuationPage() {
         <div className="bg-white border-b border-gray-200">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-6">
-              <h1 className="text-2xl font-bold text-gray-900">Valuation</h1>
-              <p className="mt-1 text-gray-600">Quick or advanced enterprise value estimate</p>
+              <h1 className="text-2xl font-bold text-gray-900">Valuación</h1>
+              <p className="mt-1 text-gray-600">Estimación rápida o avanzada del valor de la empresa</p>
             </div>
           </div>
         </div>
@@ -878,7 +878,7 @@ export default function FreeValuationPage() {
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'simple' | 'advanced')}>
             <TabsList>
               <TabsTrigger value="simple">Simple</TabsTrigger>
-              <TabsTrigger value="advanced">Advanced</TabsTrigger>
+              <TabsTrigger value="advanced">Avanzado</TabsTrigger>
             </TabsList>
 
             <TabsContent value="simple">
@@ -924,7 +924,7 @@ export default function FreeValuationPage() {
                   onSave={handleSaveValuation}
                   onNavigateToDashboard={() => router.push('/dashboard/valuations')}
                   showYears={5}
-                  chartTitle="Revenue & EBITDA Margin Projection (5-Year)"
+                  chartTitle="Proyección de Ingresos y Margen EBITDA (5 años)"
                 />
               )}
             </TabsContent>
@@ -968,7 +968,7 @@ export default function FreeValuationPage() {
                   onSave={handleSaveValuation}
                   onNavigateToDashboard={() => router.push('/dashboard/valuations')}
                   showYears={advState.advYears}
-                  chartTitle={`Revenue & EBITDA Margin Projection (${advState.advYears}-Year)`}
+                  chartTitle={`Proyección de Ingresos y Margen EBITDA (${advState.advYears} años)`}
                 />
               )}
             </TabsContent>
@@ -979,17 +979,17 @@ export default function FreeValuationPage() {
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-8 bg-white border border-gray-200 rounded-lg">
             <div className="px-4 py-2 border-b border-gray-200">
-              <h2 className="text-sm font-semibold text-gray-900">Debug: Model & Calculations</h2>
+              <h2 className="text-sm font-semibold text-gray-900">Debug: Modelo y Cálculos</h2>
             </div>
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <div className="text-xs font-medium text-gray-700 mb-2">Model</div>
+                <div className="text-xs font-medium text-gray-700 mb-2">Modelo</div>
                 <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
                   {JSON.stringify(model, null, 2)}
                 </pre>
               </div>
               <div>
-                <div className="text-xs font-medium text-gray-700 mb-2">Calculated Financials</div>
+                <div className="text-xs font-medium text-gray-700 mb-2">Resultados calculados</div>
                 <pre className="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-auto max-h-96">
                   {JSON.stringify(calculatedFinancials, null, 2)}
                 </pre>
@@ -1002,9 +1002,9 @@ export default function FreeValuationPage() {
         <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Sign in to view your valuation</DialogTitle>
+              <DialogTitle>Inicia sesión para ver tu valuación</DialogTitle>
               <DialogDescription>
-                To see your valuation results and save them for future reference, please sign in or create an account.
+                Para ver los resultados de tu valuación y guardarlos, inicia sesión o crea una cuenta.
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-center py-4">
@@ -1035,9 +1035,9 @@ export default function FreeValuationPage() {
                   </svg>
                 </div>
               </div>
-              <DialogTitle className="text-center text-2xl">Valuation Saved Successfully!</DialogTitle>
+              <DialogTitle className="text-center text-2xl">¡Valuación guardada con éxito!</DialogTitle>
               <DialogDescription className="text-center">
-                Your valuation has been saved to your dashboard. What would you like to do next?
+                Tu valuación se guardó en tu panel. ¿Qué te gustaría hacer ahora?
               </DialogDescription>
             </DialogHeader>
 
@@ -1051,7 +1051,7 @@ export default function FreeValuationPage() {
                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                   />
                 </svg>
-                Go to Dashboard
+                Ir al Panel
               </Button>
 
               <Button
@@ -1069,7 +1069,7 @@ export default function FreeValuationPage() {
                     d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
                   />
                 </svg>
-                {isPublishing ? 'Publishing...' : 'Publish & Share Report'}
+                {isPublishing ? 'Publicando...' : 'Publicar y Compartir Informe'}
               </Button>
 
               <div className="text-center">
@@ -1077,15 +1077,15 @@ export default function FreeValuationPage() {
                   onClick={() => setSuccessDialogOpen(false)}
                   className="text-sm text-gray-500 hover:text-gray-700 underline"
                 >
-                  Continue editing
+                  Seguir editando
                 </button>
               </div>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-xs text-blue-800">
-                <strong>Tip:</strong> Publishing your report creates a shareable public link that you can send to
-                investors, advisors, or team members. The report is read-only and professional-looking.
+                <strong>Consejo:</strong> Publicar tu informe crea un enlace público para compartir con inversionistas,
+                asesores o tu equipo. El informe es de solo lectura y con formato profesional.
               </p>
             </div>
           </DialogContent>

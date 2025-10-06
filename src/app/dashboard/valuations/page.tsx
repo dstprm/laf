@@ -25,14 +25,14 @@ export default async function ValuationsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Valuations</h1>
-            <p className="mt-2 text-gray-600">View and manage your saved company valuations</p>
+            <h1 className="text-3xl font-bold text-gray-900">Mis Valuaciones</h1>
+            <p className="mt-2 text-gray-600">Ver y gestionar tus valuaciones guardadas</p>
           </div>
           <Link
             href="/free-valuation"
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
-            New Valuation
+            Nueva Valuación
           </Link>
         </div>
 

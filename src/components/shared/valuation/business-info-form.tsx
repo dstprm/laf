@@ -28,30 +28,30 @@ export function BusinessInfoForm({
 }: BusinessInfoFormProps) {
   return (
     <div className={`border-b border-gray-200 pb-4 mb-4 ${className}`}>
-      <h3 className="text-sm font-semibold text-gray-900 mb-3">Business Information (Optional)</h3>
+      <h3 className="text-sm font-semibold text-gray-900 mb-3">Información de la empresa (Opcional)</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la empresa</label>
           <input
             type="text"
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
-            placeholder="e.g. Acme Corp"
+            placeholder="Example Company"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Sitio web</label>
           <input
             type="url"
             value={companyWebsite}
             onChange={(e) => setCompanyWebsite(e.target.value)}
-            placeholder="e.g. www.example.com"
+            placeholder="www.example.com"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Phone Contact</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
           <div className="flex gap-2">
             <PhoneCountryCodeSelect value={phoneCountryCode} onChange={setPhoneCountryCode} className="w-28" />
             <input
