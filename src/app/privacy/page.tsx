@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad | LAF',
+  title: 'Política de Privacidad | ValuPro',
   description:
-    'Cómo LAF trata tus datos personales: qué recopilamos, con qué fines, bases legales, conservación, derechos y contactos.',
+    'Cómo ValuPro trata tus datos personales: qué recopilamos, con qué fines, bases legales, conservación, derechos y contactos.',
 };
 
 export default function PrivacyPage() {
@@ -19,7 +19,7 @@ export default function PrivacyPage() {
 
       <section className="space-y-3">
         <p>
-          Esta Política de Privacidad explica cómo <strong>LAF</strong> (el “Servicio”) recopila y trata tus datos
+          Esta Política de Privacidad explica cómo <strong>ValuPro</strong> (el “Servicio”) recopila y trata tus datos
           personales cuando utilizas nuestro sitio y producto disponible en{' '}
           <a href={appUrl} className="underline" target="_blank" rel="noreferrer">
             {appUrl}

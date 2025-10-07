@@ -10,7 +10,7 @@ export function Footer() {
         }
       >
         <div className={'flex justify-center items-center gap-2'}>
-          <span className={'text-sm leading-[14px]'}>LAF</span>
+          <span className={'text-sm leading-[14px]'}>ValuPro</span>
           <span>·</span>
           <a href="/terms" className="hover:underline">
             Términos

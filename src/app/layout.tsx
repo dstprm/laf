@@ -9,7 +9,7 @@ import { ThemeProvider } from '@/contexts/theme-context';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'LAF — Valuación de empresas con IA',
+  title: 'ValuPro — Valuación de empresas',
   description: 'Valora tu empresa en minutos con DCF, múltiplos y comparables. Gratis y listo para compartir.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
 };

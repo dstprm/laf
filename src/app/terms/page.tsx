@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Términos del Servicio | LAF',
+  title: 'Términos del Servicio | ValuPro',
   description:
-    'Condiciones de uso de LAF: cuentas, uso permitido, planes, pagos, cancelación, propiedad intelectual, garantías, limitación de responsabilidad y contacto.',
+    'Condiciones de uso de ValuPro: cuentas, uso permitido, planes, pagos, cancelación, propiedad intelectual, garantías, limitación de responsabilidad y contacto.',
 };
 
 export default function TermsPage() {
@@ -19,7 +19,8 @@ export default function TermsPage() {
 
       <section className="space-y-3">
         <p>
-          Estos Términos del Servicio (los “Términos”) rigen el uso de <strong>LAF</strong> y del sitio disponible en{' '}
+          Estos Términos del Servicio (los “Términos”) rigen el uso de <strong>ValuPro</strong> y del sitio disponible
+          en{' '}
           <a href={appUrl} className="underline" target="_blank" rel="noreferrer">
             {appUrl}
           </a>
@@ -66,9 +67,9 @@ export default function TermsPage() {
       <section className="space-y-2">
         <h2 className="text-lg font-medium">Propiedad intelectual</h2>
         <p>
-          LAF y sus componentes están protegidos por derechos de propiedad intelectual. Conservamos todos los derechos
-          no otorgados expresamente. Puedes enviarnos comentarios; nos concedes una licencia para usarlos a fin de
-          mejorar el Servicio.
+          ValuPro y sus componentes están protegidos por derechos de propiedad intelectual. Conservamos todos los
+          derechos no otorgados expresamente. Puedes enviarnos comentarios; nos concedes una licencia para usarlos a fin
+          de mejorar el Servicio.
         </p>
       </section>
 
