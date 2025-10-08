@@ -4,6 +4,13 @@ import { ContactForm } from '@/components/forms/contact-form';
 import { Section } from './section';
 
 export function ContactSection() {
+  const services = [
+    'Análisis exhaustivo para procesos de fundraising',
+    'Estimación de valor y preparación para fusiones y adquisiciones',
+    'Modelos financieros personalizados y a la medida',
+    'Asesoría estratégica y presentaciones para inversionistas',
+  ];
+
   return (
     <div className="w-full bg-stone-100">
       <Section id="professional-valuation" className="scroll-mt-24">
@@ -15,26 +22,12 @@ export function ContactSection() {
                 ¿Necesitas una valuación más detallada y personalizada? Nuestro equipo de expertos puede ayudarte con:
               </p>
               <ul className="mt-4 space-y-2 text-sm ">
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Valuaciones exhaustivas para procesos de fundraising</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Análisis detallados para fusiones y adquisiciones</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Modelos financieros personalizados y proyecciones</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Due diligence financiero completo</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Asesoría estratégica y presentaciones para inversionistas</span>
-                </li>
+                {services.map((service, i) => (
+                  <li key={`service_${i}`} className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>{service}</span>
+                  </li>
+                ))}
               </ul>
               <p className="mt-4 text-sm">
                 Contáctanos para recibir una propuesta personalizada basada en tus necesidades específicas.

@@ -1,20 +1,22 @@
 export function HeroStats() {
   const stats = [
     {
-      title: 'Valuación en Minutos',
-      description: 'Obtén un rango de valoración profesional en menos de 5 minutos con nuestra herramienta DCF',
+      title: 'Análisis en Minutos',
+      description: 'Obtén un rango de valoración profesional en menos de 5 minutos con nuestra herramienta',
     },
     {
       title: 'Múltiples Metodologías',
-      description: 'DCF, múltiplos de industria y comparables para mayor precisión en cada valuación',
+      description:
+        'Nuestra herramienta te permite utilizar distintas metodologías y sensibilización de variables para tener una estimación robusta',
     },
     {
       title: 'Informes Profesionales',
-      description: 'Documentos exportables listos para presentar a inversionistas y potenciales compradores',
+      description: 'Documentos exportables listos para compartir y presentar',
     },
     {
       title: 'Comenzar Gratis',
-      description: 'Sin costo inicial - prueba nuestra valuación gratuita antes de solicitar análisis detallado',
+      description:
+        'Nuestra herramienta te permite hacer un análisis de manera autónoma, o puede servir como una pre-estimación antes de contar con un estudio a la medida',
     },
   ];
 

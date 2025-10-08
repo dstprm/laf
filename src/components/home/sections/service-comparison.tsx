@@ -5,41 +5,35 @@ import { Check } from 'lucide-react';
 
 export function ServiceComparison() {
   const freeFeatures = [
-    'Valuación automatizada basada en DCF',
-    'Cálculo automático de flujos descontados',
+    'Valorización automatizada basada en Flujos de Cajas Descontados (DCF)',
     'Informe one-pager listo para compartir',
-    'Resultados en minutos',
-    'Análisis de sensibilidad básico',
-    'Rango de valoración estimado',
+    'Resultados y sensibilización en minutos',
+    'Estimación de rango de valoración',
   ];
 
   const professionalFeatures = [
-    'Análisis exhaustivo personalizado',
-    'Múltiples métodos: DCF, múltiplos y comparables',
-    'Modelos financieros detallados',
-    'Asesoría de M&A',
-    'Due diligence completo',
-    'Asesoría estratégica',
-    'Asesoría de planificación financiera',
-    'Presentación ejecutiva para inversionistas',
+    'Análisis detallado personalizado',
+    'Uso de múltiples metodologías: DCF, múltiplos comparables y transacciones recientes',
+    'Modelo financiero detallado',
     'Soporte continuo durante el proceso',
+    'Informe de resultados o Presentación pensada en Directorio, Inversionistas, Financistas u otro',
   ];
 
   return (
     <Section id="services">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">Elige tu nivel de valuación</h2>
+        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">Elige el tipo de análisis</h2>
         <p className="mt-4 text-muted-foreground">
-          Desde una estimación rápida hasta un análisis completo para decisiones críticas.
+          Desde una estimación rápida hasta un análisis completo para decisiones estratégicas.
         </p>
       </div>
       <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Free Valuation Card */}
         <div className="group relative overflow-hidden rounded-xl border-2 border-border bg-background/60 p-6 sm:p-8 backdrop-blur transition-all hover:border-primary/30 hover:shadow-lg flex flex-col">
           <div className="mb-6">
-            <h3 className="text-2xl font-semibold">Valuación Gratuita</h3>
+            <h3 className="text-2xl font-semibold">Valorización Gratuita</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Perfecta para obtener una estimación inicial rápida y profesional.
+              Herramienta perfecta para obtener una estimación rápida y profesional.
             </p>
             <div className="mt-4">
               <span className="text-4xl font-bold">Gratis</span>
@@ -71,7 +65,7 @@ export function ServiceComparison() {
             <div className="inline-flex rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground mb-3">
               Recomendado para fundraising y M&A
             </div>
-            <h3 className="text-2xl font-semibold">Valuación Profesional</h3>
+            <h3 className="text-2xl font-semibold">Valorización Profesional</h3>
             <p className="mt-2 text-sm text-muted-foreground">Análisis exhaustivo y personalizado.</p>
             <div className="mt-4">
               <span className="text-4xl font-bold">Personalizado</span>
