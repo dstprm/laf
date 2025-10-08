@@ -11,18 +11,18 @@ interface ContactNotificationEmailProps {
 
 export function ContactNotificationEmail({ name, email, subject, message, source }: ContactNotificationEmailProps) {
   return (
-    <BaseEmail preview={`New contact request from ${name}`}>
-      <EmailHeader title="New Contact Request" subtitle={source ? `Source: ${source}` : undefined} />
+    <BaseEmail preview={`Nuevo contacto de ${name}`}>
+      <EmailHeader title="Nuevo contacto" subtitle={source ? `Fuente: ${source}` : undefined} />
       <div>
         <p>
-          <strong>Name:</strong> {name}
+          <strong>Nombre:</strong> {name}
         </p>
         <p>
           <strong>Email:</strong> {email}
         </p>
         {subject && (
           <p>
-            <strong>Subject:</strong> {subject}
+            <strong>Asunto:</strong> {subject}
           </p>
         )}
         <p style={{ whiteSpace: 'pre-wrap', marginTop: 16 }}>{message}</p>
