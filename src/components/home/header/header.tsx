@@ -155,7 +155,7 @@ export default function Header({ user }: Props) {
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Open navigation">
+                <Button variant="ghost" size="icon" aria-label="Open navigation" className="text-white">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
