@@ -86,14 +86,14 @@ export function HeroSection() {
 
       <div className={'mx-auto w-full max-w-5xl text-center'}>
         <p className="mx-auto mb-5 inline-flex rounded-full border border-white/20 bg-white/5 px-3.5 py-1.5 text-xs font-medium tracking-wide text-white/80 backdrop-blur-sm">
-          Expertos en valuación de empresas y modelamiento financiero
+          Análisis financiero y valoración de empresas
         </p>
         <h1
           className={
             'text-[48px] leading-[52px] md:text-[68px] md:leading-[76px] tracking-[-2px] font-bold text-white drop-shadow-2xl mb-6'
           }
         >
-          Valuaciones profesionales y modelamiento financiero
+          Valorización de empresas y modelamiento financiero
           <br />
           para decisiones inteligentes.
         </h1>

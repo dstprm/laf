@@ -4,25 +4,25 @@ import { Section } from './section';
 export function FeaturesSection() {
   const useCases = [
     {
-      title: 'Bancos o fondos',
+      title: 'Private Equity u otros fondos',
       description:
-        'Validar y compartir modelos ágiles para comités e inversión. Controlar supuestos, sensibilidad y enlaces compartibles.',
+        'Validar y compartir modelos ágiles para comités e inversión. Controlar supuestos, sensibilizar variables e identificar rangos de valor.',
       icon: Landmark,
-      highlights: ['Revisar en comité', 'Compartir modelo', 'Analizar sensibilidad'],
+      highlights: ['Comités de inversión', 'Compartir modelo', 'Sensibilizar escenarios'],
     },
     {
-      title: 'Dueños de negocio',
+      title: 'Empresarios',
       description:
-        'Valuar la empresa, explorar precios de salida y preparar conversaciones con asesores o potenciales compradores.',
+        'Estimar el valor de la empresa, explorar pecio de venta y preparar conversaciones con asesores o potenciales compradores.',
       icon: Briefcase,
-      highlights: ['Explorar escenarios', 'Seguir guía paso a paso', 'Imprimir informe'],
+      highlights: ['Explorar rango de valor', 'Compartir informe', 'Plan de acción', 'guía en el proceso'],
     },
     {
       title: 'CFOs',
       description:
-        'Integrar la valuación en la planificación financiera y el reporting. Comparar escenarios para comunicar decisiones al directorio.',
+        'Integrar la valorización de la empresa en la planificación financiera y complementar la reportería. Comparar escenarios para analizar decisiones estratégicas.',
       icon: LineChart,
-      highlights: ['Definir variables de escenario', 'Compartir con directorio', 'Exportar resúmenes'],
+      highlights: ['Definir variables críticas', 'Compartir con Directorio', 'Exportar resúmenes'],
     },
   ];
 
@@ -30,7 +30,7 @@ export function FeaturesSection() {
     <div className="w-full bg-stone-100">
       <Section id="features">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="mt-1 text-3xl font-semibold tracking-tight md:text-5xl">Hecho para quienes deciden</h2>
+          <h2 className="mt-1 text-3xl font-semibold tracking-tight md:text-5xl">Pensado en quienes deciden</h2>
           <p className="mt-4 text-muted-foreground">Nos adaptamos a diferentes perfiles y casos de uso.</p>
         </div>
         <div className="mt-12 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
