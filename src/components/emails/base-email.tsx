@@ -17,7 +17,7 @@ export function BaseEmail({ preview, children }: BaseEmailProps) {
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
-            <Img src={logoSrc} width={logoWidth} alt="Ready to SaaS" style={logo} />
+            <Img src={logoSrc} width={logoWidth} alt="ValuPro" style={logo} />
           </Section>
 
           <Section style={content}>{children}</Section>
@@ -25,17 +25,11 @@ export function BaseEmail({ preview, children }: BaseEmailProps) {
           <Hr style={hr} />
 
           <Section style={footer}>
-            <Text style={footerText}>© 2024 Your SaaS Template. All rights reserved.</Text>
+            <Text style={footerText}>© 2025 ValuPro.</Text>
             <Text style={footerText}>
-              <Link
-                href={`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings`}
-                style={footerLink}
-              >
-                Update preferences
-              </Link>
               {' · '}
               <Link href={`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}`} style={footerLink}>
-                Visit website
+                Ir al sitio
               </Link>
             </Text>
           </Section>

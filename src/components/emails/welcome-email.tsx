@@ -11,35 +11,31 @@ export function WelcomeEmail({ firstName }: WelcomeEmailProps) {
   const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`;
 
   return (
-    <BaseEmail preview={`Welcome to Your SaaS Template, ${displayName}!`}>
+    <BaseEmail preview={`¡Te damos la bienvenida a ValuPro, ${displayName}!`}>
       <EmailHeader
-        title={`Welcome to Your SaaS Template, ${displayName}! 🎉`}
-        subtitle="We're excited to have you on board"
+        title={`¡Te damos la bienvenida a ValuPro, ${displayName}! 🎉`}
+        subtitle="Tu plataforma para valoraciones financieras simples y precisas"
       />
 
       <Text style={paragraph}>
-        Thank you for signing up! Your account has been successfully created and you can now access your dashboard.
+        Gracias por registrarte. Ya puedes acceder a tu panel y comenzar a crear valoraciones en minutos.
       </Text>
 
-      <Text style={paragraph}>Here&apos;s what you can do next:</Text>
+      <Text style={paragraph}>Esto es lo que puedes hacer ahora:</Text>
 
       <ul style={list}>
-        <li style={listItem}>Explore your dashboard and available features</li>
-        <li style={listItem}>Check out our pricing plans to unlock premium features</li>
-        <li style={listItem}>Update your profile settings</li>
-        <li style={listItem}>Get familiar with our platform</li>
+        <li style={listItem}>Crear tu primera valoración</li>
+        <li style={listItem}>Explorar el panel y las funcionalidades disponibles</li>
+        <li style={listItem}>Probar escenarios y ajustar variables de valoración</li>
+        <li style={listItem}>Solicitar asesoría profesional</li>
       </ul>
 
-      <EmailButton href={dashboardUrl}>Go to Dashboard</EmailButton>
+      <EmailButton href={dashboardUrl}>Ir al panel</EmailButton>
 
       <Text style={paragraph}>
-        If you have any questions or need help getting started, don&apos;t hesitate to reach out to our support team.
-      </Text>
-
-      <Text style={paragraph}>
-        Welcome aboard!
+        ¡Gracias por unirte a ValuPro!
         <br />
-        The Your SaaS Template Team
+        Equipo de ValuPro
       </Text>
     </BaseEmail>
   );
