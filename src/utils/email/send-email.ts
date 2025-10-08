@@ -67,7 +67,7 @@ export async function sendWelcomeEmail({ to, firstName }: WelcomeEmailData) {
 
   return sendEmail({
     to,
-    subject: `Welcome to Your SaaS Template${firstName ? `, ${firstName}` : ''}!`,
+    subject: `Te damos la bienvenida a ValuPro ${firstName ? `, ${firstName}` : ''}!`,
     html,
     type: EmailType.WELCOME,
   });
