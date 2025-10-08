@@ -8,7 +8,7 @@ interface BaseEmailProps {
 
 export function BaseEmail({ preview, children }: BaseEmailProps) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const logoSrc = `${appUrl}/logo.png`;
+  const logoSrc = `${appUrl}/logo.svg`;
   const logoWidth = 200;
   return (
     <Html>
