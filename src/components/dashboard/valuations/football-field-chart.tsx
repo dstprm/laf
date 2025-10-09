@@ -50,6 +50,14 @@ export function FootballFieldChart({
   height = 400,
   className = '',
 }: FootballFieldChartProps) {
+  // Detect small screens to adjust sizing/spacing
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(typeof window !== 'undefined' && window.innerWidth < 640);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   // Debug logging
   React.useEffect(() => {
     console.log('FootballFieldChart: ranges updated', {
@@ -106,9 +114,9 @@ export function FootballFieldChart({
     const baseRatio = (base - min) / (max - min);
     const basePosition = barX + baseRatio * barWidth;
 
-    // Calculate min and max positions for labels
-    const minPosition = barX;
-    const maxPosition = barX + barWidth;
+    // Calculate min and max positions for labels (draw inside to free outer space)
+    const minPosition = barX + 6;
+    const maxPosition = barX + barWidth - 6;
     const labelY = barY + barHeight / 2;
 
     return (
@@ -116,28 +124,28 @@ export function FootballFieldChart({
         {/* Main range bar */}
         <rect x={barX} y={barY} width={barWidth} height={barHeight} fill="#3b82f6" fillOpacity={0.7} rx={4} />
 
-        {/* Min value label - to the left of the bar */}
+        {/* Min value label - inside left */}
         <text
-          x={minPosition - 8}
-          y={labelY}
-          fill="#374151"
-          fontSize="12"
-          fontWeight="600"
-          dominantBaseline="middle"
-          textAnchor="end"
-        >
-          {formatCurrency(min)}
-        </text>
-
-        {/* Max value label - to the right of the bar */}
-        <text
-          x={maxPosition + 8}
+          x={minPosition}
           y={labelY}
           fill="#374151"
           fontSize="12"
           fontWeight="600"
           dominantBaseline="middle"
           textAnchor="start"
+        >
+          {formatCurrency(min)}
+        </text>
+
+        {/* Max value label - inside right */}
+        <text
+          x={maxPosition}
+          y={labelY}
+          fill="#374151"
+          fontSize="12"
+          fontWeight="600"
+          dominantBaseline="middle"
+          textAnchor="end"
         >
           {formatCurrency(max)}
         </text>
@@ -155,27 +163,60 @@ export function FootballFieldChart({
     );
   };
 
+  // Multi-line Y-axis tick renderer to avoid truncation on small screens
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const WrappedYAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    const text = String(payload.value || '');
+    const maxChars = 22; // wrap length per line
+
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let current = '';
+    for (const word of words) {
+      const next = current ? `${current} ${word}` : word;
+      if (next.length <= maxChars) {
+        current = next;
+      } else {
+        if (current) lines.push(current);
+        current = word;
+      }
+    }
+    if (current) lines.push(current);
+    const finalLines = lines.length <= 2 ? lines : [lines[0], words.slice(lines[0].split(' ').length).join(' ')];
+
+    return (
+      <text x={x - 4} y={y} fill="#374151" fontSize={10} fontWeight={500} textAnchor="end" dominantBaseline="central">
+        {finalLines.map((line, idx) => (
+          <tspan key={idx} x={x - 4} dy={idx === 0 ? 0 : 12}>
+            {line}
+          </tspan>
+        ))}
+      </text>
+    );
+  };
+
   return (
     <div className={`bg-white border border-gray-200 rounded-lg ${className}`}>
       {title && (
         <div className="px-4 py-3 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 mt-1 hidden sm:block">
             Las barras azules muestran los rangos • La <span className="text-red-500 font-semibold">línea roja</span>{' '}
             indica el caso base
           </p>
         </div>
       )}
-      <div className="p-4">
-        <ResponsiveContainer width="100%" height={height}>
+      <div className="p-3 sm:p-4">
+        <ResponsiveContainer width="100%" height={isMobile ? 320 : height}>
           <BarChart
             data={chartData}
             layout="vertical"
             margin={{
-              top: 20,
-              right: 30,
-              left: 20,
-              bottom: 20,
+              top: isMobile ? 12 : 20,
+              right: isMobile ? 4 : 24,
+              left: isMobile ? 4 : 16,
+              bottom: isMobile ? 8 : 20,
             }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
@@ -184,14 +225,16 @@ export function FootballFieldChart({
               domain={[domainMin, domainMax]}
               tickFormatter={formatCurrency}
               stroke="#6b7280"
-              style={{ fontSize: '12px', fontWeight: 500 }}
+              style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: 500 }}
             />
             <YAxis
               type="category"
               dataKey="scenario"
               stroke="#6b7280"
-              style={{ fontSize: '12px', fontWeight: 500 }}
-              width={150}
+              style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: 500 }}
+              width={isMobile ? 120 : 160}
+              tick={<WrappedYAxisTick />}
+              interval={0}
             />
             <Tooltip
               content={({ active, payload }) => {

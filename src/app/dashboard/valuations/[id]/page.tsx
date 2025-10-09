@@ -55,7 +55,7 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
   return (
     <DashboardPageWrapper>
       <div className="space-y-6">
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <Link
@@ -64,16 +64,16 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
               >
                 ← Volver a Valuaciones
               </Link>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 {valuation.name || `Valuación - ${formatDate(valuation.createdAt)}`}
               </h1>
-              <p className="mt-2 text-gray-600">Creado el {formatDate(valuation.createdAt)}</p>
+              <p className="mt-1 sm:mt-2 text-sm text-gray-600">Creado el {formatDate(valuation.createdAt)}</p>
             </div>
           </div>
 
           {/* Resumen ejecutivo */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -84,7 +84,7 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  <h3 className="text-lg font-semibold text-gray-900">Resumen ejecutivo del informe</h3>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Resumen ejecutivo del informe</h3>
                 </div>
                 <p className="text-sm text-gray-700">
                   {valuation.reportComment ? (
@@ -97,7 +97,7 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
                   )}
                 </p>
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 w-full sm:w-auto">
                 <EditReportComment valuationId={valuation.id} initialComment={valuation.reportComment} />
               </div>
             </div>

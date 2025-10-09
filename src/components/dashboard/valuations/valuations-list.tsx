@@ -291,15 +291,15 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                 href={`/dashboard/valuations/${valuation.id}`}
                 className="block hover:bg-gray-100 transition-colors"
               >
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
+                <div className="px-4 py-3 sm:px-6">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="text-base font-semibold text-blue-700 truncate">
                         {valuation.name || `Valuación - ${formatDate(valuation.createdAt)}`}
                       </p>
-                      <div className="mt-2 flex items-center text-sm text-gray-600">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-gray-600">
                         {valuation.industry && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             {valuation.industry}
                           </span>
                         )}
@@ -310,21 +310,23 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 ml-4">
-                      <div className="flex flex-col items-end">
-                        <p className="text-base font-bold text-gray-900">{formatCurrency(valuation.enterpriseValue)}</p>
-                        <p className="mt-1 text-xs text-gray-600">{formatDate(valuation.createdAt)}</p>
+                    <div className="flex flex-col items-end gap-1.5 sm:gap-2 sm:ml-4">
+                      <div className="flex flex-col items-end min-w-[120px]">
+                        <p className="text-base font-bold text-gray-900 leading-5">
+                          {formatCurrency(valuation.enterpriseValue)}
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-600 leading-4">{formatDate(valuation.createdAt)}</p>
                         {valuation.isPublished && (
-                          <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                          <span className="mt-0.5 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                             Publicado
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <Tooltip content="Previsualizar informe">
                           <button
                             onClick={(e) => handlePreview(valuation, e)}
-                            className="p-2 text-gray-600 border border-gray-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-md transition-colors"
+                            className="h-8 w-8 inline-flex items-center justify-center text-gray-600 border border-gray-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-full transition-colors"
                           >
                             <Eye className="h-4 w-4" />
                           </button>
@@ -332,7 +334,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                         <Tooltip content="Compartir valuación">
                           <button
                             onClick={(e) => handleShare(valuation, e)}
-                            className="p-2 text-gray-600 border border-gray-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-md transition-colors"
+                            className="h-8 w-8 inline-flex items-center justify-center text-gray-600 border border-gray-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-full transition-colors"
                           >
                             <Share2 className="h-4 w-4" />
                           </button>
@@ -341,7 +343,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                           <button
                             onClick={(e) => handleDelete(valuation.id, valuation.name, e)}
                             disabled={deletingId === valuation.id}
-                            className="p-2 text-gray-600 border border-gray-300 hover:text-red-600 hover:bg-red-50 hover:border-red-600 rounded-md transition-colors disabled:opacity-50"
+                            className="h-8 w-8 inline-flex items-center justify-center text-gray-600 border border-gray-300 hover:text-red-600 hover:bg-red-50 hover:border-red-600 rounded-full transition-colors disabled:opacity-50"
                           >
                             {deletingId === valuation.id ? (
                               <div className="h-4 w-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin" />

@@ -53,6 +53,14 @@ export function RevenueEbitdaChart({
   height = 400,
   className = '',
 }: RevenueEbitdaChartProps) {
+  // Detect small screens to adjust sizing and spacing
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(typeof window !== 'undefined' && window.innerWidth < 640);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   // Prepare data for the chart
   const chartData = revenues.map((revenue, index) => {
     const ebitdaMargin = ebitdaMargins[index] || 0;
@@ -88,32 +96,40 @@ export function RevenueEbitdaChart({
         </div>
       )}
       <div className="p-4">
-        <ResponsiveContainer width="100%" height={height}>
+        <ResponsiveContainer width="100%" height={isMobile ? 260 : height}>
           <ComposedChart
             data={chartData}
             margin={{
-              top: 20,
-              right: 30,
-              left: 20,
-              bottom: 20,
+              top: isMobile ? 12 : 20,
+              right: isMobile ? 12 : 30,
+              left: isMobile ? 8 : 20,
+              bottom: isMobile ? 8 : 20,
             }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="year" stroke="#6b7280" style={{ fontSize: '12px', fontWeight: 500 }} />
+            <XAxis dataKey="year" stroke="#6b7280" style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: 500 }} />
             <YAxis
               yAxisId="left"
               stroke="#3b82f6"
-              style={{ fontSize: '12px', fontWeight: 500 }}
+              style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: 500 }}
               tickFormatter={formatCurrency}
-              label={{ value: 'Ingresos', angle: -90, position: 'insideLeft', style: { fontSize: '12px' } }}
+              label={
+                isMobile
+                  ? undefined
+                  : { value: 'Ingresos', angle: -90, position: 'insideLeft', style: { fontSize: '12px' } }
+              }
             />
             <YAxis
               yAxisId="right"
               orientation="right"
               stroke="#10b981"
-              style={{ fontSize: '12px', fontWeight: 500 }}
+              style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: 500 }}
               tickFormatter={formatPercent}
-              label={{ value: 'Margen EBITDA (%)', angle: 90, position: 'insideRight', style: { fontSize: '12px' } }}
+              label={
+                isMobile
+                  ? undefined
+                  : { value: 'Margen EBITDA (%)', angle: 90, position: 'insideRight', style: { fontSize: '12px' } }
+              }
             />
             <Tooltip
               contentStyle={{
@@ -145,17 +161,24 @@ export function RevenueEbitdaChart({
                 return null;
               }}
             />
-            <Legend wrapperStyle={{ paddingTop: '10px' }} iconType="square" />
-            <Bar yAxisId="left" dataKey="revenue" name="Ingresos" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            <Legend wrapperStyle={{ paddingTop: '8px', fontSize: isMobile ? '12px' : '14px' }} iconType="square" />
+            <Bar
+              yAxisId="left"
+              dataKey="revenue"
+              name="Ingresos"
+              fill="#3b82f6"
+              radius={[4, 4, 0, 0]}
+              barSize={isMobile ? 18 : undefined}
+            />
             <Line
               yAxisId="right"
               type="monotone"
               dataKey="ebitdaMargin"
               name="Margen EBITDA"
               stroke="#10b981"
-              strokeWidth={3}
-              dot={{ fill: '#10b981', r: 5 }}
-              activeDot={{ r: 7 }}
+              strokeWidth={isMobile ? 2 : 3}
+              dot={{ fill: '#10b981', r: isMobile ? 4 : 5 }}
+              activeDot={{ r: isMobile ? 6 : 7 }}
             />
           </ComposedChart>
         </ResponsiveContainer>
