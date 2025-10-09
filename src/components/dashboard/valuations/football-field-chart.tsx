@@ -207,15 +207,15 @@ export function FootballFieldChart({
           </p>
         </div>
       )}
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         <ResponsiveContainer width="100%" height={isMobile ? 320 : height}>
           <BarChart
             data={chartData}
             layout="vertical"
             margin={{
               top: isMobile ? 12 : 20,
-              right: isMobile ? 6 : 24,
-              left: isMobile ? 6 : 16,
+              right: isMobile ? 4 : 24,
+              left: isMobile ? 4 : 16,
               bottom: isMobile ? 8 : 20,
             }}
           >
@@ -232,7 +232,7 @@ export function FootballFieldChart({
               dataKey="scenario"
               stroke="#6b7280"
               style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: 500 }}
-              width={isMobile ? 136 : 160}
+              width={isMobile ? 120 : 160}
               tick={<WrappedYAxisTick />}
               interval={0}
             />
