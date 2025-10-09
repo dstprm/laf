@@ -114,9 +114,9 @@ export function FootballFieldChart({
     const baseRatio = (base - min) / (max - min);
     const basePosition = barX + baseRatio * barWidth;
 
-    // Calculate min and max positions for labels
-    const minPosition = barX;
-    const maxPosition = barX + barWidth;
+    // Calculate min and max positions for labels (draw inside to free outer space)
+    const minPosition = barX + 6;
+    const maxPosition = barX + barWidth - 6;
     const labelY = barY + barHeight / 2;
 
     return (
@@ -124,28 +124,28 @@ export function FootballFieldChart({
         {/* Main range bar */}
         <rect x={barX} y={barY} width={barWidth} height={barHeight} fill="#3b82f6" fillOpacity={0.7} rx={4} />
 
-        {/* Min value label - to the left of the bar */}
+        {/* Min value label - inside left */}
         <text
-          x={minPosition - 8}
-          y={labelY}
-          fill="#374151"
-          fontSize="12"
-          fontWeight="600"
-          dominantBaseline="middle"
-          textAnchor="end"
-        >
-          {formatCurrency(min)}
-        </text>
-
-        {/* Max value label - to the right of the bar */}
-        <text
-          x={maxPosition + 8}
+          x={minPosition}
           y={labelY}
           fill="#374151"
           fontSize="12"
           fontWeight="600"
           dominantBaseline="middle"
           textAnchor="start"
+        >
+          {formatCurrency(min)}
+        </text>
+
+        {/* Max value label - inside right */}
+        <text
+          x={maxPosition}
+          y={labelY}
+          fill="#374151"
+          fontSize="12"
+          fontWeight="600"
+          dominantBaseline="middle"
+          textAnchor="end"
         >
           {formatCurrency(max)}
         </text>
@@ -160,6 +160,39 @@ export function FootballFieldChart({
           strokeWidth={3}
         />
       </g>
+    );
+  };
+
+  // Multi-line Y-axis tick renderer to avoid truncation on small screens
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const WrappedYAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    const text = String(payload.value || '');
+    const maxChars = 22; // wrap length per line
+
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let current = '';
+    for (const word of words) {
+      const next = current ? `${current} ${word}` : word;
+      if (next.length <= maxChars) {
+        current = next;
+      } else {
+        if (current) lines.push(current);
+        current = word;
+      }
+    }
+    if (current) lines.push(current);
+    const finalLines = lines.length <= 2 ? lines : [lines[0], words.slice(lines[0].split(' ').length).join(' ')];
+
+    return (
+      <text x={x - 4} y={y} fill="#374151" fontSize={10} fontWeight={500} textAnchor="end" dominantBaseline="central">
+        {finalLines.map((line, idx) => (
+          <tspan key={idx} x={x - 4} dy={idx === 0 ? 0 : 12}>
+            {line}
+          </tspan>
+        ))}
+      </text>
     );
   };
 
@@ -181,8 +214,8 @@ export function FootballFieldChart({
             layout="vertical"
             margin={{
               top: isMobile ? 12 : 20,
-              right: isMobile ? 12 : 30,
-              left: isMobile ? 8 : 20,
+              right: isMobile ? 6 : 24,
+              left: isMobile ? 6 : 16,
               bottom: isMobile ? 8 : 20,
             }}
           >
@@ -199,12 +232,9 @@ export function FootballFieldChart({
               dataKey="scenario"
               stroke="#6b7280"
               style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: 500 }}
-              width={isMobile ? 96 : 150}
-              tickFormatter={(v: string) => {
-                if (!isMobile) return v;
-                const s = String(v);
-                return s.length > 18 ? `${s.slice(0, 18)}…` : s;
-              }}
+              width={isMobile ? 136 : 160}
+              tick={<WrappedYAxisTick />}
+              interval={0}
             />
             <Tooltip
               content={({ active, payload }) => {
