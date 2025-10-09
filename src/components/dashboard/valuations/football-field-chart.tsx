@@ -50,6 +50,14 @@ export function FootballFieldChart({
   height = 400,
   className = '',
 }: FootballFieldChartProps) {
+  // Detect small screens to adjust sizing/spacing
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(typeof window !== 'undefined' && window.innerWidth < 640);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   // Debug logging
   React.useEffect(() => {
     console.log('FootballFieldChart: ranges updated', {
@@ -160,22 +168,22 @@ export function FootballFieldChart({
       {title && (
         <div className="px-4 py-3 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 mt-1 hidden sm:block">
             Las barras azules muestran los rangos • La <span className="text-red-500 font-semibold">línea roja</span>{' '}
             indica el caso base
           </p>
         </div>
       )}
       <div className="p-4">
-        <ResponsiveContainer width="100%" height={height}>
+        <ResponsiveContainer width="100%" height={isMobile ? 320 : height}>
           <BarChart
             data={chartData}
             layout="vertical"
             margin={{
-              top: 20,
-              right: 30,
-              left: 20,
-              bottom: 20,
+              top: isMobile ? 12 : 20,
+              right: isMobile ? 12 : 30,
+              left: isMobile ? 8 : 20,
+              bottom: isMobile ? 8 : 20,
             }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
@@ -184,14 +192,19 @@ export function FootballFieldChart({
               domain={[domainMin, domainMax]}
               tickFormatter={formatCurrency}
               stroke="#6b7280"
-              style={{ fontSize: '12px', fontWeight: 500 }}
+              style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: 500 }}
             />
             <YAxis
               type="category"
               dataKey="scenario"
               stroke="#6b7280"
-              style={{ fontSize: '12px', fontWeight: 500 }}
-              width={150}
+              style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: 500 }}
+              width={isMobile ? 96 : 150}
+              tickFormatter={(v: string) => {
+                if (!isMobile) return v;
+                const s = String(v);
+                return s.length > 18 ? `${s.slice(0, 18)}…` : s;
+              }}
             />
             <Tooltip
               content={({ active, payload }) => {
