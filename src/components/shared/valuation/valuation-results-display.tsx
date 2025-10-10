@@ -138,6 +138,7 @@ export function ValuationResultsDisplay({
             baseModel={model}
             baseResults={calculatedFinancials}
             baseValue={baseValue}
+            valuationId={savedValuationId || undefined}
           />
         </div>
       ) : !savedValuationId ? (
