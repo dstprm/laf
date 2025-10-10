@@ -914,7 +914,7 @@ export default function FreeValuationPage() {
 
               {isCalculating && <CalculationLoading />}
 
-              {results && (
+              {results && !isCalculating && (
                 <ValuationResultsDisplay
                   results={results}
                   model={model}
@@ -959,7 +959,7 @@ export default function FreeValuationPage() {
 
               {isCalculating && <CalculationLoading />}
 
-              {results && (
+              {results && !isCalculating && (
                 <ValuationResultsDisplay
                   results={results}
                   model={model}
