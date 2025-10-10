@@ -218,6 +218,16 @@ export function CreateScenarioDialog({
         description: 'Your scenario has been successfully calculated and saved.',
       });
 
+      // Also update local list immediately for seamless UX in local-only views
+      if (onLocalCreate) {
+        onLocalCreate({
+          name: name.trim(),
+          description: description.trim() || autoDescription,
+          minValue: scenarioValues.minValue,
+          maxValue: scenarioValues.maxValue,
+        });
+      }
+
       // Reset will happen via useEffect when dialog closes
       onSuccess?.();
       onOpenChange(false);

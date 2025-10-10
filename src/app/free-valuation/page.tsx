@@ -239,58 +239,52 @@ export default function FreeValuationPage() {
       return;
     }
 
-    setResults(null);
     setIsCalculating(true);
     setStep(4);
-
-    setTimeout(() => {
-      // Calculate all three scenarios using helper function
-      const computed = scenarios.map((s) => ({
-        id: s.id,
-        name: s.name,
-        enterpriseValue: calculateSimpleScenario({
-          industry,
-          country,
-          baseRevenue: revenue0,
-          revenueGrowthPct: s.revenueGrowthPct,
-          ebitdaMarginPct: s.ebitdaMarginPct,
-          deRatio: 0, // Simple valuation assumes no debt
-        }),
-        ebitdaMarginPct: s.ebitdaMarginPct,
+    // Calculate immediately
+    const computed = scenarios.map((s) => ({
+      id: s.id,
+      name: s.name,
+      enterpriseValue: calculateSimpleScenario({
+        industry,
+        country,
+        baseRevenue: revenue0,
         revenueGrowthPct: s.revenueGrowthPct,
-      }));
+        ebitdaMarginPct: s.ebitdaMarginPct,
+        deRatio: 0, // Simple valuation assumes no debt
+      }),
+      ebitdaMarginPct: s.ebitdaMarginPct,
+      revenueGrowthPct: s.revenueGrowthPct,
+    }));
 
-      // Recompute base case to set store to base case values for graphs and saving
-      const baseScenario = scenarios.find((s) => s.id === 'base');
-      if (baseScenario) {
-        calculateSimpleScenario({
-          industry,
-          country,
-          baseRevenue: revenue0,
-          revenueGrowthPct: baseScenario.revenueGrowthPct,
-          ebitdaMarginPct: baseScenario.ebitdaMarginPct,
-          deRatio: 0,
-        });
-      }
-
-      // Use calculatedFinancials.enterpriseValue as truth source for base case
-      const baseEV = useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
-      const updatedComputed = computed.map((result) => {
-        if (result.id === 'base') {
-          return { ...result, enterpriseValue: baseEV };
-        }
-        return result;
+    // Recompute base case to set store to base case values for graphs and saving
+    const baseScenario = scenarios.find((s) => s.id === 'base');
+    if (baseScenario) {
+      calculateSimpleScenario({
+        industry,
+        country,
+        baseRevenue: revenue0,
+        revenueGrowthPct: baseScenario.revenueGrowthPct,
+        ebitdaMarginPct: baseScenario.ebitdaMarginPct,
+        deRatio: 0,
       });
+    }
 
-      setResults(updatedComputed);
-      setIsCalculating(false);
+    // Use calculatedFinancials.enterpriseValue as truth source for base case
+    const baseEV = useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
+    const updatedComputed = computed.map((result) =>
+      result.id === 'base' ? { ...result, enterpriseValue: baseEV } : result,
+    );
 
-      // Set flag to auto-save if triggered after login
-      if (autoSave && isSignedIn) {
-        console.log('Setting shouldAutoSave flag to true', { autoSave, isSignedIn });
-        setShouldAutoSave(true);
-      }
-    }, 3000);
+    setResults(updatedComputed);
+
+    // Start auto-save pipeline immediately (will wait for localScenarios readiness)
+    if (autoSave && isSignedIn) {
+      setShouldAutoSave(true);
+    }
+
+    // Keep loader visible for UX consistency
+    setTimeout(() => setIsCalculating(false), 3000);
   };
 
   // Calculate sensitivity ranges for football field chart using proper model manipulation
@@ -402,6 +396,12 @@ export default function FreeValuationPage() {
             error: errorData,
             scenarioData,
           });
+          // Show non-blocking toast but do not reload or change UI
+          toast({
+            variant: 'destructive',
+            title: 'Escenario no guardado',
+            description: `No se pudo guardar "${scenario.name}". Tus resultados siguen visibles.`,
+          });
           return null;
         }
 
@@ -411,7 +411,12 @@ export default function FreeValuationPage() {
       await Promise.all(scenarioPromises);
     } catch (error) {
       console.error('Failed to save scenarios:', error);
-      // Don't throw - scenarios are optional
+      // Non-blocking error toast; scenarios are optional and UI remains local
+      toast({
+        variant: 'destructive',
+        title: 'Algunos escenarios no se guardaron',
+        description: 'Intenta nuevamente desde el panel más tarde.',
+      });
     }
   };
 
@@ -422,7 +427,6 @@ export default function FreeValuationPage() {
       return;
     }
 
-    setResults(null);
     setIsCalculating(true);
     setAdvState((prev) => ({ ...prev, advStep: 5 }));
 
@@ -619,67 +623,66 @@ export default function FreeValuationPage() {
       }
     };
 
-    setTimeout(() => {
-      // Calculate base case
-      setupBaseCase();
-      const baseEV = useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
+    // Calculate base case immediately
+    setupBaseCase();
+    const baseEV = useModelStore.getState().calculatedFinancials.enterpriseValue || 0;
 
-      // For advanced mode, we'll use the sensitivity scenarios from the useEffect
-      // For now, just create placeholder results that will be populated by the sensitivity analysis
-      setResults([
-        {
-          id: 'bear',
-          name: 'Low',
-          enterpriseValue: baseEV, // Will be updated by sensitivity analysis
-          ebitdaMarginPct:
-            advState.ebitdaInputType === 'percent'
-              ? advState.ebitdaPctMode === 'uniform'
-                ? parseFloat(advState.advEbitdaUniformPct || '0')
-                : parseFloat(advState.advEbitdaStart || '0')
-              : 0,
-          revenueGrowthPct:
-            advState.advRevenueInputMethod === 'growth' && advState.growthMode === 'uniform'
-              ? parseFloat(advState.advUniformGrowth || '0')
-              : 0,
-        },
-        {
-          id: 'base',
-          name: 'Base',
-          enterpriseValue: baseEV,
-          ebitdaMarginPct:
-            advState.ebitdaInputType === 'percent'
-              ? advState.ebitdaPctMode === 'uniform'
-                ? parseFloat(advState.advEbitdaUniformPct || '0')
-                : parseFloat(advState.advEbitdaStart || '0')
-              : 0,
-          revenueGrowthPct:
-            advState.advRevenueInputMethod === 'growth' && advState.growthMode === 'uniform'
-              ? parseFloat(advState.advUniformGrowth || '0')
-              : 0,
-        },
-        {
-          id: 'bull',
-          name: 'High',
-          enterpriseValue: baseEV, // Will be updated by sensitivity analysis
-          ebitdaMarginPct:
-            advState.ebitdaInputType === 'percent'
-              ? advState.ebitdaPctMode === 'uniform'
-                ? parseFloat(advState.advEbitdaUniformPct || '0')
-                : parseFloat(advState.advEbitdaStart || '0')
-              : 0,
-          revenueGrowthPct:
-            advState.advRevenueInputMethod === 'growth' && advState.growthMode === 'uniform'
-              ? parseFloat(advState.advUniformGrowth || '0')
-              : 0,
-        },
-      ]);
-      setIsCalculating(false);
+    // Prepare placeholder results; sensitivity useEffect will update ranges
+    setResults([
+      {
+        id: 'bear',
+        name: 'Low',
+        enterpriseValue: baseEV,
+        ebitdaMarginPct:
+          advState.ebitdaInputType === 'percent'
+            ? advState.ebitdaPctMode === 'uniform'
+              ? parseFloat(advState.advEbitdaUniformPct || '0')
+              : parseFloat(advState.advEbitdaStart || '0')
+            : 0,
+        revenueGrowthPct:
+          advState.advRevenueInputMethod === 'growth' && advState.growthMode === 'uniform'
+            ? parseFloat(advState.advUniformGrowth || '0')
+            : 0,
+      },
+      {
+        id: 'base',
+        name: 'Base',
+        enterpriseValue: baseEV,
+        ebitdaMarginPct:
+          advState.ebitdaInputType === 'percent'
+            ? advState.ebitdaPctMode === 'uniform'
+              ? parseFloat(advState.advEbitdaUniformPct || '0')
+              : parseFloat(advState.advEbitdaStart || '0')
+            : 0,
+        revenueGrowthPct:
+          advState.advRevenueInputMethod === 'growth' && advState.growthMode === 'uniform'
+            ? parseFloat(advState.advUniformGrowth || '0')
+            : 0,
+      },
+      {
+        id: 'bull',
+        name: 'High',
+        enterpriseValue: baseEV,
+        ebitdaMarginPct:
+          advState.ebitdaInputType === 'percent'
+            ? advState.ebitdaPctMode === 'uniform'
+              ? parseFloat(advState.advEbitdaUniformPct || '0')
+              : parseFloat(advState.advEbitdaStart || '0')
+            : 0,
+        revenueGrowthPct:
+          advState.advRevenueInputMethod === 'growth' && advState.growthMode === 'uniform'
+            ? parseFloat(advState.advUniformGrowth || '0')
+            : 0,
+      },
+    ]);
 
-      // Set flag to auto-save if triggered after login
-      if (autoSave && isSignedIn) {
-        setShouldAutoSave(true);
-      }
-    }, 3000);
+    // Start auto-save pipeline immediately (will wait for localScenarios readiness)
+    if (autoSave && isSignedIn) {
+      setShouldAutoSave(true);
+    }
+
+    // Keep loader visible for UX consistency
+    setTimeout(() => setIsCalculating(false), 3000);
   };
 
   const saveFormDataToSession = () => {
@@ -799,8 +802,8 @@ export default function FreeValuationPage() {
         savedValuation = await response.json();
         setSavedValuationId(savedValuation.id);
 
-        // Save local scenarios after valuation is created
-        await saveLocalScenarios(savedValuation.id);
+        // Fire-and-forget saving of scenarios to avoid blocking UI; toast on failures internally
+        saveLocalScenarios(savedValuation.id);
 
         // Show success dialog instead of toast
         setSuccessDialogOpen(true);
@@ -911,7 +914,7 @@ export default function FreeValuationPage() {
 
               {isCalculating && <CalculationLoading />}
 
-              {results && (
+              {results && !isCalculating && (
                 <ValuationResultsDisplay
                   results={results}
                   model={model}
@@ -925,6 +928,7 @@ export default function FreeValuationPage() {
                   onNavigateToDashboard={() => router.push('/dashboard/valuations')}
                   showYears={5}
                   chartTitle="Proyección de Ingresos y Margen EBITDA (5 años)"
+                  useLocalScenariosOnly
                 />
               )}
             </TabsContent>
@@ -955,7 +959,7 @@ export default function FreeValuationPage() {
 
               {isCalculating && <CalculationLoading />}
 
-              {results && (
+              {results && !isCalculating && (
                 <ValuationResultsDisplay
                   results={results}
                   model={model}
@@ -969,6 +973,7 @@ export default function FreeValuationPage() {
                   onNavigateToDashboard={() => router.push('/dashboard/valuations')}
                   showYears={advState.advYears}
                   chartTitle={`Proyección de Ingresos y Margen EBITDA (${advState.advYears} años)`}
+                  useLocalScenariosOnly
                 />
               )}
             </TabsContent>

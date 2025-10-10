@@ -21,9 +21,18 @@ interface ScenarioListLocalProps {
   baseModel: FinancialModel;
   baseResults: CalculatedFinancials;
   baseValue: number;
+  /** Optional: when provided, new scenarios will also be saved to DB */
+  valuationId?: string;
 }
 
-export function ScenarioListLocal({ scenarios, onChange, baseModel, baseResults, baseValue }: ScenarioListLocalProps) {
+export function ScenarioListLocal({
+  scenarios,
+  onChange,
+  baseModel,
+  baseResults,
+  baseValue,
+  valuationId,
+}: ScenarioListLocalProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
@@ -124,6 +133,7 @@ export function ScenarioListLocal({ scenarios, onChange, baseModel, baseResults,
 
       {/* Create Scenario Dialog - Uses the sophisticated variable-based dialog */}
       <CreateScenarioDialog
+        valuationId={valuationId}
         baseValue={baseValue}
         baseModel={baseModel}
         baseResults={baseResults}

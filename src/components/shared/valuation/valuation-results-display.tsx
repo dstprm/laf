@@ -36,6 +36,12 @@ interface ValuationResultsDisplayProps {
   onNavigateToDashboard?: () => void;
   showYears?: number;
   chartTitle?: string;
+  /**
+   * When true, this component will always use local scenarios and will not
+   * fetch or display DB-backed scenarios. Useful for demo/estimate views
+   * to avoid flicker and loaders while saving in the background.
+   */
+  useLocalScenariosOnly?: boolean;
 }
 
 const currency = (v: number) =>
@@ -54,6 +60,7 @@ export function ValuationResultsDisplay({
   onNavigateToDashboard,
   showYears = 5,
   chartTitle,
+  useLocalScenariosOnly = false,
 }: ValuationResultsDisplayProps) {
   // Track database scenarios separately when valuation is saved
   const [dbScenarios, setDbScenarios] = React.useState<LocalScenario[]>([]);
@@ -79,8 +86,9 @@ export function ValuationResultsDisplay({
 
   const baseValue = results?.find((r) => r.id === 'base')?.enterpriseValue || calculatedFinancials.enterpriseValue || 0;
 
-  // Use dbScenarios if valuation is saved, otherwise use localScenarios
-  const scenariosForChart = savedValuationId ? dbScenarios : localScenarios;
+  // When forced to local-only, never switch to DB scenarios
+  // Otherwise, use dbScenarios if valuation is saved
+  const scenariosForChart = useLocalScenariosOnly ? localScenarios : savedValuationId ? dbScenarios : localScenarios;
 
   return (
     <>
@@ -122,7 +130,18 @@ export function ValuationResultsDisplay({
       )}
 
       {/* Scenario Management */}
-      {!savedValuationId ? (
+      {useLocalScenariosOnly ? (
+        <div className="mt-6">
+          <ScenarioListLocal
+            scenarios={localScenarios}
+            onChange={setLocalScenarios}
+            baseModel={model}
+            baseResults={calculatedFinancials}
+            baseValue={baseValue}
+            valuationId={savedValuationId || undefined}
+          />
+        </div>
+      ) : !savedValuationId ? (
         <div className="mt-6">
           <ScenarioListLocal
             scenarios={localScenarios}
