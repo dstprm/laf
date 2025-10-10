@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import '../styles/globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -7,6 +7,7 @@ import { esES } from '@clerk/localizations';
 import { ThemeProvider } from '@/contexts/theme-context';
 import { GtmPageView } from '@/components/analytics/gtm-pageview';
 import Script from 'next/script';
+import { Suspense } from 'react';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -69,19 +70,20 @@ export const metadata: Metadata = {
     shortcut: '/logo.png',
     apple: '/logo.png',
   },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#09090b' },
   ],
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    viewportFit: 'cover',
-  },
-  verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -139,7 +141,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                   style={{ display: 'none', visibility: 'hidden' }}
                 />
               </noscript>
-              <GtmPageView />
+              <Suspense fallback={null}>
+                <GtmPageView />
+              </Suspense>
             </>
           ) : null}
           <ThemeProvider simpleMode={true}>
