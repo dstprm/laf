@@ -13,7 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/home/header/header';
 import { useUserInfo } from '@/hooks/useUserInfo';
-import type { CreateValuationInput, CreateScenarioInput } from '@/lib/valuation.types';
+import type { CreateValuationInput } from '@/lib/valuation.types';
 import { SimpleValuationForm } from '@/components/shared/valuation/simple-valuation-form';
 import {
   AdvancedValuationForm,
@@ -358,67 +358,7 @@ export default function FreeValuationPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [results, calculatedFinancials.enterpriseValue]);
 
-  // Helper function to save scenarios after valuation is created
-  const saveLocalScenarios = async (valuationId: string) => {
-    if (localScenarios.length === 0) return;
-
-    console.log('=== Saving Local Scenarios ===');
-    console.log('Number of scenarios:', localScenarios.length);
-    console.log('Scenarios to save:', localScenarios);
-
-    try {
-      // Save each local scenario to the database
-      const scenarioPromises = localScenarios.map(async (scenario) => {
-        const scenarioData: Omit<CreateScenarioInput, 'valuationId'> = {
-          name: scenario.name,
-          description: scenario.description,
-          minValue: scenario.minValue,
-          maxValue: scenario.maxValue,
-        };
-
-        console.log(`Saving scenario "${scenario.name}":`, {
-          minValue: scenario.minValue,
-          maxValue: scenario.maxValue,
-          isValid: scenario.minValue < scenario.maxValue,
-        });
-
-        const response = await fetch(`/api/valuations/${valuationId}/scenarios`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...scenarioData, valuationId }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-          console.error(`Failed to save scenario: ${scenario.name}`, {
-            status: response.status,
-            statusText: response.statusText,
-            error: errorData,
-            scenarioData,
-          });
-          // Show non-blocking toast but do not reload or change UI
-          toast({
-            variant: 'destructive',
-            title: 'Escenario no guardado',
-            description: `No se pudo guardar "${scenario.name}". Tus resultados siguen visibles.`,
-          });
-          return null;
-        }
-
-        return response.json();
-      });
-
-      await Promise.all(scenarioPromises);
-    } catch (error) {
-      console.error('Failed to save scenarios:', error);
-      // Non-blocking error toast; scenarios are optional and UI remains local
-      toast({
-        variant: 'destructive',
-        title: 'Algunos escenarios no se guardaron',
-        description: 'Intenta nuevamente desde el panel más tarde.',
-      });
-    }
-  };
+  // Auto scenarios are generated server-side; local scenarios remain for preview only
 
   const performAdvancedCalculation = (autoSave: boolean = false) => {
     const revenue0 = parseFloat(lastYearRevenue || '0');
@@ -802,8 +742,7 @@ export default function FreeValuationPage() {
         savedValuation = await response.json();
         setSavedValuationId(savedValuation.id);
 
-        // Fire-and-forget saving of scenarios to avoid blocking UI; toast on failures internally
-        saveLocalScenarios(savedValuation.id);
+        // Auto scenarios are now generated server-side after creation; no need to save client-side
 
         // Show success dialog instead of toast
         setSuccessDialogOpen(true);

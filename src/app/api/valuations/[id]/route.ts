@@ -2,8 +2,19 @@ import { NextResponse } from 'next/server';
 import { validateUserSession } from '@/utils/database/auth';
 import { deleteValuation, getValuationById, updateValuation, parseValuationRecord } from '@/utils/database/valuation';
 import { getUserByClerkId } from '@/utils/database/user';
-import type { UpdateValuationInput, UpdateValuationResponse, GetValuationResponse } from '@/lib/valuation.types';
+import {
+  getValuationScenarios,
+  getScenarioById,
+  updateScenario,
+  parseScenarioRecord,
+  upsertAutoScenarios,
+} from '@/utils/database/scenario';
+import type { UpdateValuationInput, UpdateValuationResponse } from '@/lib/valuation.types';
+import type { FinancialModel, CalculatedFinancials } from '@/lib/valuation.types';
 import { isFinancialModel, isCalculatedFinancials } from '@/lib/valuation.types';
+import { calculateScenarioValues } from '@/lib/scenario-calculator';
+import { SCENARIO_VARIABLES, getVariableBaseValue } from '@/lib/scenario-variables';
+import type { VariableAdjustment } from '@/lib/scenario-variables';
 
 /**
  * PUT /api/valuations/[id]
@@ -43,6 +54,16 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     // Convert Prisma JSON fields to typed data before returning
     const responseData = parseValuationRecord(updatedValuation);
 
+    // Best-effort: Recalculate scenarios based on the new base model
+    // Only recalculates scenarios that have stored min/max model data
+    try {
+      await recalculateScenariosForValuation(id, responseData.modelData, responseData.resultsData);
+      // Also ensure auto scenarios exist and are updated
+      await upsertAutoScenarios(id, responseData.modelData, responseData.resultsData);
+    } catch (recalcError) {
+      console.error('Scenario recalculation failed (non-fatal):', recalcError);
+    }
+
     return NextResponse.json<UpdateValuationResponse>(responseData, { status: 200 });
   } catch (error) {
     console.error('Error updating valuation:', error);
@@ -50,6 +71,54 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       { error: error instanceof Error ? error.message : 'Failed to update valuation' },
       { status: 500 },
     );
+  }
+}
+
+// Helper: recompute all scenarios for a valuation using stored variable adjustments inferred
+// from each scenario's min/max model data. Scenarios without model data are skipped.
+async function recalculateScenariosForValuation(
+  valuationId: string,
+  baseModel: FinancialModel,
+  baseResults: CalculatedFinancials,
+) {
+  const list = await getValuationScenarios(valuationId);
+  for (const item of list) {
+    const raw = await getScenarioById(item.id, valuationId);
+    if (!raw) continue;
+    const scenario = parseScenarioRecord(raw);
+
+    if (!scenario.minModelData || !scenario.maxModelData) {
+      // Cannot infer adjustments without stored models; leave as-is
+      continue;
+    }
+
+    // Infer adjustments by reading variable values from stored min/max models
+    const adjustments = SCENARIO_VARIABLES.map((v) => {
+      const baseVal = getVariableBaseValue(v.id, baseModel, baseResults);
+      const minVal = getVariableBaseValue(v.id, scenario.minModelData, scenario.minResultsData);
+      const maxVal = getVariableBaseValue(v.id, scenario.maxModelData, scenario.maxResultsData);
+      return { variableId: v.id, baseVal, minVal, maxVal } as const;
+    })
+      .filter((a) => a.minVal !== null && a.maxVal !== null)
+      .map((a) => ({
+        variableId: a.variableId,
+        minValue: a.minVal as number,
+        maxValue: a.maxVal as number,
+        baseValue: typeof a.baseVal === 'number' ? a.baseVal : undefined,
+      }));
+
+    if (adjustments.length === 0) continue;
+
+    const result = calculateScenarioValues(baseModel, adjustments as VariableAdjustment[]);
+
+    await updateScenario(item.id, valuationId, {
+      minValue: result.minValue,
+      maxValue: result.maxValue,
+      minModelData: result.minModel,
+      maxModelData: result.maxModel,
+      minResultsData: result.minResults,
+      maxResultsData: result.maxResults,
+    });
   }
 }
 

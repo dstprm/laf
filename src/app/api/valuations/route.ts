@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { validateUserSession } from '@/utils/database/auth';
 import { createValuation, getUserValuations, parseValuationRecord } from '@/utils/database/valuation';
 import { getUserByClerkId } from '@/utils/database/user';
+import { upsertAutoScenarios } from '@/utils/database/scenario';
 import type { CreateValuationInput, CreateValuationResponse, GetValuationsResponse } from '@/lib/valuation.types';
 import { isFinancialModel, isCalculatedFinancials } from '@/lib/valuation.types';
 
@@ -65,6 +66,12 @@ export async function POST(req: Request) {
 
     const valuation = await createValuation(valuationData);
     const responseData = parseValuationRecord(valuation);
+
+    // Fire-and-forget: generate default auto scenarios with full model/results
+    // Do not block creation response
+    upsertAutoScenarios(responseData.id, responseData.modelData, responseData.resultsData).catch((e) =>
+      console.error('Failed to generate auto scenarios (non-fatal):', e),
+    );
 
     return NextResponse.json<CreateValuationResponse>(responseData, { status: 201 });
   } catch (error) {
