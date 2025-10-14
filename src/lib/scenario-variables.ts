@@ -56,13 +56,13 @@ export const SCENARIO_VARIABLES: ScenarioVariable[] = [
     unit: 'percentage',
     step: 0.1,
   },
-  {
-    id: 'terminal_multiple',
-    label: 'Terminal EBITDA Multiple',
-    description: 'Exit multiple for terminal value calculation',
-    unit: 'multiplier',
-    step: 0.5,
-  },
+  // {
+  //   id: 'terminal_multiple',
+  //   label: 'Terminal EBITDA Multiple',
+  //   description: 'Exit multiple for terminal value calculation',
+  //   unit: 'multiplier',
+  //   step: 0.5,
+  // },
   {
     id: 'capex_percent',
     label: 'CAPEX (% of Revenue)',
