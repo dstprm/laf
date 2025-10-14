@@ -43,9 +43,17 @@ export function BusinessInfoForm({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Sitio web</label>
           <input
-            type="url"
+            type="text"
+            inputMode="url"
+            autoComplete="url"
             value={companyWebsite}
             onChange={(e) => setCompanyWebsite(e.target.value)}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v && !/^https?:\/\//i.test(v)) {
+                setCompanyWebsite(`https://${v}`);
+              }
+            }}
             placeholder="www.example.com"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
