@@ -3,6 +3,7 @@
 import React from 'react';
 import { RevenueEbitdaChart } from './revenue-ebitda-chart';
 import { FootballFieldChart } from './football-field-chart';
+import { countryRiskPremiumStatic } from '@/app/valuation/countryRiskPremiumStatic';
 
 interface Scenario {
   id: string;
@@ -115,6 +116,21 @@ export function ValuationReport({
 
   // Calculate WACC components
   const riskProfile = modelData?.riskProfile;
+  // Prefer taxes.percentOfEBIT if present (Advanced mode) to display tax shield consistently
+  const taxesPercent =
+    modelData?.taxes?.percentMethod === 'uniform' && typeof modelData?.taxes?.percentOfEBIT === 'number'
+      ? modelData.taxes.percentOfEBIT / 100
+      : undefined;
+  // Prefer model tax rate; if missing or likely default, fall back to country's current rate
+  const countryTaxRate = country
+    ? countryRiskPremiumStatic[country as keyof typeof countryRiskPremiumStatic]?.corporateTaxRate
+    : undefined;
+  const displayCorporateTaxRate =
+    (typeof taxesPercent === 'number' ? taxesPercent : undefined) ??
+    (riskProfile && typeof riskProfile.corporateTaxRate === 'number' && riskProfile.corporateTaxRate > 0
+      ? riskProfile.corporateTaxRate
+      : (countryTaxRate ?? riskProfile?.corporateTaxRate));
+
   const waccComponents = riskProfile
     ? {
         costOfEquity:
@@ -410,7 +426,11 @@ export function ValuationReport({
               <div className="bg-green-50 rounded-lg p-3">
                 <p className="text-sm font-medium text-green-900 mb-2">Cost of Debt (After-Tax)</p>
                 <p className="text-lg font-bold text-green-700">
-                  {formatPercent(waccComponents.costOfDebt * (1 - riskProfile.corporateTaxRate) * 100)}
+                  {formatPercent(
+                    waccComponents.costOfDebt *
+                      (1 - (displayCorporateTaxRate ?? (riskProfile.corporateTaxRate || 0))) *
+                      100,
+                  )}
                 </p>
                 <div className="mt-2 space-y-1 text-xs text-green-800">
                   <div className="flex justify-between">
@@ -427,7 +447,9 @@ export function ValuationReport({
                   </div>
                   <div className="flex justify-between">
                     <span>Tax Shield:</span>
-                    <span className="font-medium">{formatPercent(riskProfile.corporateTaxRate * 100)}</span>
+                    <span className="font-medium">
+                      {formatPercent((displayCorporateTaxRate ?? (riskProfile.corporateTaxRate || 0)) * 100)}
+                    </span>
                   </div>
                 </div>
               </div>

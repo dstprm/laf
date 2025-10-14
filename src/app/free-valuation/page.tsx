@@ -222,15 +222,21 @@ export default function FreeValuationPage() {
   }, [isLoaded, isSignedIn, pendingCalculation]);
 
   // Effect to auto-save valuation when results are ready
-  // Wait for both results AND localScenarios to be ready before auto-saving
-  // The localScenarios are calculated by another useEffect that depends on results
+  // For Simple tab, wait for localScenarios; for Advanced, save immediately
   React.useEffect(() => {
-    if (shouldAutoSave && results && results.length > 0 && isSignedIn && !isSaving && localScenarios.length > 0) {
+    const allowSave =
+      shouldAutoSave &&
+      results &&
+      results.length > 0 &&
+      isSignedIn &&
+      !isSaving &&
+      (activeTab === 'advanced' || localScenarios.length > 0);
+    if (allowSave) {
       setShouldAutoSave(false); // Reset flag
       handleSaveValuation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldAutoSave, results, isSignedIn, isSaving, localScenarios]);
+  }, [shouldAutoSave, results, isSignedIn, isSaving, localScenarios, activeTab]);
 
   const performSimpleCalculation = (autoSave: boolean = false) => {
     const revenue0 = parseFloat(lastYearRevenue || '0');
@@ -288,8 +294,11 @@ export default function FreeValuationPage() {
   };
 
   // Calculate sensitivity ranges for football field chart using proper model manipulation
-  // This effect runs after results are calculated to compute sensitivity scenarios
+  // Only run this for Simple tab to avoid overwriting Advanced results in the store
   React.useEffect(() => {
+    if (activeTab !== 'simple') {
+      return;
+    }
     if (!results || results.length === 0) {
       setLocalScenarios([]);
       return;
@@ -356,7 +365,7 @@ export default function FreeValuationPage() {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results, calculatedFinancials.enterpriseValue]);
+  }, [activeTab, results, calculatedFinancials.enterpriseValue]);
 
   // Auto scenarios are generated server-side; local scenarios remain for preview only
 
@@ -373,14 +382,26 @@ export default function FreeValuationPage() {
     const industryData = betasStatic[industry as keyof typeof betasStatic];
     const countryData = countryRiskPremiumStatic[country as keyof typeof countryRiskPremiumStatic];
 
-    const parsePerYearGrowth = (): number[] | null => {
-      const arr = buildArrayFromList(Math.max(advState.advYears - 1, 1), advState.growthPerYearList);
-      if (arr.length >= advState.advYears - 1) return arr.slice(0, advState.advYears - 1);
-      return null;
+    const parsePerYearGrowth = (): number[] => {
+      const periods = Math.max(advState.advYears - 1, 1);
+      const raw = buildArrayFromList(periods, advState.growthPerYearList);
+      const filled: number[] = [];
+      for (let i = 0; i < periods; i++) {
+        const v = raw[i];
+        if (Number.isFinite(v)) {
+          filled[i] = v as number;
+        } else {
+          filled[i] = i > 0 ? filled[i - 1] : 0;
+        }
+      }
+      return filled.slice(0, periods);
     };
 
     // Function to setup the model with base case parameters
     const setupBaseCase = () => {
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG][FreeAdvanced] Starting setupBaseCase');
+      }
       // Optional: update risk profile if industry/country selected
       if (industry || country) {
         const unleveredBeta = industryData?.unleveredBeta ?? 0;
@@ -403,38 +424,53 @@ export default function FreeValuationPage() {
       updatePeriods({ numberOfYears: advState.advYears, startYear: new Date().getFullYear() });
 
       // Revenue
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG][FreeAdvanced] Revenue config', {
+          advYears: advState.advYears,
+          baseRevenue: revenue0,
+          inputMethod: advState.advRevenueInputMethod,
+          growthMode: advState.growthMode,
+          uniformGrowth: advState.advUniformGrowth,
+          perYearList: advState.growthPerYearList,
+        });
+      }
       if (advState.advRevenueInputMethod === 'growth') {
         if (advState.growthMode === 'uniform') {
           const g = advState.advUniformGrowth.trim() !== '' ? parseFloat(advState.advUniformGrowth) : 0;
+          if (typeof window !== 'undefined') {
+            console.log('[DEBUG][FreeAdvanced] Applying uniform growth', { baseValue: revenue0, growthRate: g });
+          }
           updateRevenue({
             inputType: 'consolidated',
             consolidated: { inputMethod: 'growth', growthMethod: 'uniform', baseValue: revenue0, growthRate: g },
           });
         } else {
           const arr = parsePerYearGrowth();
-          if (arr) {
-            const individualGrowthRates: { [k: number]: number } = {};
-            for (let i = 1; i < advState.advYears; i++) {
-              individualGrowthRates[i] = arr[i - 1] ?? 0;
-            }
-            updateRevenue({
-              inputType: 'consolidated',
-              consolidated: {
-                inputMethod: 'growth',
-                growthMethod: 'individual',
-                baseValue: revenue0,
-                individualGrowthRates,
-              },
-            });
-          } else {
-            updateRevenue({
-              inputType: 'consolidated',
-              consolidated: { inputMethod: 'growth', growthMethod: 'uniform', baseValue: revenue0, growthRate: 0 },
+          const individualGrowthRates: { [k: number]: number } = {};
+          for (let i = 1; i < advState.advYears; i++) {
+            individualGrowthRates[i] = arr[i - 1] ?? 0;
+          }
+          if (typeof window !== 'undefined') {
+            console.log('[DEBUG][FreeAdvanced] Applying individual growth', {
+              baseValue: revenue0,
+              individualGrowthRates,
             });
           }
+          updateRevenue({
+            inputType: 'consolidated',
+            consolidated: {
+              inputMethod: 'growth',
+              growthMethod: 'individual',
+              baseValue: revenue0,
+              individualGrowthRates,
+            },
+          });
         }
       } else {
         const yearlyValues = buildArrayFromList(advState.advYears, advState.revenueDirectList);
+        if (typeof window !== 'undefined') {
+          console.log('[DEBUG][FreeAdvanced] Applying direct revenue', { yearlyValues });
+        }
         updateRevenue({ inputType: 'consolidated', consolidated: { inputMethod: 'direct', yearlyValues } });
       }
 
@@ -467,12 +503,23 @@ export default function FreeValuationPage() {
         for (let i = 0; i < advState.advYears; i++) {
           individualPercents[i] = Math.max(0, 100 - (marginArr[i] || 0));
         }
+        if (typeof window !== 'undefined') {
+          console.log('[DEBUG][FreeAdvanced] EBITDA via OpEx', {
+            ebitdaInputType: advState.ebitdaInputType,
+            ebitdaPctMode: advState.ebitdaPctMode,
+            marginArr,
+            individualPercents,
+          });
+        }
         updateOpEx({
           inputType: 'consolidated',
           consolidated: { inputMethod: 'percentOfRevenue', percentMethod: 'individual', individualPercents },
         });
       } else {
         // Direct EBITDA -> set OpEx after we have revenue values
+        if (typeof window !== 'undefined') {
+          console.log('[DEBUG][FreeAdvanced] EBITDA direct mode - will derive OpEx after revenue');
+        }
         updateOpEx({
           inputType: 'consolidated',
           consolidated: { inputMethod: 'direct', yearlyValues: Array(advState.advYears).fill(0) },
@@ -548,6 +595,8 @@ export default function FreeValuationPage() {
       } else {
         const taxPct = advState.taxesPct.trim() !== '' ? parseFloat(advState.taxesPct) : 0;
         updateTaxes({ inputMethod: 'percentOfEBIT', percentMethod: 'uniform', percentOfEBIT: taxPct });
+        // Keep risk profile corporate tax consistent with taxes assumption so WACC/report show the same
+        updateRiskProfile({ corporateTaxRate: Math.max(0, taxPct) / 100 });
       }
 
       calculateFinancials();
@@ -558,8 +607,19 @@ export default function FreeValuationPage() {
         const currentRevenue = state.calculatedFinancials.revenue;
         const targetEbitda = buildArrayFromList(advState.advYears, advState.ebitdaDirectList);
         const opexValues = currentRevenue.map((rev, i) => Math.max(0, (rev || 0) - (targetEbitda[i] || 0)));
+        if (typeof window !== 'undefined') {
+          console.log('[DEBUG][FreeAdvanced] EBITDA direct adjustment', { targetEbitda, opexValues });
+        }
         updateOpEx({ inputType: 'consolidated', consolidated: { inputMethod: 'direct', yearlyValues: opexValues } });
         calculateFinancials();
+      }
+
+      // Snapshot after calculations
+      if (typeof window !== 'undefined') {
+        const dbg = useModelStore.getState();
+        console.log('[DEBUG][FreeAdvanced] Model.revenue', dbg.model.revenue);
+        console.log('[DEBUG][FreeAdvanced] Calculated revenue', dbg.calculatedFinancials.revenue);
+        console.log('[DEBUG][FreeAdvanced] Calculated EBITDA margin', dbg.calculatedFinancials.ebitdaMargin);
       }
     };
 
@@ -616,7 +676,7 @@ export default function FreeValuationPage() {
       },
     ]);
 
-    // Start auto-save pipeline immediately (will wait for localScenarios readiness)
+    // Start auto-save pipeline immediately
     if (autoSave && isSignedIn) {
       setShouldAutoSave(true);
     }
@@ -912,7 +972,6 @@ export default function FreeValuationPage() {
                   onNavigateToDashboard={() => router.push('/dashboard/valuations')}
                   showYears={advState.advYears}
                   chartTitle={`Proyección de Ingresos y Margen EBITDA (${advState.advYears} años)`}
-                  useLocalScenariosOnly
                 />
               )}
             </TabsContent>

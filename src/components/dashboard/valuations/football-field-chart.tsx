@@ -111,8 +111,10 @@ export function FootballFieldChart({
 
     // Calculate base position relative to the scenario's range (min to max)
     // The bar's x position already represents min, and width represents (max - min)
-    const baseRatio = (base - min) / (max - min);
-    const basePosition = barX + baseRatio * barWidth;
+    const denom = max - min;
+    // Guard against zero/invalid ranges to avoid NaN base position
+    const baseRatio = denom > 0 ? (base - min) / denom : 0.5;
+    const basePosition = barX + (Number.isFinite(baseRatio) ? baseRatio : 0.5) * barWidth;
 
     // Calculate min and max positions for labels (draw inside to free outer space)
     const minPosition = barX + 6;

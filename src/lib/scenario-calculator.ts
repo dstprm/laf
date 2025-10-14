@@ -53,6 +53,10 @@ export function applyVariableAdjustments(
 
       case 'revenue_growth':
         if (model.revenue?.consolidated && value !== undefined) {
+          // Force consolidated uniform growth so the adjustment actually applies
+          model.revenue.inputType = 'consolidated';
+          model.revenue.consolidated.inputMethod = 'growth';
+          model.revenue.consolidated.growthMethod = 'uniform';
           model.revenue.consolidated.growthRate = value;
         }
         break;
@@ -61,9 +65,13 @@ export function applyVariableAdjustments(
         // Adjust OpEx to achieve target EBITDA margin
         if (model.opex?.consolidated && value !== undefined) {
           const targetOpexPercent = Math.max(0, 100 - value);
-          if (model.opex.consolidated.inputMethod === 'percentOfRevenue') {
-            model.opex.consolidated.percentOfRevenue = targetOpexPercent;
-          }
+          // Ensure percent-of-revenue uniform so the margin change applies
+          model.opex.inputType = 'consolidated';
+          model.opex.consolidated.inputMethod = 'percentOfRevenue';
+          model.opex.consolidated.percentMethod = 'uniform';
+          model.opex.consolidated.percentOfRevenue = targetOpexPercent;
+          // Clear individual percents if present (no-op if undefined)
+          if (model.opex.consolidated.individualPercents) delete model.opex.consolidated.individualPercents;
         }
         break;
 

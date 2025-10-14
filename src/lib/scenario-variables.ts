@@ -56,13 +56,13 @@ export const SCENARIO_VARIABLES: ScenarioVariable[] = [
     unit: 'percentage',
     step: 0.1,
   },
-  {
-    id: 'terminal_multiple',
-    label: 'Terminal EBITDA Multiple',
-    description: 'Exit multiple for terminal value calculation',
-    unit: 'multiplier',
-    step: 0.5,
-  },
+  // {
+  //   id: 'terminal_multiple',
+  //   label: 'Terminal EBITDA Multiple',
+  //   description: 'Exit multiple for terminal value calculation',
+  //   unit: 'multiplier',
+  //   step: 0.5,
+  // },
   {
     id: 'capex_percent',
     label: 'CAPEX (% of Revenue)',
@@ -139,11 +139,27 @@ export function getVariableBaseValue(
       return (equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - rp.corporateTaxRate)) * 100;
 
     case 'revenue_growth':
-      // Get uniform growth rate if available
-      if (model.revenue?.consolidated?.growthRate) {
+      // Prefer uniform growth rate if available; otherwise approximate from calculated revenue
+      if (model.revenue?.consolidated?.growthRate != null) {
         return model.revenue.consolidated.growthRate;
       }
-      return null;
+      if (calculatedFinancials?.revenue && calculatedFinancials.revenue.length > 1) {
+        const rev = calculatedFinancials.revenue.filter((v: number) => Number.isFinite(v) && v > 0);
+        if (rev.length > 1) {
+          let sum = 0;
+          let count = 0;
+          for (let i = 1; i < rev.length; i++) {
+            const prev = rev[i - 1];
+            const curr = rev[i];
+            if (prev > 0 && Number.isFinite(curr)) {
+              sum += (curr / prev - 1) * 100;
+              count++;
+            }
+          }
+          if (count > 0) return sum / count;
+        }
+      }
+      return 0;
 
     case 'ebitda_margin':
       // Calculate average EBITDA margin
