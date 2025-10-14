@@ -32,7 +32,7 @@ export function generateAutoScenarios(
       { variableId: 'revenue_growth', minValue: min, maxValue: max },
     ] as any);
     scenarios.push({
-      name: 'Crecimiento de ingresos (±5%)',
+      name: `Crecimiento de ingresos (±5%) — Base ${baseGrowth.toFixed(1)}%`,
       description: 'Análisis de sensibilidad: crecimiento de ingresos (±5%)',
       minValue: result.minValue,
       maxValue: result.maxValue,
@@ -52,7 +52,7 @@ export function generateAutoScenarios(
       { variableId: 'ebitda_margin', minValue: min, maxValue: max },
     ] as any);
     scenarios.push({
-      name: 'Margen EBITDA (±5%)',
+      name: `Margen EBITDA (±5%) — Base ${baseMargin.toFixed(1)}%`,
       description: 'Análisis de sensibilidad: margen EBITDA (±5%)',
       minValue: result.minValue,
       maxValue: result.maxValue,
@@ -70,7 +70,7 @@ export function generateAutoScenarios(
     const max = baseWacc + 2;
     const result = calculateScenarioValues(baseModel, [{ variableId: 'wacc', minValue: min, maxValue: max }] as any);
     scenarios.push({
-      name: 'WACC (±2%)',
+      name: `WACC (±2%) — Base ${baseWacc.toFixed(2)}%`,
       description: 'Análisis de sensibilidad: costo de capital (±2%)',
       minValue: result.minValue,
       maxValue: result.maxValue,

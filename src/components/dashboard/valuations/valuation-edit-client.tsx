@@ -713,6 +713,9 @@ export default function ValuationEditClient({
       : null;
 
     setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG][DashboardAdvanced] Begin handleAdvancedUpdate');
+      }
       // Update periods
       updatePeriods({ numberOfYears: advState.advYears, startYear: new Date().getFullYear() });
 
@@ -737,9 +740,22 @@ export default function ValuationEditClient({
       }
 
       // Revenue
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG][DashboardAdvanced] Revenue config', {
+          advYears: advState.advYears,
+          baseRevenue: revenue0,
+          inputMethod: advState.advRevenueInputMethod,
+          growthMode: advState.growthMode,
+          uniformGrowth: advState.advUniformGrowth,
+          perYearList: advState.growthPerYearList,
+        });
+      }
       if (advState.advRevenueInputMethod === 'growth') {
         if (advState.growthMode === 'uniform') {
           const g = advState.advUniformGrowth.trim() !== '' ? parseFloat(advState.advUniformGrowth) : 0;
+          if (typeof window !== 'undefined') {
+            console.log('[DEBUG][DashboardAdvanced] Applying uniform growth', { baseValue: revenue0, growthRate: g });
+          }
           updateRevenue({
             inputType: 'consolidated',
             consolidated: { inputMethod: 'growth', growthMethod: 'uniform', baseValue: revenue0, growthRate: g },
@@ -749,6 +765,12 @@ export default function ValuationEditClient({
           const individualGrowthRates: { [k: number]: number } = {};
           for (let i = 1; i < advState.advYears; i++) {
             individualGrowthRates[i] = arr[i - 1] ?? 0;
+          }
+          if (typeof window !== 'undefined') {
+            console.log('[DEBUG][DashboardAdvanced] Applying individual growth', {
+              baseValue: revenue0,
+              individualGrowthRates,
+            });
           }
           updateRevenue({
             inputType: 'consolidated',
@@ -762,6 +784,9 @@ export default function ValuationEditClient({
         }
       } else {
         const yearlyValues = buildArrayFromList(advState.advYears, advState.revenueDirectList);
+        if (typeof window !== 'undefined') {
+          console.log('[DEBUG][DashboardAdvanced] Applying direct revenue', { yearlyValues });
+        }
         updateRevenue({ inputType: 'consolidated', consolidated: { inputMethod: 'direct', yearlyValues } });
       }
 
@@ -788,6 +813,14 @@ export default function ValuationEditClient({
         const individualPercents: { [k: number]: number } = {};
         for (let i = 0; i < advState.advYears; i++) {
           individualPercents[i] = Math.max(0, 100 - (marginArr[i] || 0));
+        }
+        if (typeof window !== 'undefined') {
+          console.log('[DEBUG][DashboardAdvanced] EBITDA via OpEx', {
+            ebitdaInputType: advState.ebitdaInputType,
+            ebitdaPctMode: advState.ebitdaPctMode,
+            marginArr,
+            individualPercents,
+          });
         }
         updateOpEx({
           inputType: 'consolidated',
@@ -878,8 +911,19 @@ export default function ValuationEditClient({
         const currentRevenue = useModelStore.getState().calculatedFinancials.revenue;
         const targetEbitda = buildArrayFromList(advState.advYears, advState.ebitdaDirectList);
         const opexValues = currentRevenue.map((rev, i) => Math.max(0, (rev || 0) - (targetEbitda[i] || 0)));
+        if (typeof window !== 'undefined') {
+          console.log('[DEBUG][DashboardAdvanced] EBITDA direct adjustment', { targetEbitda, opexValues });
+        }
         updateOpEx({ inputType: 'consolidated', consolidated: { inputMethod: 'direct', yearlyValues: opexValues } });
         calculateFinancials();
+      }
+
+      // Snapshot after calculations
+      if (typeof window !== 'undefined') {
+        const dbg = useModelStore.getState();
+        console.log('[DEBUG][DashboardAdvanced] Model.revenue', dbg.model.revenue);
+        console.log('[DEBUG][DashboardAdvanced] Calculated revenue', dbg.calculatedFinancials.revenue);
+        console.log('[DEBUG][DashboardAdvanced] Calculated EBITDA margin', dbg.calculatedFinancials.ebitdaMargin);
       }
 
       setIsCalculating(false);
