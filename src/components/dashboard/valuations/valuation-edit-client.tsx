@@ -588,9 +588,20 @@ export default function ValuationEditClient({
           <div className="space-y-6">
             {(initialResultsData as any)?.revenue && (initialResultsData as any)?.revenue.length > 0 && (
               <RevenueEbitdaChart
-                revenues={(initialResultsData as any).revenue.slice(0, 5)}
-                ebitdaMargins={(initialResultsData as any).ebitdaMargin.slice(0, 5)}
-                years={(initialModelData as any)?.periods?.periodLabels?.slice(0, 5)}
+                revenues={(initialResultsData as any).revenue.slice(
+                  0,
+                  (initialModelData as any)?.periods?.numberOfYears || (initialResultsData as any).revenue.length,
+                )}
+                ebitdaMargins={(initialResultsData as any).ebitdaMargin.slice(
+                  0,
+                  (initialModelData as any)?.periods?.numberOfYears || (initialResultsData as any).ebitdaMargin.length,
+                )}
+                years={(initialModelData as any)?.periods?.periodLabels?.slice(
+                  0,
+                  (initialModelData as any)?.periods?.numberOfYears ||
+                    (initialModelData as any)?.periods?.periodLabels?.length ||
+                    0,
+                )}
                 title="Proyección de Ingresos y Margen EBITDA"
               />
             )}
@@ -902,6 +913,8 @@ export default function ValuationEditClient({
       } else {
         const taxPct = advState.taxesPct.trim() !== '' ? parseFloat(advState.taxesPct) : 0;
         updateTaxes({ inputMethod: 'percentOfEBIT', percentMethod: 'uniform', percentOfEBIT: taxPct });
+        // Keep risk profile corporate tax consistent with taxes assumption so WACC/report show the same
+        updateRiskProfile({ corporateTaxRate: Math.max(0, taxPct) / 100 });
       }
 
       calculateFinancials();

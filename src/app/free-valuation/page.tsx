@@ -595,6 +595,8 @@ export default function FreeValuationPage() {
       } else {
         const taxPct = advState.taxesPct.trim() !== '' ? parseFloat(advState.taxesPct) : 0;
         updateTaxes({ inputMethod: 'percentOfEBIT', percentMethod: 'uniform', percentOfEBIT: taxPct });
+        // Keep risk profile corporate tax consistent with taxes assumption so WACC/report show the same
+        updateRiskProfile({ corporateTaxRate: Math.max(0, taxPct) / 100 });
       }
 
       calculateFinancials();
