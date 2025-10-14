@@ -86,8 +86,8 @@ export function CreateScenarioDialog({
         setScenarioValues(null);
         toast({
           variant: 'destructive',
-          title: 'Calculation error',
-          description: 'Unable to calculate scenario values. Please try different values.',
+          title: 'Error de cálculo',
+          description: 'No se pueden calcular los valores del escenario. Intenta con otros valores.',
         });
       } finally {
         setIsCalculating(false);
@@ -104,8 +104,8 @@ export function CreateScenarioDialog({
 
     if (!availableVar) {
       toast({
-        title: 'No more variables',
-        description: 'All available variables have been added.',
+        title: 'No hay más variables',
+        description: 'Todas las variables disponibles ya han sido añadidas.',
       });
       return;
     }
@@ -139,8 +139,8 @@ export function CreateScenarioDialog({
     if (!name.trim()) {
       toast({
         variant: 'destructive',
-        title: 'Validation error',
-        description: 'Please enter a scenario name.',
+        title: 'Error de validación',
+        description: 'Por favor ingresa un nombre de escenario.',
       });
       return;
     }
@@ -148,8 +148,8 @@ export function CreateScenarioDialog({
     if (adjustments.length === 0) {
       toast({
         variant: 'destructive',
-        title: 'Validation error',
-        description: 'Please add at least one variable adjustment.',
+        title: 'Error de validación',
+        description: 'Agrega al menos un ajuste de variable.',
       });
       return;
     }
@@ -157,8 +157,8 @@ export function CreateScenarioDialog({
     if (!scenarioValues) {
       toast({
         variant: 'destructive',
-        title: 'Calculation error',
-        description: 'Unable to calculate scenario values. Please check your inputs.',
+        title: 'Error de cálculo',
+        description: 'No se pueden calcular los valores del escenario. Revisa tus entradas.',
       });
       return;
     }
@@ -177,8 +177,8 @@ export function CreateScenarioDialog({
         });
 
         toast({
-          title: 'Scenario created',
-          description: 'Your scenario has been added.',
+          title: 'Escenario creado',
+          description: 'Tu escenario ha sido añadido.',
         });
 
         onOpenChange(false);
@@ -214,8 +214,8 @@ export function CreateScenarioDialog({
       }
 
       toast({
-        title: 'Scenario created',
-        description: 'Your scenario has been successfully calculated and saved.',
+        title: 'Escenario creado',
+        description: 'Tu escenario ha sido calculado y guardado correctamente.',
       });
 
       // Also update local list immediately for seamless UX in local-only views
@@ -235,8 +235,8 @@ export function CreateScenarioDialog({
       console.error('Failed to create scenario:', error);
       toast({
         variant: 'destructive',
-        title: 'Failed to create scenario',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: 'Error al crear el escenario',
+        description: error instanceof Error ? error.message : 'Por favor, inténtalo de nuevo.',
       });
     } finally {
       setIsSubmitting(false);
@@ -256,31 +256,31 @@ export function CreateScenarioDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Create Scenario</DialogTitle>
+          <DialogTitle>Crear escenario</DialogTitle>
           <DialogDescription>
-            Select variables to adjust and the system will calculate the valuation range.
+            Selecciona variables a ajustar y el sistema calculará el rango de valuación.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto">
           <div>
-            <Label htmlFor="name">Scenario Name *</Label>
+            <Label htmlFor="name">Nombre del escenario *</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., WACC Sensitivity ±2%, Optimistic Case"
+              placeholder="p. ej., Sensibilidad WACC ±2%, Caso optimista"
               className="mt-1"
             />
           </div>
 
           <div>
-            <Label htmlFor="description">Description (optional)</Label>
+            <Label htmlFor="description">Descripción (opcional)</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Auto-generated from variables if left blank"
+              placeholder="Se genera automáticamente a partir de las variables si se deja en blanco"
               className="mt-1"
               rows={2}
             />
@@ -288,7 +288,7 @@ export function CreateScenarioDialog({
 
           <div className="border-t pt-4">
             <div className="flex items-center justify-between mb-3">
-              <Label>Variable Adjustments</Label>
+              <Label>Ajustes de variables</Label>
               <Button
                 type="button"
                 variant="outline"
@@ -297,13 +297,13 @@ export function CreateScenarioDialog({
                 disabled={adjustments.length >= SCENARIO_VARIABLES.length}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Add Variable
+                Agregar variable
               </Button>
             </div>
 
             {adjustments.length === 0 ? (
               <div className="text-center py-6 text-sm text-gray-500 bg-gray-50 rounded-lg">
-                No variables selected. Click "Add Variable" to start building your scenario.
+                No hay variables seleccionadas. Haz click en "Agregar variable" para empezar a construir tu escenario.
               </div>
             ) : (
               <div className="space-y-3">
@@ -363,7 +363,7 @@ export function CreateScenarioDialog({
                           />
                         </div>
                         <div>
-                          <Label className="text-xs">Min</Label>
+                          <Label className="text-xs">Mín</Label>
                           <Input
                             type="number"
                             step={variable.step || 0.1}
@@ -373,7 +373,7 @@ export function CreateScenarioDialog({
                           />
                         </div>
                         <div>
-                          <Label className="text-xs">Max</Label>
+                          <Label className="text-xs">Máx</Label>
                           <Input
                             type="number"
                             step={variable.step || 0.1}
@@ -392,18 +392,18 @@ export function CreateScenarioDialog({
 
           {scenarioValues && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm font-medium text-blue-900 mb-2">Calculated Values:</p>
+              <p className="text-sm font-medium text-blue-900 mb-2">Valores calculados:</p>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <span className="text-blue-700">Min EV:</span>
+                  <span className="text-blue-700">EV mín:</span>
                   <span className="ml-2 font-semibold text-blue-900">{formatCurrency(scenarioValues.minValue)}</span>
                 </div>
                 <div>
-                  <span className="text-blue-700">Max EV:</span>
+                  <span className="text-blue-700">EV máx:</span>
                   <span className="ml-2 font-semibold text-blue-900">{formatCurrency(scenarioValues.maxValue)}</span>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-blue-700">Range:</span>
+                  <span className="text-blue-700">Rango:</span>
                   <span className="ml-2 font-semibold text-blue-900">
                     {formatCurrency(scenarioValues.maxValue - scenarioValues.minValue)}
                   </span>
@@ -412,14 +412,16 @@ export function CreateScenarioDialog({
             </div>
           )}
 
-          {isCalculating && <div className="text-sm text-gray-600 text-center">Calculating scenario values...</div>}
+          {isCalculating && (
+            <div className="text-sm text-gray-600 text-center">Calculando valores del escenario...</div>
+          )}
 
           <div className="flex justify-end gap-2 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting || isCalculating || !scenarioValues}>
-              {isSubmitting ? 'Creating...' : 'Create Scenario'}
+              {isSubmitting ? 'Creando...' : 'Crear escenario'}
             </Button>
           </div>
         </form>

@@ -80,20 +80,22 @@ export function ScenarioListLocal({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Scenarios</CardTitle>
-              <CardDescription>Create and manage scenarios before saving (changes are not saved yet)</CardDescription>
+              <CardTitle>Escenarios</CardTitle>
+              <CardDescription>
+                Crea y gestiona escenarios antes de guardar (los cambios aún no se guardan)
+              </CardDescription>
             </div>
             <Button onClick={() => setIsCreateDialogOpen(true)} size="sm">
               <Plus className="h-4 w-4 mr-1" />
-              Add Scenario
+              Agregar escenario
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           {scenarios.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              <p>No scenarios created yet.</p>
-              <p className="text-sm mt-2">Add a scenario to see different valuation ranges.</p>
+              <p>Aún no se han creado escenarios.</p>
+              <p className="text-sm mt-2">Agrega un escenario para ver diferentes rangos de valuación.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -107,10 +109,10 @@ export function ScenarioListLocal({
                     {scenario.description && <p className="text-sm text-gray-600 mt-1">{scenario.description}</p>}
                     <div className="mt-2 flex items-center gap-4 text-sm">
                       <span className="text-gray-700">
-                        Range: <span className="font-medium">{formatRange(scenario.minValue, scenario.maxValue)}</span>
+                        Rango: <span className="font-medium">{formatRange(scenario.minValue, scenario.maxValue)}</span>
                       </span>
                       <span className="text-gray-500">
-                        Spread: {formatCurrency(scenario.maxValue - scenario.minValue)}
+                        Diferencia: {formatCurrency(scenario.maxValue - scenario.minValue)}
                       </span>
                     </div>
                   </div>
@@ -146,17 +148,17 @@ export function ScenarioListLocal({
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete Scenario</DialogTitle>
+            <DialogTitle>Eliminar escenario</DialogTitle>
             <DialogDescription>
-              Are you sure you want to remove this scenario? This action cannot be undone.
+              ¿Estás seguro de que deseas eliminar este escenario? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
+              Cancelar
             </Button>
             <Button type="button" variant="destructive" onClick={confirmDelete}>
-              Delete
+              Eliminar
             </Button>
           </div>
         </DialogContent>
