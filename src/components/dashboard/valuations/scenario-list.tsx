@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { ScenarioListItem, FinancialModel, CalculatedFinancials } from '@/lib/valuation.types';
@@ -20,6 +21,8 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
   const [scenarios, setScenarios] = useState<ScenarioListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [scenarioToDelete, setScenarioToDelete] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchScenarios = async () => {
@@ -50,10 +53,6 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
   }, [valuationId]);
 
   const handleDelete = async (scenarioId: string) => {
-    if (!confirm('¿Estás seguro de querer eliminar este escenario?')) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/valuations/${valuationId}/scenarios/${scenarioId}`, {
         method: 'DELETE',
@@ -65,7 +64,7 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
 
       toast({
         title: 'Escenario eliminado',
-        description: 'The scenario has been successfully deleted.',
+        description: 'El escenario se ha eliminado correctamente.',
       });
 
       fetchScenarios();
@@ -74,9 +73,17 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
       toast({
         variant: 'destructive',
         title: 'Error al eliminar escenario',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        description: error instanceof Error ? error.message : 'Por favor, inténtalo de nuevo.',
       });
     }
+  };
+
+  const confirmDelete = async () => {
+    if (!scenarioToDelete) return;
+    const id = scenarioToDelete;
+    setIsDeleteDialogOpen(false);
+    setScenarioToDelete(null);
+    await handleDelete(id);
   };
 
   const formatCurrency = (value: number) => {
@@ -145,7 +152,10 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDelete(scenario.id)}
+                    onClick={() => {
+                      setScenarioToDelete(scenario.id);
+                      setIsDeleteDialogOpen(true);
+                    }}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -165,6 +175,26 @@ export function ScenarioList({ valuationId, baseValue, baseModel, baseResults, o
           onOpenChange={setIsCreateDialogOpen}
           onSuccess={fetchScenarios}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Eliminar escenario</DialogTitle>
+              <DialogDescription>
+                ¿Estás seguro de que deseas eliminar este escenario? Esta acción no se puede deshacer.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="button" variant="destructive" onClick={confirmDelete}>
+                Eliminar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
