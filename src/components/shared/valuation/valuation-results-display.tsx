@@ -80,7 +80,7 @@ export function ValuationResultsDisplay({
     });
   }, [dbScenarios]);
 
-  if (!results) {
+  if (!results || results.length === 0) {
     return null;
   }
 
