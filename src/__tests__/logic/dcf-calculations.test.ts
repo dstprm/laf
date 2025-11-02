@@ -296,8 +296,12 @@ describe('DCF Calculation Logic', () => {
       const rev = revenue[0];
       const dAndA = rev * 0.05;
       const capEx = rev * 0.05;
-      const nwc = rev * 0.1;
-      const changeNWC = nwc; // First year change = initial NWC
+
+      // With 0% revenue growth, NWC stays constant, so change in NWC = 0
+      // Base year: NWC = 1,000,000 * 0.1 = 100,000
+      // Year 1: NWC = 1,000,000 * 0.1 = 100,000
+      // Change: 100,000 - 100,000 = 0
+      const changeNWC = 0;
 
       // FCF = Net Income + D&A - CAPEX - Change in NWC
       const expectedFCF = netIncome[0] + dAndA - capEx - changeNWC;
@@ -374,6 +378,16 @@ describe('DCF Calculation Logic', () => {
 
   describe('Discounted Cash Flow Calculation', () => {
     it('should discount cash flows correctly', () => {
+      const unleveredBeta = 1.01;
+      const equityRiskPremium = 0.06;
+      const countryRiskPremium = 0.01;
+      const deRatio = 0.5;
+      const adjustedDefaultSpread = 0.02;
+      const companySpread = 0.05;
+      const riskFreeRate = 0.0444;
+      const corporateTaxRate = 0.25;
+      const leveredBeta = unleveredBeta * (1 + deRatio * (1 - corporateTaxRate));
+
       const model = createTestModel({
         revenue: {
           inputType: 'consolidated',
@@ -387,15 +401,15 @@ describe('DCF Calculation Logic', () => {
         riskProfile: {
           selectedIndustry: null,
           selectedCountry: null,
-          unleveredBeta: 1.0,
-          leveredBeta: 1.0,
-          equityRiskPremium: 0.06,
-          countryRiskPremium: 0,
-          deRatio: 0,
-          adjustedDefaultSpread: 0,
-          companySpread: 0.05,
-          riskFreeRate: 0.0444,
-          corporateTaxRate: 0.25,
+          unleveredBeta,
+          leveredBeta,
+          equityRiskPremium,
+          countryRiskPremium,
+          deRatio,
+          adjustedDefaultSpread,
+          companySpread,
+          riskFreeRate,
+          corporateTaxRate,
         },
       });
 
@@ -406,7 +420,14 @@ describe('DCF Calculation Logic', () => {
 
       // WACC = Cost of Equity (since D/E = 0)
       // Cost of Equity = Rf + Beta * ERP = 0.0444 + 1.0 * 0.06 = 0.1044
-      const wacc = 0.1044;
+      const costOfEquity = riskFreeRate + leveredBeta * (equityRiskPremium + countryRiskPremium);
+      const costOfDebt = riskFreeRate + adjustedDefaultSpread + companySpread;
+      const equityWeight = 1 / (1 + deRatio);
+      const debtWeight = deRatio / (1 + deRatio);
+      const wacc = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - corporateTaxRate);
+
+      console.log('wacc', wacc);
+      console.log(useModelStore.getState().calculatedFinancials);
 
       // Verify each DCF is discounted correctly
       discountedCashFlows.forEach((dcf, index) => {
@@ -415,6 +436,7 @@ describe('DCF Calculation Logic', () => {
         expect(dcf).toBeCloseTo(expectedDCF, 0);
       });
 
+      // No esta funcionando porque logica de NWC esta incorrecta
       // Later years should be discounted more
       expect(discountedCashFlows[0]).toBeGreaterThan(discountedCashFlows[4]);
     });
@@ -550,6 +572,399 @@ describe('DCF Calculation Logic', () => {
       const dcfYear1 = discountedCashFlows[0];
       const expectedDCF = freeCashFlow[0] / (1 + expectedWACC);
       expect(dcfYear1).toBeCloseTo(expectedDCF, 0);
+    });
+  });
+
+  describe('Net Working Capital Calculation', () => {
+    describe('percentOfRevenue method', () => {
+      it('should calculate change in NWC correctly with uniform percentage', () => {
+        const model = createTestModel({
+          revenue: {
+            inputType: 'consolidated',
+            consolidated: {
+              inputMethod: 'growth',
+              growthMethod: 'uniform',
+              baseValue: 1000000,
+              growthRate: 10,
+            },
+          },
+          netWorkingCapital: {
+            inputMethod: 'percentOfRevenue',
+            percentMethod: 'uniform',
+            percentOfRevenue: 10,
+          },
+        });
+
+        useModelStore.setState({ model });
+        useModelStore.getState().calculateFinancials();
+
+        const { netWorkingCapital, changeInNWC } = useModelStore.getState().calculatedFinancials;
+
+        // The displayed NWC array corresponds to projection years
+        // Note: NWC is calculated from an extended array that includes base year
+        // Year 0 (base, not displayed): revenue = 1,000,000, NWC = 100,000
+        // Year 1 (displayed index 0): revenue = 1,100,000, NWC = 110,000
+        // Year 2 (displayed index 1): revenue = 1,210,000, NWC = 121,000
+
+        // Verify displayed NWC values match projection year revenues
+        expect(netWorkingCapital[0]).toBeCloseTo(1100000 * 0.1, 0); // Year 1
+        expect(netWorkingCapital[1]).toBeCloseTo(1210000 * 0.1, 0); // Year 2
+
+        // Verify change in NWC
+        // Year 1 Change: 110,000 - 100,000 = 10,000
+        expect(changeInNWC[0]).toBeCloseTo(10000, 0);
+
+        // Year 2 Change: 121,000 - 110,000 = 11,000
+        expect(changeInNWC[1]).toBeCloseTo(11000, 0);
+
+        // Verify no NaN values
+        changeInNWC.forEach((change) => {
+          expect(change).not.toBeNaN();
+          expect(Number.isFinite(change)).toBe(true);
+        });
+      });
+
+      it('should calculate change in NWC correctly with individual percentages', () => {
+        const model = createTestModel({
+          revenue: {
+            inputType: 'consolidated',
+            consolidated: {
+              inputMethod: 'growth',
+              growthMethod: 'uniform',
+              baseValue: 1000000,
+              growthRate: 0, // No growth for simplicity
+            },
+          },
+          netWorkingCapital: {
+            inputMethod: 'percentOfRevenue',
+            percentMethod: 'individual',
+            individualPercents: {
+              0: 10,
+              1: 12,
+              2: 11,
+              3: 13,
+              4: 10,
+            },
+          },
+        });
+
+        useModelStore.setState({ model });
+        useModelStore.getState().calculateFinancials();
+
+        const { changeInNWC } = useModelStore.getState().calculatedFinancials;
+
+        // Base year (Year 0): 1,000,000 * 0.10 = 100,000
+        // Year 1: 1,000,000 * 0.12 = 120,000
+        // Change: 120,000 - 100,000 = 20,000
+        expect(changeInNWC[0]).toBeCloseTo(20000, 0);
+
+        // Year 2: 1,000,000 * 0.11 = 110,000
+        // Change: 110,000 - 120,000 = -10,000
+        expect(changeInNWC[1]).toBeCloseTo(-10000, 0);
+
+        // Verify no NaN values
+        changeInNWC.forEach((change) => {
+          expect(change).not.toBeNaN();
+        });
+      });
+    });
+
+    describe('percentOfEBIT method', () => {
+      it('should calculate change in NWC correctly with uniform percentage', () => {
+        const model = createTestModel({
+          revenue: {
+            inputType: 'consolidated',
+            consolidated: {
+              inputMethod: 'growth',
+              growthMethod: 'uniform',
+              baseValue: 1000000,
+              growthRate: 10,
+            },
+          },
+          netWorkingCapital: {
+            inputMethod: 'percentOfEBIT',
+            percentMethod: 'uniform',
+            percentOfEBIT: 15,
+          },
+        });
+
+        useModelStore.setState({ model });
+        useModelStore.getState().calculateFinancials();
+
+        const { netWorkingCapital, changeInNWC } = useModelStore.getState().calculatedFinancials;
+
+        // The displayed NWC is calculated from extended EBIT (including base year)
+        // We can verify the relationship by checking change in NWC calculation
+        // (NWC values will be based on extended EBIT which includes projected Year 6)
+
+        // Verify change in NWC is the difference between consecutive years
+        for (let i = 1; i < netWorkingCapital.length; i++) {
+          const expectedChange = netWorkingCapital[i] - netWorkingCapital[i - 1];
+          expect(changeInNWC[i]).toBeCloseTo(expectedChange, 0);
+        }
+
+        // Verify no NaN values
+        changeInNWC.forEach((change) => {
+          expect(change).not.toBeNaN();
+          expect(Number.isFinite(change)).toBe(true);
+        });
+      });
+
+      it('should calculate change in NWC correctly with individual percentages', () => {
+        const model = createTestModel({
+          revenue: {
+            inputType: 'consolidated',
+            consolidated: {
+              inputMethod: 'growth',
+              growthMethod: 'uniform',
+              baseValue: 1000000,
+              growthRate: 0,
+            },
+          },
+          netWorkingCapital: {
+            inputMethod: 'percentOfEBIT',
+            percentMethod: 'individual',
+            individualPercents: {
+              0: 10,
+              1: 15,
+              2: 12,
+              3: 18,
+              4: 10,
+            },
+          },
+        });
+
+        useModelStore.setState({ model });
+        useModelStore.getState().calculateFinancials();
+
+        const { changeInNWC } = useModelStore.getState().calculatedFinancials;
+
+        // Verify no NaN values
+        changeInNWC.forEach((change) => {
+          expect(change).not.toBeNaN();
+          expect(Number.isFinite(change)).toBe(true);
+        });
+      });
+    });
+
+    describe('growth method', () => {
+      it('should calculate change in NWC correctly with uniform growth', () => {
+        const model = createTestModel({
+          revenue: {
+            inputType: 'consolidated',
+            consolidated: {
+              inputMethod: 'growth',
+              growthMethod: 'uniform',
+              baseValue: 1000000,
+              growthRate: 10,
+            },
+          },
+          netWorkingCapital: {
+            inputMethod: 'growth',
+            growthMethod: 'uniform',
+            baseValue: 100000,
+            growthRate: 5,
+          },
+        });
+
+        useModelStore.setState({ model });
+        useModelStore.getState().calculateFinancials();
+
+        const { netWorkingCapital, changeInNWC } = useModelStore.getState().calculatedFinancials;
+
+        // Base year (Year 0): 100,000
+        // Year 1: 100,000 * 1.05 = 105,000
+        expect(netWorkingCapital[0]).toBeCloseTo(105000, 0);
+        // Change Year 1: 105,000 - 100,000 = 5,000
+        expect(changeInNWC[0]).toBeCloseTo(5000, 0);
+
+        // Year 2: 105,000 * 1.05 = 110,250
+        expect(netWorkingCapital[1]).toBeCloseTo(110250, 0);
+        // Change Year 2: 110,250 - 105,000 = 5,250
+        expect(changeInNWC[1]).toBeCloseTo(5250, 0);
+
+        // Verify no NaN values
+        changeInNWC.forEach((change) => {
+          expect(change).not.toBeNaN();
+          expect(Number.isFinite(change)).toBe(true);
+        });
+      });
+
+      it('should calculate change in NWC correctly with individual growth rates', () => {
+        const model = createTestModel({
+          revenue: {
+            inputType: 'consolidated',
+            consolidated: {
+              inputMethod: 'growth',
+              growthMethod: 'uniform',
+              baseValue: 1000000,
+              growthRate: 10,
+            },
+          },
+          netWorkingCapital: {
+            inputMethod: 'growth',
+            growthMethod: 'individual',
+            baseValue: 100000,
+            individualGrowthRates: {
+              1: 5,
+              2: 10,
+              3: 8,
+              4: 6,
+              5: 4,
+            },
+          },
+        });
+
+        useModelStore.setState({ model });
+        useModelStore.getState().calculateFinancials();
+
+        const { netWorkingCapital, changeInNWC } = useModelStore.getState().calculatedFinancials;
+
+        // Base year (Year 0): 100,000
+        // Year 1: 100,000 * 1.05 = 105,000
+        expect(netWorkingCapital[0]).toBeCloseTo(105000, 0);
+        expect(changeInNWC[0]).toBeCloseTo(5000, 0);
+
+        // Year 2: 105,000 * 1.10 = 115,500
+        expect(netWorkingCapital[1]).toBeCloseTo(115500, 0);
+        expect(changeInNWC[1]).toBeCloseTo(10500, 0);
+
+        // Verify no NaN values
+        changeInNWC.forEach((change) => {
+          expect(change).not.toBeNaN();
+        });
+      });
+    });
+
+    describe('direct method', () => {
+      it('should calculate change in NWC correctly with direct values', () => {
+        const model = createTestModel({
+          revenue: {
+            inputType: 'consolidated',
+            consolidated: {
+              inputMethod: 'growth',
+              growthMethod: 'uniform',
+              baseValue: 1000000,
+              growthRate: 10,
+            },
+          },
+          netWorkingCapital: {
+            inputMethod: 'direct',
+            yearlyValues: [100000, 110000, 115000, 120000, 125000, 130000],
+          },
+        });
+
+        useModelStore.setState({ model });
+        useModelStore.getState().calculateFinancials();
+
+        const { netWorkingCapital, changeInNWC } = useModelStore.getState().calculatedFinancials;
+
+        // Year 1: 110,000, Base: 100,000, Change: 10,000
+        expect(netWorkingCapital[0]).toBeCloseTo(110000, 0);
+        expect(changeInNWC[0]).toBeCloseTo(10000, 0);
+
+        // Year 2: 115,000, Previous: 110,000, Change: 5,000
+        expect(netWorkingCapital[1]).toBeCloseTo(115000, 0);
+        expect(changeInNWC[1]).toBeCloseTo(5000, 0);
+
+        // Year 5: 130,000, Previous: 125,000, Change: 5,000
+        expect(netWorkingCapital[4]).toBeCloseTo(130000, 0);
+        expect(changeInNWC[4]).toBeCloseTo(5000, 0);
+
+        // Verify no NaN values
+        changeInNWC.forEach((change) => {
+          expect(change).not.toBeNaN();
+          expect(Number.isFinite(change)).toBe(true);
+        });
+      });
+    });
+
+    describe('Impact on Free Cash Flow', () => {
+      it('should correctly impact FCF with change in NWC', () => {
+        const model = createTestModel({
+          revenue: {
+            inputType: 'consolidated',
+            consolidated: {
+              inputMethod: 'growth',
+              growthMethod: 'uniform',
+              baseValue: 1000000,
+              growthRate: 10,
+            },
+          },
+          netWorkingCapital: {
+            inputMethod: 'percentOfRevenue',
+            percentMethod: 'uniform',
+            percentOfRevenue: 10,
+          },
+          da: {
+            inputMethod: 'direct',
+            yearlyValues: [50000, 50000, 50000, 50000, 50000],
+          },
+          capex: {
+            inputMethod: 'direct',
+            yearlyValues: [50000, 50000, 50000, 50000, 50000],
+          },
+        });
+
+        useModelStore.setState({ model });
+        useModelStore.getState().calculateFinancials();
+
+        const { netIncome, da, capex, changeInNWC, freeCashFlow } = useModelStore.getState().calculatedFinancials;
+
+        // FCF = Net Income + D&A - CAPEX - Change in NWC
+        freeCashFlow.forEach((fcf, i) => {
+          const expectedFCF = netIncome[i] + da[i] - capex[i] - changeInNWC[i];
+          expect(fcf).toBeCloseTo(expectedFCF, 0);
+        });
+
+        // Verify no NaN values in FCF
+        freeCashFlow.forEach((fcf) => {
+          expect(fcf).not.toBeNaN();
+          expect(Number.isFinite(fcf)).toBe(true);
+        });
+      });
+
+      it('should handle decrease in NWC (positive impact on FCF)', () => {
+        const model = createTestModel({
+          revenue: {
+            inputType: 'consolidated',
+            consolidated: {
+              inputMethod: 'growth',
+              growthMethod: 'uniform',
+              baseValue: 1000000,
+              growthRate: 0, // No revenue growth
+            },
+          },
+          netWorkingCapital: {
+            inputMethod: 'percentOfRevenue',
+            percentMethod: 'individual',
+            individualPercents: {
+              0: 15, // Base year
+              1: 10, // Decrease
+              2: 8, // Further decrease
+              3: 6,
+              4: 5,
+            },
+          },
+        });
+
+        useModelStore.setState({ model });
+        useModelStore.getState().calculateFinancials();
+
+        const { changeInNWC } = useModelStore.getState().calculatedFinancials;
+
+        // Base: 150,000, Year 1: 100,000, Change: -50,000 (decrease)
+        expect(changeInNWC[0]).toBeCloseTo(-50000, 0);
+
+        // Decrease in NWC should boost FCF
+        // When NWC decreases, change is negative, and FCF = NI + DA - CAPEX - (negative) = higher
+        expect(changeInNWC[0]).toBeLessThan(0);
+
+        // Verify no NaN values
+        changeInNWC.forEach((change) => {
+          expect(change).not.toBeNaN();
+        });
+      });
     });
   });
 

@@ -21,26 +21,31 @@ pnpm install
 ## Running Tests
 
 ### Run all tests
+
 ```bash
 pnpm test
 ```
 
 ### Run tests in watch mode
+
 ```bash
 pnpm test:watch
 ```
 
 ### Run tests with coverage report
+
 ```bash
 pnpm test:coverage
 ```
 
 ### Run only logic tests (DCF and scenario calculations)
+
 ```bash
 pnpm test:logic
 ```
 
 ### Run only frontend/component tests
+
 ```bash
 pnpm test:frontend
 ```
@@ -120,12 +125,15 @@ Run `pnpm test:coverage` to see detailed coverage reports.
 4. Write test cases using `describe` and `it` blocks
 
 Example:
+
 ```typescript
 import { calculateEnterpriseValue } from '@/lib/scenario-calculator';
 
 describe('My Calculation', () => {
   it('should calculate correctly', () => {
-    const model = createTestModel({ /* overrides */ });
+    const model = createTestModel({
+      /* overrides */
+    });
     const result = calculateEnterpriseValue(model);
     expect(result.enterpriseValue).toBeGreaterThan(0);
   });
@@ -140,6 +148,7 @@ describe('My Calculation', () => {
 4. Render components and test their behavior
 
 Example:
+
 ```typescript
 import { render, screen } from '@testing-library/react';
 import { MyComponent } from '@/components/my-component';
@@ -170,6 +179,7 @@ describe('MyComponent', () => {
 ## Continuous Integration
 
 Tests should be run:
+
 - Before committing code (use pre-commit hooks)
 - On pull requests
 - Before deploying to production
@@ -177,14 +187,17 @@ Tests should be run:
 ## Troubleshooting
 
 ### Tests fail with "Cannot find module"
+
 - Make sure you've run `pnpm install`
 - Check that `tsconfig.json` paths are correctly configured
 
 ### Tests fail with "window is not defined"
+
 - Make sure you're using `jest-environment-jsdom` in your test file
 - Check `jest.setup.js` for proper configuration
 
 ### Component tests fail with styling errors
+
 - Mock CSS imports if needed: `jest.mock('*.css', {})`
 - Check that Tailwind classes are properly configured
 
@@ -193,5 +206,3 @@ Tests should be run:
 - [Jest Documentation](https://jestjs.io/docs/getting-started)
 - [React Testing Library](https://testing-library.com/react)
 - [Testing Best Practices](https://kentcdodds.com/blog/common-mistakes-with-react-testing-library)
-
-

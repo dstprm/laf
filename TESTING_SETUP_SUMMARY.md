@@ -3,7 +3,9 @@
 ## What Was Added
 
 ### 1. Testing Dependencies
+
 Added to `package.json`:
+
 - `jest` - Test runner
 - `jest-environment-jsdom` - DOM environment for React tests
 - `ts-jest` - TypeScript support for Jest
@@ -13,11 +15,14 @@ Added to `package.json`:
 - `@types/jest` - TypeScript types for Jest
 
 ### 2. Configuration Files
+
 - `jest.config.js` - Jest configuration for Next.js and TypeScript
 - `jest.setup.js` - Test setup file with mocks and global configurations
 
 ### 3. Test Scripts
+
 Added to `package.json`:
+
 - `test` - Run all tests
 - `test:watch` - Run tests in watch mode
 - `test:coverage` - Run tests with coverage report
@@ -27,6 +32,7 @@ Added to `package.json`:
 ### 4. Test Files Created
 
 #### Logic Tests (`src/__tests__/logic/`)
+
 - `dcf-calculations.test.ts` - Comprehensive DCF calculation tests
   - Revenue calculation (uniform and individual growth)
   - EBITDA and margin calculations
@@ -44,6 +50,7 @@ Added to `package.json`:
   - Edge cases
 
 #### Component Tests (`src/__tests__/components/`)
+
 - `charts.test.tsx` - Chart component tests
   - FootballFieldChart rendering and data display
   - RevenueEbitdaChart rendering and data display
@@ -57,6 +64,7 @@ Added to `package.json`:
   - Data handling (missing data, empty arrays)
 
 ### 5. Documentation
+
 - `TESTING.md` - Comprehensive testing guide with:
   - Setup instructions
   - Test structure overview
@@ -68,12 +76,14 @@ Added to `package.json`:
 ## Testing Coverage
 
 ### Logic Tests
+
 - ✅ DCF calculations output correctly
 - ✅ Scenario calculations output correctly
 - ✅ All variable adjustment types tested
 - ✅ Edge cases covered (zero values, negative values, empty data)
 
 ### Frontend Tests
+
 - ✅ Charts render correctly
 - ✅ Valuation results display correctly
 - ✅ Currency formatting works
@@ -82,16 +92,19 @@ Added to `package.json`:
 ## Next Steps
 
 1. **Install Dependencies**:
+
    ```bash
    pnpm install
    ```
 
 2. **Run Tests**:
+
    ```bash
    pnpm test
    ```
 
 3. **Run Specific Test Suites**:
+
    ```bash
    pnpm test:logic    # DCF and scenario calculations
    pnpm test:frontend # Component tests
@@ -105,6 +118,7 @@ Added to `package.json`:
 ## Usage Examples
 
 ### Running Tests During Development
+
 ```bash
 # Watch mode - automatically rerun tests on file changes
 pnpm test:watch
@@ -117,7 +131,9 @@ pnpm test:frontend
 ```
 
 ### Writing New Tests
+
 See `TESTING.md` for detailed instructions on:
+
 - Adding logic tests
 - Adding component tests
 - Best practices
@@ -132,9 +148,8 @@ See `TESTING.md` for detailed instructions on:
 ## Troubleshooting
 
 If tests fail:
+
 1. Make sure all dependencies are installed: `pnpm install`
 2. Check that TypeScript paths are configured correctly in `tsconfig.json`
 3. Verify that `jest.config.js` and `jest.setup.js` are in the root directory
 4. See `TESTING.md` for more troubleshooting tips
-
-
