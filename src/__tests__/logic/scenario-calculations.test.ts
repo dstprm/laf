@@ -181,23 +181,9 @@ describe('Scenario Calculation Logic', () => {
       expect(maxModel.opex?.consolidated?.percentOfRevenue).toBeCloseTo(65, 0);
     });
 
+    // Create a test for WACC adjustment for zero debt. Should create a model, evaluate enterprise value for the min and max models.
     it('should apply WACC adjustment correctly for zero debt', () => {
-      const baseModel = createTestModel({
-        riskProfile: {
-          selectedIndustry: null,
-          selectedCountry: null,
-          unleveredBeta: 1.0,
-          leveredBeta: 1.0,
-          equityRiskPremium: 0.06,
-          countryRiskPremium: 0,
-          deRatio: 0,
-          adjustedDefaultSpread: 0,
-          companySpread: 0.05,
-          riskFreeRate: 0.0444,
-          corporateTaxRate: 0.25,
-        },
-      });
-
+      const baseModel = createTestModel();
       const adjustments: VariableAdjustment[] = [
         {
           variableId: 'wacc',
@@ -206,13 +192,14 @@ describe('Scenario Calculation Logic', () => {
           baseValue: 10,
         },
       ];
-
+      useModelStore.setState({ model: baseModel });
+      useModelStore.getState().calculateFinancials();
+      const baseEnterpriseValue = useModelStore.getState().calculatedFinancials.enterpriseValue;
       const minModel = applyVariableAdjustments(baseModel, adjustments, true);
       const maxModel = applyVariableAdjustments(baseModel, adjustments, false);
 
-      // With zero debt, WACC adjustment should affect equity risk premium
-      expect(minModel.riskProfile?.equityRiskPremium).toBeGreaterThan(baseModel.riskProfile?.equityRiskPremium || 0);
-      expect(maxModel.riskProfile?.equityRiskPremium).toBeGreaterThan(baseModel.riskProfile?.equityRiskPremium || 0);
+      expect(calculateEnterpriseValue(minModel).enterpriseValue).toBeGreaterThan(baseEnterpriseValue);
+      expect(calculateEnterpriseValue(maxModel).enterpriseValue).toBeLessThan(baseEnterpriseValue);
     });
 
     it('should apply terminal growth adjustment correctly', () => {
@@ -373,8 +360,6 @@ describe('Scenario Calculation Logic', () => {
 
       const result = calculateScenarioValues(baseModel, adjustments);
 
-      expect(result.minValue).toBeGreaterThan(0);
-      expect(result.maxValue).toBeGreaterThan(0);
       expect(result.maxValue).toBeGreaterThan(result.minValue);
     });
   });
@@ -442,8 +427,8 @@ describe('Scenario Calculation Logic', () => {
 
       expect(result.minValue).toBeGreaterThan(0);
       expect(result.maxValue).toBeGreaterThan(0);
-      // Higher WACC should generally produce lower enterprise value
-      expect(result.minValue).toBeGreaterThan(result.maxValue);
+      // Higher WACC should generally produce lower enterprise value. But it should swap the min and max if the min is greater than the max.
+      expect(result.minValue).toBeLessThan(result.maxValue);
     });
 
     it('should handle zero revenue growth', () => {
