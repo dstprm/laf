@@ -31,6 +31,7 @@ interface ValuationReportProps {
   // Display options
   showHeader?: boolean;
   className?: string;
+  id?: string; // Optional ID for PDF generation
 }
 
 /**
@@ -50,6 +51,7 @@ export function ValuationReport({
   scenarios = [],
   showHeader = true,
   className = '',
+  id = 'valuation-report',
 }: ValuationReportProps) {
   const formatCurrency = (value: number | null | undefined) => {
     if (value === null || value === undefined) return 'N/A';
@@ -143,7 +145,7 @@ export function ValuationReport({
     : null;
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div id={id} className={`space-y-6 ${className}`}>
       {/* Header Section */}
       {showHeader && (
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 shadow-md">
