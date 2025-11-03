@@ -198,14 +198,11 @@ export async function generateReportPDF(
     // Small delay for rendering
     await new Promise((resolve) => setTimeout(resolve, 50));
     
-    // Remove logging now that we've seen it works
-    console.log('Starting PDF generation with pre-styled element');
-    
     // Now pass this pre-styled element to html2canvas
     const canvas = await html2canvas(preparedElement, {
       scale: scale,
       useCORS: true,
-      logging: true, // Enable to see what html2canvas is doing
+      logging: false,
       backgroundColor: '#ffffff',
       windowWidth: element.offsetWidth,
       windowHeight: element.offsetHeight,
@@ -213,7 +210,7 @@ export async function generateReportPDF(
       height: element.offsetHeight,
       x: 0,
       y: 0,
-      foreignObjectRendering: false, // Force canvas rendering, avoiding CSS parsing issues
+      foreignObjectRendering: false,
       imageTimeout: 0,
       removeContainer: true,
     });

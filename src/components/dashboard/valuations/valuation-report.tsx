@@ -145,7 +145,12 @@ export function ValuationReport({
     : null;
 
   return (
-    <div id={id} className={`space-y-6 ${className}`}>
+    <div id={id} className={`space-y-6 p-8 bg-white ${className}`}>
+      {/* Logo Section */}
+      <div className="flex justify-center mb-6">
+        <img src="/logo.svg" alt="ValuPro" className="h-12" />
+      </div>
+
       {/* Header Section */}
       {showHeader && (
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 shadow-md">
@@ -488,6 +493,21 @@ export function ValuationReport({
           como asesoría financiera. Todas las proyecciones y suposiciones se basan en los datos proporcionados y pueden
           no reflejar resultados futuros reales. Por favor, consulte con un profesional financiero calificado antes de
           tomar decisiones de inversión.
+        </p>
+      </div>
+
+      {/* Promotional Footer */}
+      <div className="mt-8 pt-6 border-t-2 border-gray-200 text-center">
+        <p className="text-sm text-gray-600">
+          Crea tu propio reporte de manera gratuita en{' '}
+          <a
+            href="https://valupro.lat"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 font-semibold hover:text-blue-700 hover:underline"
+          >
+            https://valupro.lat
+          </a>
         </p>
       </div>
     </div>

@@ -2,7 +2,12 @@
 
 ## Overview
 
-Users can now generate and download PDF versions of their valuation reports directly from the report page. This feature converts the entire HTML report into a professional PDF document.
+Users can now generate and download PDF versions of their valuation reports directly from the report page. This feature converts the entire HTML report into a professional PDF document with:
+- Company logo at the top
+- Proper padding and spacing
+- All report sections and visualizations
+- Professional disclaimer
+- Promotional footer with link to ValuPro
 
 ## Implementation
 
