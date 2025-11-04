@@ -173,87 +173,116 @@ function cloneAndFixColors(originalElement: HTMLElement): HTMLElement {
  * @param element - The HTML element to convert to PDF
  * @param options - Options for PDF generation
  */
+/**
+ * Captures a single element as a canvas
+ */
+async function captureElementAsCanvas(element: HTMLElement, scale: number, width: number): Promise<HTMLCanvasElement> {
+  return await html2canvas(element, {
+    scale: scale,
+    useCORS: true,
+    logging: false,
+    backgroundColor: '#ffffff',
+    windowWidth: width,
+    windowHeight: element.offsetHeight,
+    width: width,
+    height: element.offsetHeight,
+    x: 0,
+    y: 0,
+    foreignObjectRendering: false,
+    imageTimeout: 0,
+  });
+}
+
 export async function generateReportPDF(
   element: HTMLElement,
   options: GeneratePDFOptions = {}
 ): Promise<void> {
   const { filename = 'valuation-report.pdf', quality = 0.95, scale = 2 } = options;
 
-  let preparedElement: HTMLElement | null = null;
+  let container: HTMLElement | null = null;
   
   try {
     // Wait for all resources to load first
     await waitForResources(element);
     
-    // Create a fully styled clone with inline styles BEFORE html2canvas sees it
-    preparedElement = cloneAndFixColors(element);
+    // PDF dimensions
+    const pageWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+    const margins = 10; // 10mm margins
+    const contentWidth = pageWidth - (margins * 2);
     
-    // Add to DOM temporarily (hidden)
-    const container = document.createElement('div');
+    // Create PDF
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    let currentY = margins;
+    let isFirstElement = true;
+    
+    // Get all major sections that should be kept together
+    const sections = element.querySelectorAll(
+      '#valuation-report > *:not(script):not(style)'
+    );
+    
+    console.log(`Found ${sections.length} sections to process`);
+    
+    // Create container for rendering elements
+    container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.left = '-9999px';
     container.style.top = '0';
     container.style.zIndex = '-9999';
     container.style.pointerEvents = 'none';
+    container.style.width = `${element.offsetWidth}px`;
+    container.style.backgroundColor = '#ffffff';
     document.body.appendChild(container);
-    container.appendChild(preparedElement);
     
-    // Small delay for rendering
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    
-    // Now pass this pre-styled element to html2canvas
-    const canvas = await html2canvas(preparedElement, {
-      scale: scale,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      windowWidth: element.offsetWidth,
-      windowHeight: element.offsetHeight,
-      width: element.offsetWidth,
-      height: element.offsetHeight,
-      x: 0,
-      y: 0,
-      foreignObjectRendering: false,
-      imageTimeout: 0,
-      removeContainer: true,
-    });
+    // Process each section separately
+    for (let i = 0; i < sections.length; i++) {
+      const section = sections[i] as HTMLElement;
+      
+      // Clone and fix colors for this section
+      const clonedSection = cloneAndFixColors(section);
+      container.appendChild(clonedSection);
+      
+      // Small delay for rendering
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      
+      // Capture this section as canvas
+      const canvas = await captureElementAsCanvas(clonedSection, scale, element.offsetWidth);
+      
+      // Calculate dimensions in mm
+      const imgWidth = contentWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Check if we need a new page
+      if (!isFirstElement && currentY + imgHeight > pageHeight - margins) {
+        pdf.addPage();
+        currentY = margins;
+      }
+      
+      // Add the image to PDF
+      const imgData = canvas.toDataURL('image/jpeg', quality);
+      pdf.addImage(imgData, 'JPEG', margins, currentY, imgWidth, imgHeight);
+      
+      // Update position for next element
+      currentY += imgHeight + 5; // 5mm spacing between sections
+      isFirstElement = false;
+      
+      // Clean up this section
+      container.removeChild(clonedSection);
+      
+      console.log(`Processed section ${i + 1}/${sections.length}, height: ${imgHeight.toFixed(2)}mm`);
+    }
     
     // Clean up
     document.body.removeChild(container);
-    preparedElement = null;
-
-    // Calculate PDF dimensions
-    const imgWidth = 210; // A4 width in mm
-    const pageHeight = 297; // A4 height in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-
-    // Create PDF
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    let position = 0;
-
-    // Add image to PDF
-    const imgData = canvas.toDataURL('image/jpeg', quality);
-    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    // Add additional pages if content is longer than one page
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
+    container = null;
 
     // Save the PDF
     pdf.save(filename);
+    console.log('PDF generated successfully!');
   } catch (error) {
     // Clean up if needed
-    if (preparedElement && preparedElement.parentElement) {
-      const parent = preparedElement.parentElement;
-      if (document.body.contains(parent)) {
-        document.body.removeChild(parent);
-      }
+    if (container && document.body.contains(container)) {
+      document.body.removeChild(container);
     }
     
     console.error('Error generating PDF:', error);
