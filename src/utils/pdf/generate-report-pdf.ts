@@ -207,6 +207,11 @@ async function addHeader(
   pageWidth: number,
   margins: number
 ): Promise<void> {
+  // Add dark blue header banner (full width)
+  const headerHeight = 18; // mm
+  pdf.setFillColor(29, 78, 216); // blue-700 - dark blue
+  pdf.rect(0, 0, pageWidth, headerHeight, 'F');
+  
   if (!logoElement) return;
 
   // Clone and render logo
@@ -218,19 +223,15 @@ async function addHeader(
   const imgData = canvas.toDataURL('image/png', 0.95);
 
   // Calculate logo dimensions (keep it small in header)
-  const logoHeight = 8; // 8mm height
+  const logoHeight = 10; // 10mm height for better visibility on dark background
   const logoWidth = (canvas.width * logoHeight) / canvas.height;
 
-  // Center the logo
+  // Center the logo vertically and horizontally in the header
   const logoX = (pageWidth - logoWidth) / 2;
+  const logoY = (headerHeight - logoHeight) / 2;
 
-  // Add logo at top
-  pdf.addImage(imgData, 'PNG', logoX, margins / 2, logoWidth, logoHeight);
-
-  // Add a line below header
-  pdf.setDrawColor(200, 200, 200);
-  pdf.setLineWidth(0.1);
-  pdf.line(margins, margins + 10, pageWidth - margins, margins + 10);
+  // Add logo on top of the dark blue header
+  pdf.addImage(imgData, 'PNG', logoX, logoY, logoWidth, logoHeight);
 
   container.removeChild(clonedLogo);
 }
