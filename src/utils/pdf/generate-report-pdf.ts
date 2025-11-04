@@ -366,8 +366,8 @@ export async function generateReportPDF(
     let currentPage = 1;
     let currentY = contentTop;
     
-    // Add subtle background color to first page
-    pdf.setFillColor(249, 250, 251); // gray-50 background
+    // Add subtle blueish background to first page
+    pdf.setFillColor(235, 240, 248); // Darker blue-gray background
     pdf.rect(0, 0, pageWidth, pageHeight, 'F');
     
     // Add header and footer to first page
@@ -385,8 +385,8 @@ export async function generateReportPDF(
         currentPage++;
         currentY = contentTop;
         
-        // Add subtle background color to new page
-        pdf.setFillColor(249, 250, 251); // gray-50 background
+        // Add subtle blueish background to new page
+        pdf.setFillColor(235, 240, 248); // Darker blue-gray background
         pdf.rect(0, 0, pageWidth, pageHeight, 'F');
         
         // Add header and footer to new page
