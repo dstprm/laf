@@ -3,6 +3,7 @@ import { getValuationByTokenWithOwnerCheck } from '@/utils/database/valuation';
 import { ValuationReport } from '@/components/dashboard/valuations/valuation-report';
 import { ReportPublishBanner } from '@/components/dashboard/valuations/report-publish-banner';
 import { PrivateReportMessage } from '@/components/shared/private-report-message';
+import { DownloadPDFButton } from '@/components/dashboard/valuations/download-pdf-button';
 import Link from 'next/link';
 import Header from '@/components/home/header/header';
 import { Footer } from '@/components/home/footer/footer';
@@ -62,8 +63,19 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
         {/* Page Title */}
         <div className="bg-white border-b border-gray-200 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <h1 className="text-3xl font-bold text-gray-900">Reporte de Valuación</h1>
-            <p className="mt-2 text-sm text-gray-600">Análisis profesional DCF y proyecciones financieras</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Reporte de Valuación</h1>
+                <p className="mt-2 text-sm text-gray-600">Análisis profesional DCF y proyecciones financieras</p>
+              </div>
+              <DownloadPDFButton
+                reportElementId="valuation-report"
+                companyName={valuation.companyName}
+                reportName={valuation.name}
+                variant="default"
+                size="default"
+              />
+            </div>
           </div>
         </div>
 

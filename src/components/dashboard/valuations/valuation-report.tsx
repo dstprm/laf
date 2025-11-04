@@ -31,6 +31,8 @@ interface ValuationReportProps {
   // Display options
   showHeader?: boolean;
   className?: string;
+  id?: string; // Optional ID for PDF generation
+  isPDF?: boolean; // Flag to force desktop rendering for PDF generation
 }
 
 /**
@@ -50,6 +52,8 @@ export function ValuationReport({
   scenarios = [],
   showHeader = true,
   className = '',
+  id = 'valuation-report',
+  isPDF = false,
 }: ValuationReportProps) {
   const formatCurrency = (value: number | null | undefined) => {
     if (value === null || value === undefined) return 'N/A';
@@ -143,7 +147,12 @@ export function ValuationReport({
     : null;
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div id={id} className={`space-y-6 p-8 pb-16 bg-white ${className}`}>
+      {/* Logo Section */}
+      <div className="flex justify-center mb-8">
+        <img src="/logo.svg" alt="ValuPro" className="h-12" />
+      </div>
+
       {/* Header Section */}
       {showHeader && (
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 shadow-md">
@@ -194,12 +203,12 @@ export function ValuationReport({
       <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-sm">
         <div className="text-center">
           <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Enterprise Value (Caso Base)</p>
-          <p className="text-4xl font-bold text-blue-600 mt-2">{formatCurrency(enterpriseValue)}</p>
+          <p className="text-4xl font-bold text-blue-600 mt-2 mb-6">{formatCurrency(enterpriseValue)}</p>
 
           {/* Show scenario range if available */}
           {scenarioRange && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="text-xs font-medium text-gray-500 uppercase mb-2">Rango de Escenarios</p>
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <p className="text-xs font-medium text-gray-500 uppercase mb-3">Rango de Escenarios</p>
               <div className="flex items-center justify-center gap-6">
                 <div>
                   <p className="text-xs text-gray-500">Bajo</p>
@@ -283,25 +292,31 @@ export function ValuationReport({
 
       {/* Revenue & EBITDA Chart */}
       {revenue.length > 0 && (
-        <RevenueEbitdaChart
-          revenues={revenue.slice(0, numberOfYears)}
-          ebitdaMargins={ebitdaMargin.slice(0, numberOfYears)}
-          years={periods.slice(0, numberOfYears)}
-          title="Proyección de Ingresos y Margen EBITDA"
-        />
+        <div className="break-inside-avoid mt-8 mb-8">
+          <RevenueEbitdaChart
+            revenues={revenue.slice(0, numberOfYears)}
+            ebitdaMargins={ebitdaMargin.slice(0, numberOfYears)}
+            years={periods.slice(0, numberOfYears)}
+            title="Proyección de Ingresos y Margen EBITDA"
+            forceDesktop={isPDF}
+          />
+        </div>
       )}
 
       {/* Football Field Chart - Scenario Analysis */}
       {footballFieldData.length > 0 && (
-        <FootballFieldChart
-          ranges={footballFieldData}
-          title="Análisis de Rango de Valuación (Análisis de Escenarios)"
-        />
+        <div className="break-inside-avoid mt-8 mb-8">
+          <FootballFieldChart
+            ranges={footballFieldData}
+            title="Análisis de Rango de Valuación (Análisis de Escenarios)"
+            forceDesktop={isPDF}
+          />
+        </div>
       )}
 
       {/* Financial Projections Table */}
       {revenue.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm break-inside-avoid mt-8 mb-8">
           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
             <h3 className="text-lg font-semibold text-gray-900">Proyecciones Financieras</h3>
           </div>
@@ -364,7 +379,7 @@ export function ValuationReport({
       )}
 
       {/* Key Assumptions */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm break-inside-avoid mt-8 mb-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Suposiciones Clave</h3>
 
         {/* General Assumptions */}
@@ -486,6 +501,21 @@ export function ValuationReport({
           como asesoría financiera. Todas las proyecciones y suposiciones se basan en los datos proporcionados y pueden
           no reflejar resultados futuros reales. Por favor, consulte con un profesional financiero calificado antes de
           tomar decisiones de inversión.
+        </p>
+      </div>
+
+      {/* Promotional Footer */}
+      <div className="mt-8 pt-6 border-t-2 border-gray-200 text-center">
+        <p className="text-sm text-gray-600">
+          Crea tu propio reporte de manera gratuita en{' '}
+          <a
+            href="https://valupro.lat"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 font-semibold hover:text-blue-700 hover:underline"
+          >
+            https://valupro.lat
+          </a>
         </p>
       </div>
     </div>

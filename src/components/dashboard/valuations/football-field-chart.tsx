@@ -27,6 +27,10 @@ interface FootballFieldChartProps {
    * Optional class name for custom styling
    */
   className?: string;
+  /**
+   * Force desktop rendering (useful for PDF generation)
+   */
+  forceDesktop?: boolean;
 }
 
 /**
@@ -49,15 +53,23 @@ export function FootballFieldChart({
   title = 'Análisis de rango de valuación',
   height = 400,
   className = '',
+  forceDesktop = false,
 }: FootballFieldChartProps) {
-  // Detect small screens to adjust sizing/spacing
+  // Detect small screens to adjust sizing/spacing (unless forced to desktop or generating PDF)
   const [isMobile, setIsMobile] = React.useState(false);
   React.useEffect(() => {
+    // Check if we're in a PDF generation context
+    const isPDF = document.querySelector('[data-is-pdf="true"]') !== null;
+    
+    if (forceDesktop || isPDF) {
+      setIsMobile(false);
+      return;
+    }
     const handleResize = () => setIsMobile(typeof window !== 'undefined' && window.innerWidth < 640);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [forceDesktop]);
   // Debug logging
   React.useEffect(() => {
     console.log('FootballFieldChart: ranges updated', {
@@ -209,14 +221,14 @@ export function FootballFieldChart({
           </p>
         </div>
       )}
-      <div className="p-3 sm:p-4">
+      <div className="p-3 sm:p-4 overflow-visible">
         <ResponsiveContainer width="100%" height={isMobile ? 320 : height}>
           <BarChart
             data={chartData}
             layout="vertical"
             margin={{
               top: isMobile ? 12 : 20,
-              right: isMobile ? 4 : 24,
+              right: isMobile ? 20 : 40,
               left: isMobile ? 4 : 16,
               bottom: isMobile ? 8 : 20,
             }}

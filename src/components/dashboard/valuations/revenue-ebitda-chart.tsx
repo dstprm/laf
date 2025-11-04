@@ -29,6 +29,10 @@ interface RevenueEbitdaChartProps {
    * Optional class name for custom styling
    */
   className?: string;
+  /**
+   * Force desktop rendering (useful for PDF generation)
+   */
+  forceDesktop?: boolean;
 }
 
 /**
@@ -52,15 +56,23 @@ export function RevenueEbitdaChart({
   title = 'Ingresos y Margen EBITDA',
   height = 400,
   className = '',
+  forceDesktop = false,
 }: RevenueEbitdaChartProps) {
-  // Detect small screens to adjust sizing and spacing
+  // Detect small screens to adjust sizing and spacing (unless forced to desktop or generating PDF)
   const [isMobile, setIsMobile] = React.useState(false);
   React.useEffect(() => {
+    // Check if we're in a PDF generation context
+    const isPDF = document.querySelector('[data-is-pdf="true"]') !== null;
+    
+    if (forceDesktop || isPDF) {
+      setIsMobile(false);
+      return;
+    }
     const handleResize = () => setIsMobile(typeof window !== 'undefined' && window.innerWidth < 640);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [forceDesktop]);
   // Prepare data for the chart
   const chartData = revenues.map((revenue, index) => {
     const ebitdaMargin = ebitdaMargins[index] || 0;
@@ -95,13 +107,13 @@ export function RevenueEbitdaChart({
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
         </div>
       )}
-      <div className="p-4">
+      <div className="p-4 overflow-visible">
         <ResponsiveContainer width="100%" height={isMobile ? 260 : height}>
           <ComposedChart
             data={chartData}
             margin={{
               top: isMobile ? 12 : 20,
-              right: isMobile ? 12 : 30,
+              right: isMobile ? 20 : 50,
               left: isMobile ? 8 : 20,
               bottom: isMobile ? 8 : 20,
             }}
