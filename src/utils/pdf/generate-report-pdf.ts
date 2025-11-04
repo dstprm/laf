@@ -193,6 +193,79 @@ async function captureElementAsCanvas(element: HTMLElement, scale: number, width
   });
 }
 
+/**
+ * Adds header with logo to the PDF page
+ */
+async function addHeader(
+  pdf: jsPDF,
+  logoElement: HTMLElement | null,
+  container: HTMLElement,
+  scale: number,
+  pageWidth: number,
+  margins: number
+): Promise<void> {
+  if (!logoElement) return;
+
+  // Clone and render logo
+  const clonedLogo = cloneAndFixColors(logoElement);
+  container.appendChild(clonedLogo);
+  await new Promise((resolve) => setTimeout(resolve, 30));
+
+  const canvas = await captureElementAsCanvas(clonedLogo, scale, logoElement.offsetWidth);
+  const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+  // Calculate logo dimensions (keep it small in header)
+  const logoHeight = 8; // 8mm height
+  const logoWidth = (canvas.width * logoHeight) / canvas.height;
+
+  // Center the logo
+  const logoX = (pageWidth - logoWidth) / 2;
+
+  // Add logo at top
+  pdf.addImage(imgData, 'JPEG', logoX, margins / 2, logoWidth, logoHeight);
+
+  // Add a line below header
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(0.1);
+  pdf.line(margins, margins + 10, pageWidth - margins, margins + 10);
+
+  container.removeChild(clonedLogo);
+}
+
+/**
+ * Adds footer with promotional text and page number to the PDF page
+ */
+function addFooter(
+  pdf: jsPDF,
+  pageNumber: number,
+  totalPages: number,
+  pageWidth: number,
+  pageHeight: number,
+  margins: number
+): void {
+  const footerY = pageHeight - margins + 2;
+
+  // Add line above footer
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(0.1);
+  pdf.line(margins, pageHeight - margins - 5, pageWidth - margins, pageHeight - margins - 5);
+
+  // Add promotional text
+  pdf.setFontSize(8);
+  pdf.setTextColor(100, 100, 100);
+  const promoText = 'Crea tu propio reporte de manera gratuita en https://valupro.lat';
+  const textWidth = pdf.getTextWidth(promoText);
+  const textX = (pageWidth - textWidth) / 2;
+  pdf.text(promoText, textX, footerY);
+
+  // Add page number
+  pdf.setFontSize(8);
+  pdf.setTextColor(100, 100, 100);
+  const pageText = `Página ${pageNumber} de ${totalPages}`;
+  const pageTextWidth = pdf.getTextWidth(pageText);
+  pdf.text(pageText, pageWidth - margins - pageTextWidth, footerY);
+}
+
 export async function generateReportPDF(
   element: HTMLElement,
   options: GeneratePDFOptions = {}
@@ -208,20 +281,36 @@ export async function generateReportPDF(
     // PDF dimensions
     const pageWidth = 210; // A4 width in mm
     const pageHeight = 297; // A4 height in mm
-    const margins = 10; // 10mm margins
+    const margins = 15; // 15mm margins
+    const headerHeight = 15; // Space reserved for header
+    const footerHeight = 10; // Space reserved for footer
     const contentWidth = pageWidth - (margins * 2);
+    const contentTop = margins + headerHeight;
+    const contentBottom = pageHeight - margins - footerHeight;
+    const availableHeight = contentBottom - contentTop;
     
-    // Create PDF
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    let currentY = margins;
-    let isFirstElement = true;
+    // Get logo and footer elements
+    const logoElement = element.querySelector('.flex.justify-center') as HTMLElement | null;
+    const footerElement = element.querySelector('.mt-8.pt-6.border-t-2') as HTMLElement | null;
     
-    // Get all major sections that should be kept together
-    const sections = element.querySelectorAll(
-      '#valuation-report > *:not(script):not(style)'
-    );
+    // Get all major sections (excluding logo and footer)
+    const allSections = Array.from(
+      element.querySelectorAll('#valuation-report > *:not(script):not(style)')
+    ) as HTMLElement[];
     
-    console.log(`Found ${sections.length} sections to process`);
+    const sections = allSections.filter((section) => {
+      // Exclude logo section
+      if (section.classList.contains('justify-center') && section.querySelector('img[alt="ValuPro"]')) {
+        return false;
+      }
+      // Exclude promotional footer section
+      if (section.classList.contains('border-t-2') && section.textContent?.includes('valupro.lat')) {
+        return false;
+      }
+      return true;
+    });
+    
+    console.log(`Found ${sections.length} content sections to process`);
     
     // Create container for rendering elements
     container = document.createElement('div');
@@ -234,42 +323,72 @@ export async function generateReportPDF(
     container.style.backgroundColor = '#ffffff';
     document.body.appendChild(container);
     
-    // Process each section separately
+    // First pass: capture all sections to calculate total pages
+    const sectionData: Array<{ imgData: string; width: number; height: number }> = [];
+    
     for (let i = 0; i < sections.length; i++) {
-      const section = sections[i] as HTMLElement;
+      const section = sections[i];
       
-      // Clone and fix colors for this section
       const clonedSection = cloneAndFixColors(section);
       container.appendChild(clonedSection);
-      
-      // Small delay for rendering
       await new Promise((resolve) => setTimeout(resolve, 50));
       
-      // Capture this section as canvas
       const canvas = await captureElementAsCanvas(clonedSection, scale, element.offsetWidth);
-      
-      // Calculate dimensions in mm
       const imgWidth = contentWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL('image/jpeg', quality);
+      
+      sectionData.push({ imgData, width: imgWidth, height: imgHeight });
+      container.removeChild(clonedSection);
+      
+      console.log(`Captured section ${i + 1}/${sections.length}, height: ${imgHeight.toFixed(2)}mm`);
+    }
+    
+    // Calculate total pages needed
+    let totalPages = 1;
+    let testY = contentTop;
+    for (const data of sectionData) {
+      if (testY + data.height > contentBottom) {
+        totalPages++;
+        testY = contentTop;
+      }
+      testY += data.height + 5;
+    }
+    
+    console.log(`PDF will have ${totalPages} pages`);
+    
+    // Create PDF with headers and footers
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    let currentPage = 1;
+    let currentY = contentTop;
+    
+    // Add header and footer to first page
+    await addHeader(pdf, logoElement, container, scale, pageWidth, margins);
+    addFooter(pdf, currentPage, totalPages, pageWidth, pageHeight, margins);
+    
+    // Add all sections
+    for (let i = 0; i < sectionData.length; i++) {
+      const data = sectionData[i];
       
       // Check if we need a new page
-      if (!isFirstElement && currentY + imgHeight > pageHeight - margins) {
+      if (currentY + data.height > contentBottom) {
+        // New page
         pdf.addPage();
-        currentY = margins;
+        currentPage++;
+        currentY = contentTop;
+        
+        // Add header and footer to new page
+        await addHeader(pdf, logoElement, container, scale, pageWidth, margins);
+        addFooter(pdf, currentPage, totalPages, pageWidth, pageHeight, margins);
       }
       
       // Add the image to PDF
-      const imgData = canvas.toDataURL('image/jpeg', quality);
-      pdf.addImage(imgData, 'JPEG', margins, currentY, imgWidth, imgHeight);
+      pdf.addImage(data.imgData, 'JPEG', margins, currentY, data.width, data.height);
       
       // Update position for next element
-      currentY += imgHeight + 5; // 5mm spacing between sections
-      isFirstElement = false;
+      currentY += data.height + 5; // 5mm spacing between sections
       
-      // Clean up this section
-      container.removeChild(clonedSection);
-      
-      console.log(`Processed section ${i + 1}/${sections.length}, height: ${imgHeight.toFixed(2)}mm`);
+      console.log(`Added section ${i + 1}/${sectionData.length} to page ${currentPage}`);
     }
     
     // Clean up
