@@ -241,21 +241,29 @@ async function addHeader(pdf: jsPDF, container: HTMLElement, scale: number, page
     const logoHeight = 8; // 8mm height
     const logoWidth = (canvas.width * logoHeight) / canvas.height;
 
+    // Calculate total height of logo + tagline combo for vertical centering
+    const taglineSpacing = 3; // spacing between logo and tagline
+    const taglineTextHeight = 2; // approximate text height
+    const totalComboHeight = logoHeight + taglineSpacing + taglineTextHeight;
+
+    // Center the combo vertically in the header
+    const comboStartY = (headerHeight - totalComboHeight) / 2;
+
     // Position logo on the right side
     const logoX = pageWidth - margins - logoWidth;
-    const logoY = 4; // 4mm from top - more space
+    const logoY = comboStartY;
 
     // Add logo on the right
     pdf.addImage(imgData, 'PNG', logoX, logoY, logoWidth, logoHeight);
 
-    // Add tagline below logo (small text)
-    pdf.setFontSize(7);
-    pdf.setFont('helvetica', 'normal');
+    // Add tagline below logo (bold, professional font)
+    pdf.setFontSize(8);
+    pdf.setFont('times', 'bold'); // Times is more professional and elegant
     pdf.setTextColor(255, 255, 255); // White color
     const tagline = 'Regional M&A Advisory';
     const taglineWidth = pdf.getTextWidth(tagline);
     const taglineX = pageWidth - margins - taglineWidth;
-    const taglineY = logoY + logoHeight + 3.5; // 3.5mm below logo - more space
+    const taglineY = logoY + logoHeight + taglineSpacing;
     pdf.text(tagline, taglineX, taglineY);
   } catch (error) {
     console.error('Error capturing white logo:', error);
@@ -286,7 +294,7 @@ function addFooter(
   // Add promotional text
   pdf.setFontSize(8);
   pdf.setTextColor(100, 100, 100);
-  const promoText = 'Crea tu propio reporte de manera gratuita en https://valupro.lat';
+  const promoText = 'Crea una valorización gratuita en https://valupro.lat';
   const textWidth = pdf.getTextWidth(promoText);
   const textX = (pageWidth - textWidth) / 2;
   pdf.text(promoText, textX, footerY);
