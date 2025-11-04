@@ -141,6 +141,9 @@ function cloneAndFixColors(originalElement: HTMLElement): HTMLElement {
   // Now clone the element
   const clone = originalElement.cloneNode(true) as HTMLElement;
   
+  // Set isPDF attribute to force desktop rendering in React components
+  clone.setAttribute('data-is-pdf', 'true');
+  
   // Preserve the original element's dimensions
   const originalRect = originalElement.getBoundingClientRect();
   clone.style.width = `${originalRect.width}px`;

@@ -32,6 +32,7 @@ interface ValuationReportProps {
   showHeader?: boolean;
   className?: string;
   id?: string; // Optional ID for PDF generation
+  isPDF?: boolean; // Flag to force desktop rendering for PDF generation
 }
 
 /**
@@ -52,6 +53,7 @@ export function ValuationReport({
   showHeader = true,
   className = '',
   id = 'valuation-report',
+  isPDF = false,
 }: ValuationReportProps) {
   const formatCurrency = (value: number | null | undefined) => {
     if (value === null || value === undefined) return 'N/A';
@@ -201,12 +203,12 @@ export function ValuationReport({
       <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-sm">
         <div className="text-center">
           <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Enterprise Value (Caso Base)</p>
-          <p className="text-4xl font-bold text-blue-600 mt-2">{formatCurrency(enterpriseValue)}</p>
+          <p className="text-4xl font-bold text-blue-600 mt-2 mb-6">{formatCurrency(enterpriseValue)}</p>
 
           {/* Show scenario range if available */}
           {scenarioRange && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="text-xs font-medium text-gray-500 uppercase mb-2">Rango de Escenarios</p>
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <p className="text-xs font-medium text-gray-500 uppercase mb-3">Rango de Escenarios</p>
               <div className="flex items-center justify-center gap-6">
                 <div>
                   <p className="text-xs text-gray-500">Bajo</p>
@@ -295,6 +297,7 @@ export function ValuationReport({
           ebitdaMargins={ebitdaMargin.slice(0, numberOfYears)}
           years={periods.slice(0, numberOfYears)}
           title="Proyección de Ingresos y Margen EBITDA"
+          forceDesktop={isPDF}
         />
       )}
 
@@ -303,6 +306,7 @@ export function ValuationReport({
         <FootballFieldChart
           ranges={footballFieldData}
           title="Análisis de Rango de Valuación (Análisis de Escenarios)"
+          forceDesktop={isPDF}
         />
       )}
 
