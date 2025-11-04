@@ -174,17 +174,20 @@ function cloneAndFixColors(originalElement: HTMLElement): HTMLElement {
  * @param options - Options for PDF generation
  */
 /**
- * Captures a single element as a canvas
+ * Captures a single element as a canvas with transparent background
  */
-async function captureElementAsCanvas(element: HTMLElement, scale: number, width: number): Promise<HTMLCanvasElement> {
+async function captureElementAsCanvas(element: HTMLElement, scale: number): Promise<HTMLCanvasElement> {
+  // Get the actual content width (use scrollWidth to get real width)
+  const actualWidth = Math.max(element.offsetWidth, element.scrollWidth);
+  
   return await html2canvas(element, {
     scale: scale,
     useCORS: true,
     logging: false,
-    backgroundColor: '#ffffff',
-    windowWidth: width,
+    backgroundColor: null, // Transparent background
+    windowWidth: actualWidth,
     windowHeight: element.offsetHeight,
-    width: width,
+    width: actualWidth,
     height: element.offsetHeight,
     x: 0,
     y: 0,
@@ -211,8 +214,8 @@ async function addHeader(
   container.appendChild(clonedLogo);
   await new Promise((resolve) => setTimeout(resolve, 30));
 
-  const canvas = await captureElementAsCanvas(clonedLogo, scale, logoElement.offsetWidth);
-  const imgData = canvas.toDataURL('image/jpeg', 0.95);
+  const canvas = await captureElementAsCanvas(clonedLogo, scale);
+  const imgData = canvas.toDataURL('image/png', 0.95);
 
   // Calculate logo dimensions (keep it small in header)
   const logoHeight = 8; // 8mm height
@@ -222,7 +225,7 @@ async function addHeader(
   const logoX = (pageWidth - logoWidth) / 2;
 
   // Add logo at top
-  pdf.addImage(imgData, 'JPEG', logoX, margins / 2, logoWidth, logoHeight);
+  pdf.addImage(imgData, 'PNG', logoX, margins / 2, logoWidth, logoHeight);
 
   // Add a line below header
   pdf.setDrawColor(200, 200, 200);
@@ -313,14 +316,14 @@ export async function generateReportPDF(
     console.log(`Found ${sections.length} content sections to process`);
     
     // Create container for rendering elements
+    // Don't constrain width - let each section determine its natural width
     container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.left = '-9999px';
     container.style.top = '0';
     container.style.zIndex = '-9999';
     container.style.pointerEvents = 'none';
-    container.style.width = `${element.offsetWidth}px`;
-    container.style.backgroundColor = '#ffffff';
+    container.style.backgroundColor = 'transparent';
     document.body.appendChild(container);
     
     // First pass: capture all sections to calculate total pages
@@ -333,15 +336,16 @@ export async function generateReportPDF(
       container.appendChild(clonedSection);
       await new Promise((resolve) => setTimeout(resolve, 50));
       
-      const canvas = await captureElementAsCanvas(clonedSection, scale, element.offsetWidth);
+      // Capture with automatic width detection and transparent background
+      const canvas = await captureElementAsCanvas(clonedSection, scale);
       const imgWidth = contentWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const imgData = canvas.toDataURL('image/jpeg', quality);
+      const imgData = canvas.toDataURL('image/png', quality);
       
       sectionData.push({ imgData, width: imgWidth, height: imgHeight });
       container.removeChild(clonedSection);
       
-      console.log(`Captured section ${i + 1}/${sections.length}, height: ${imgHeight.toFixed(2)}mm`);
+      console.log(`Captured section ${i + 1}/${sections.length}, width: ${canvas.width}px, height: ${imgHeight.toFixed(2)}mm`);
     }
     
     // Calculate total pages needed
@@ -362,6 +366,10 @@ export async function generateReportPDF(
     let currentPage = 1;
     let currentY = contentTop;
     
+    // Add subtle background color to first page
+    pdf.setFillColor(249, 250, 251); // gray-50 background
+    pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+    
     // Add header and footer to first page
     await addHeader(pdf, logoElement, container, scale, pageWidth, margins);
     addFooter(pdf, currentPage, totalPages, pageWidth, pageHeight, margins);
@@ -377,13 +385,17 @@ export async function generateReportPDF(
         currentPage++;
         currentY = contentTop;
         
+        // Add subtle background color to new page
+        pdf.setFillColor(249, 250, 251); // gray-50 background
+        pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+        
         // Add header and footer to new page
         await addHeader(pdf, logoElement, container, scale, pageWidth, margins);
         addFooter(pdf, currentPage, totalPages, pageWidth, pageHeight, margins);
       }
       
-      // Add the image to PDF
-      pdf.addImage(data.imgData, 'JPEG', margins, currentY, data.width, data.height);
+      // Add the image to PDF (PNG for transparency support)
+      pdf.addImage(data.imgData, 'PNG', margins, currentY, data.width, data.height);
       
       // Update position for next element
       currentY += data.height + 5; // 5mm spacing between sections
