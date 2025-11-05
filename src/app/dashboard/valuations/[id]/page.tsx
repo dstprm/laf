@@ -62,7 +62,7 @@ export default async function ValuationDetailPage({ params }: { params: Promise<
                 href="/dashboard/valuations"
                 className="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block"
               >
-                ← Volver a Valuaciones
+                ← Volver a Valorizaciones
               </Link>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 {valuation.name || `Valuación - ${formatDate(valuation.createdAt)}`}

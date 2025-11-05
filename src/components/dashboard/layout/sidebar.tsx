@@ -8,7 +8,7 @@ import { useUserAdmin } from '@/hooks/useUserAdmin';
 
 const baseSidebarItems = [
   {
-    title: 'Valuaciones',
+    title: 'Valorizaciones',
     icon: <FileText className="h-6 w-6" />,
     href: '/dashboard/valuations',
   },

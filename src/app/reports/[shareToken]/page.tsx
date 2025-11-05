@@ -99,8 +99,8 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
           <div className="mt-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-8 text-center text-white shadow-lg">
             <h2 className="text-2xl font-bold mb-3">Crea tu propio informe de valuación</h2>
             <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-              Obtén valuaciones de empresas de alta calidad con nuestro calculador DCF fácil de usar. Guarda, comparte y
-              analiza múltiples escenarios.
+              Obtén valorizaciones de empresas de alta calidad con nuestro calculador DCF fácil de usar. Guarda,
+              comparte y analiza múltiples escenarios.
             </p>
             <Link
               href="/free-valuation"

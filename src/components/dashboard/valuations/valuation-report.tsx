@@ -235,7 +235,7 @@ export function ValuationReport({
       </div>
 
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {wacc !== null && wacc !== undefined && (
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
             <p className="text-sm font-medium text-gray-600">WACC.</p>
@@ -248,7 +248,7 @@ export function ValuationReport({
             <p className="text-2xl font-bold text-gray-900 mt-1">{formatPercent(terminalGrowthRate)}</p>
           </div>
         )}
-        {/* {resultsData?.terminalValue && (
+        {resultsData?.terminalValue && (
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
             <p className="text-sm font-medium text-gray-600">Valor Terminal</p>
             <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(resultsData.terminalValue)}</p>
@@ -259,8 +259,8 @@ export function ValuationReport({
             <p className="text-sm font-medium text-gray-600">TV % de EV</p>
             <p className="text-2xl font-bold text-gray-900 mt-1">{terminalValuePercent.toFixed(1)}%</p>
           </div>
-        )} */}
-      </div>
+        )}
+      </div> */}
 
       {/* Valuation Multiples */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
@@ -397,12 +397,6 @@ export function ValuationReport({
             <p className="text-sm font-medium text-gray-600">Período de Proyección</p>
             <p className="text-base text-gray-900 mt-1">{numberOfYears} años</p>
           </div>
-          {wacc !== null && wacc !== undefined && (
-            <div>
-              <p className="text-sm font-medium text-gray-600">Tasa de Descuento (WACC)</p>
-              <p className="text-base text-gray-900 mt-1">{formatPercent(wacc)}</p>
-            </div>
-          )}
           {terminalGrowthRate !== null && terminalGrowthRate !== undefined && (
             <div>
               <p className="text-sm font-medium text-gray-600">Tasa de Crecimiento Terminal</p>
@@ -421,7 +415,23 @@ export function ValuationReport({
         {waccComponents && (
           <>
             <div className="border-t border-gray-200 pt-4 mb-4">
-              <h4 className="text-md font-semibold text-gray-900 mb-3">Componentes de WACC</h4>
+              <h4 className="text-md font-semibold text-gray-900 mb-3">Cálculo de WACC</h4>
+              {/* WACC Result */}
+              <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4">
+                <p className="text-sm font-medium text-gray-600 mb-2">Weighted Average Cost of Capital (WACC)</p>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900 mb-2">
+                      {wacc !== null && wacc !== undefined ? formatPercent(wacc) : 'N/A'}
+                    </p>
+                    <div className="flex items-baseline gap-3 text-xs text-gray-500">
+                      <span>Equity Weight: {(waccComponents.equityWeight * 100).toFixed(1)}%</span>
+                      <span>•</span>
+                      <span>Debt Weight: {(waccComponents.debtWeight * 100).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="bg-blue-50 rounded-lg p-3">
