@@ -82,7 +82,7 @@ export function EditReportComment({ valuationId, initialComment }: EditReportCom
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Ingresa tu resumen ejecutivo aquí... (e.g., 'Fuerte crecimiento con márgenes mejorando. La empresa está bien posicionada en el mercado que se está expandiendo. La valuación refleja un 25% de alza sobre los niveles actuales de trading.')"
+              placeholder="Ingresa tu resumen ejecutivo aquí... (e.g., 'Fuerte crecimiento con márgenes mejorando. La empresa está bien posicionada en el mercado que se está expandiendo. La valorización refleja un 25% de alza sobre los niveles actuales de trading.')"
               className="w-full min-h-[200px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
               maxLength={50000}
             />

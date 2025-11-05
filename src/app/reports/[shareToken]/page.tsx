@@ -65,7 +65,7 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Reporte de Valuación</h1>
+                <h1 className="text-3xl font-bold text-gray-900">Reporte de Valorización</h1>
                 <p className="mt-2 text-sm text-gray-600">Análisis profesional DCF y proyecciones financieras</p>
               </div>
               <DownloadPDFButton
@@ -97,7 +97,7 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
 
           {/* Call to Action */}
           <div className="mt-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-8 text-center text-white shadow-lg">
-            <h2 className="text-2xl font-bold mb-3">Crea tu propio informe de valuación</h2>
+            <h2 className="text-2xl font-bold mb-3">Crea tu propio informe de valorización</h2>
             <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
               Obtén valorizaciones de empresas de alta calidad con nuestro calculador DCF fácil de usar. Guarda,
               comparte y analiza múltiples escenarios.
@@ -134,27 +134,27 @@ export async function generateMetadata({ params }: ReportPageProps) {
 
   if (status === 'not_found') {
     return {
-      title: 'Reporte de Valuación no encontrado',
+      title: 'Reporte de Valorización no encontrado',
     };
   }
 
   if (status === 'private') {
     return {
       title: 'Reporte Privado',
-      description: 'Este informe de valuación es privado y solo accesible para su propietario.',
+      description: 'Este informe de valorización es privado y solo accesible para su propietario.',
     };
   }
 
   if (!valuation) {
     return {
-      title: 'Reporte de Valuación no encontrado',
+      title: 'Reporte de Valorización no encontrado',
     };
   }
 
-  const title = valuation.companyName || valuation.name || 'Reporte de Valuación';
+  const title = valuation.companyName || valuation.name || 'Reporte de Valorización';
 
   return {
-    title: `${title} - Reporte de Valuación`,
-    description: `Ve el análisis detallado de la valuación para ${title}. Incluye proyecciones financieras, análisis de escenarios y suposiciones clave.`,
+    title: `${title} - Reporte de Valorización`,
+    description: `Ve el análisis detallado de la valorización para ${title}. Incluye proyecciones financieras, análisis de escenarios y suposiciones clave.`,
   };
 }

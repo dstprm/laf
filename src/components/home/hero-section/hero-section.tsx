@@ -105,7 +105,7 @@ export function HeroSection() {
 
         <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
           <Button asChild={true} size="lg" className="h-12 px-8 text-base font-semibold">
-            <Link href="/free-valuation">Valuación Gratuita</Link>
+            <Link href="/free-valuation">Valorización Gratuita</Link>
           </Button>
           <Button
             variant="outline"
@@ -113,7 +113,7 @@ export function HeroSection() {
             size="lg"
             className="h-12 px-8 text-base font-semibold bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
           >
-            <Link href="#professional-valuation">Valuación Profesional</Link>
+            <Link href="#professional-valuation">Valorización Profesional</Link>
           </Button>
         </div>
       </div>

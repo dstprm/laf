@@ -17,9 +17,12 @@ export function ContactSection() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8 py-14 sm:py-16 md:py-20">
           <div className="grid items-start gap-8 md:grid-cols-2">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight md:text-4xl">Valuación Profesional</h2>
+              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight md:text-4xl">
+                Valorización Profesional
+              </h2>
               <p className="mt-3 sm:mt-4 text-sm sm:text-base ">
-                ¿Necesitas una valuación más detallada y personalizada? Nuestro equipo de expertos puede ayudarte con:
+                ¿Necesitas una valorización más detallada y personalizada? Nuestro equipo de expertos puede ayudarte
+                con:
               </p>
               <ul className="mt-4 space-y-2 text-sm ">
                 {services.map((service, i) => (
@@ -34,7 +37,7 @@ export function ContactSection() {
               </p>
             </div>
             <div className="bg-card border rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Solicita tu valuación profesional</h3>
+              <h3 className="text-lg font-semibold mb-4">Solicita tu valorización profesional</h3>
               <ContactForm source="home" />
             </div>
           </div>

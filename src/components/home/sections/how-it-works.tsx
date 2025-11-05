@@ -7,7 +7,7 @@ export function HowItWorks() {
     },
     {
       title: 'Cálculo automático',
-      description: 'Calculamos tu valuación mediante DCF con datos actualizados de tasas y betas por industria.',
+      description: 'Calculamos tu valorización mediante DCF con datos actualizados de tasas y betas por industria.',
     },
     {
       title: 'Obtén tu informe',
@@ -20,13 +20,13 @@ export function HowItWorks() {
       <div className="mx-auto max-w-3xl text-center">
         <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">Cómo funciona</h2>
         <p className="mt-4 text-muted-foreground">
-          Comienza con nuestra valuación gratuita en minutos, o contacta a nuestro equipo para una valuación profesional
-          completa.
+          Comienza con nuestra valorización gratuita en minutos, o contacta a nuestro equipo para una valorización
+          profesional completa.
         </p>
       </div>
 
       <div className="mt-8 mb-12 text-center">
-        <h3 className="text-xl font-semibold">Valuación Gratuita</h3>
+        <h3 className="text-xl font-semibold">Valorización Gratuita</h3>
         <p className="text-sm text-muted-foreground mt-2">Proceso automatizado en 3 pasos</p>
       </div>
 
@@ -44,7 +44,7 @@ export function HowItWorks() {
 
       <div className="mt-12 pt-8 border-t border-border">
         <div className="text-center">
-          <h3 className="text-xl font-semibold">Valuación Profesional</h3>
+          <h3 className="text-xl font-semibold">Valorización Profesional</h3>
           <p className="text-sm text-muted-foreground mt-2 max-w-2xl mx-auto">
             Para necesidades más complejas, nuestro equipo de expertos trabaja contigo de forma personalizada: desde la
             recopilación de información hasta la entrega de un análisis exhaustivo y presentaciones ejecutivas para

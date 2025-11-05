@@ -167,7 +167,7 @@ export function ValuationReport({
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 shadow-md">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold">{companyName || name || 'Informe de Valuación'}</h1>
+              <h1 className="text-3xl font-bold">{companyName || name || 'Informe de Valorización'}</h1>
               {companyName && name && companyName !== name && <p className="text-blue-100 mt-1">{name}</p>}
               <div className="flex items-center gap-4 mt-3 text-sm text-blue-100">
                 {industry && (
@@ -256,7 +256,7 @@ export function ValuationReport({
 
       {/* Valuation Multiples */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Múltiplos de Valuación Implícitos</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Múltiplos de Valorización Implícitos</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {evEbitdaMultipleCurrent !== null && (
             <div>
@@ -309,7 +309,7 @@ export function ValuationReport({
         <div className="break-inside-avoid mt-8 mb-8">
           <FootballFieldChart
             ranges={footballFieldData}
-            title="Análisis de Rango de Valuación (Análisis de Escenarios)"
+            title="Análisis de Rango de Valorización (Análisis de Escenarios)"
             forceDesktop={isPDF}
           />
         </div>

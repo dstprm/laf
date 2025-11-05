@@ -95,7 +95,7 @@ export function ScenarioListLocal({
           {scenarios.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <p>Aún no se han creado escenarios.</p>
-              <p className="text-sm mt-2">Agrega un escenario para ver diferentes rangos de valuación.</p>
+              <p className="text-sm mt-2">Agrega un escenario para ver diferentes rangos de valorización.</p>
             </div>
           ) : (
             <div className="space-y-3">
