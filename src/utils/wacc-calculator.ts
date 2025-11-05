@@ -1,6 +1,6 @@
 /**
  * WACC (Weighted Average Cost of Capital) Calculation Utilities
- * 
+ *
  * Provides consistent WACC calculations across the application.
  * WACC is always calculated at runtime from risk profile data to maintain
  * consistency when input parameters change.
@@ -63,7 +63,7 @@ export function calculateDebtWeight(deRatio: number): number {
 /**
  * Calculate WACC (Weighted Average Cost of Capital)
  * Formula: WACC = (E/V × Re) + (D/V × Rd × (1 - Tc))
- * 
+ *
  * @param riskProfile - The risk profile containing all necessary parameters
  * @returns WACC as a decimal (e.g., 0.12 for 12%)
  */
@@ -79,7 +79,7 @@ export function calculateWacc(riskProfile: RiskProfile): number {
 /**
  * Calculate all WACC components at once
  * Useful for displaying detailed breakdowns in reports
- * 
+ *
  * @param riskProfile - The risk profile containing all necessary parameters
  * @returns Object containing all WACC components and final WACC
  */
@@ -101,11 +101,10 @@ export function calculateWaccComponents(riskProfile: RiskProfile): WaccComponent
 
 /**
  * Calculate WACC as a percentage
- * 
+ *
  * @param riskProfile - The risk profile containing all necessary parameters
  * @returns WACC as a percentage (e.g., 12 for 12%)
  */
 export function calculateWaccPercent(riskProfile: RiskProfile): number {
   return calculateWacc(riskProfile) * 100;
 }
-
