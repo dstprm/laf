@@ -15,7 +15,7 @@ export function Cta() {
           }}
         />
         <div className="mx-auto max-w-2xl">
-          <h3 className="text-2xl font-semibold md:text-4xl">Listo para valuar tu empresa</h3>
+          <h3 className="text-2xl font-semibold md:text-4xl">Listo para valorizar tu empresa</h3>
           <p className="mt-3 text-muted-foreground">
             Comienza gratis en minutos o solicita una valorización profesional personalizada.
           </p>
