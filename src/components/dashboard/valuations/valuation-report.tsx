@@ -503,21 +503,6 @@ export function ValuationReport({
           tomar decisiones de inversión.
         </p>
       </div>
-
-      {/* Promotional Footer */}
-      <div className="mt-8 pt-6 border-t-2 border-gray-200 text-center">
-        <p className="text-sm text-gray-600">
-          Crea tu propio reporte de manera gratuita en{' '}
-          <a
-            href="https://valupro.lat"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 font-semibold hover:text-blue-700 hover:underline"
-          >
-            https://valupro.lat
-          </a>
-        </p>
-      </div>
     </div>
   );
 }

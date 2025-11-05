@@ -286,20 +286,37 @@ function addFooter(
 ): void {
   const footerY = pageHeight - margins + 2;
 
-  // Add line above footer
-  pdf.setDrawColor(200, 200, 200);
-  pdf.setLineWidth(0.1);
+  // Add separator line above footer (darker, thicker line to match the border-t-2 style)
+  pdf.setDrawColor(209, 213, 219); // gray-300
+  pdf.setLineWidth(0.5); // Thicker line to match border-t-2
   pdf.line(margins, pageHeight - margins - 5, pageWidth - margins, pageHeight - margins - 5);
 
-  // Add promotional text
-  pdf.setFontSize(8);
-  pdf.setTextColor(100, 100, 100);
-  const promoText = 'Crea una valorización gratuita en https://valupro.lat';
-  const textWidth = pdf.getTextWidth(promoText);
-  const textX = (pageWidth - textWidth) / 2;
-  pdf.text(promoText, textX, footerY);
+  // Add promotional text (centered, matching the component style)
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(75, 85, 99); // gray-600 for main text
 
-  // Add page number
+  // Split into parts: regular text + link
+  const regularText = 'Crea tu propio reporte de manera gratuita en ';
+  const linkText = 'https://valupro.lat';
+
+  const regularWidth = pdf.getTextWidth(regularText);
+  const linkWidth = pdf.getTextWidth(linkText);
+  const totalWidth = regularWidth + linkWidth;
+
+  // Center the entire line
+  const startX = (pageWidth - totalWidth) / 2;
+
+  // Draw regular text in gray
+  pdf.text(regularText, startX, footerY);
+
+  // Draw link text in blue and bold
+  pdf.setTextColor(37, 99, 235); // blue-600
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(linkText, startX + regularWidth, footerY);
+
+  // Add page number (right-aligned)
+  pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
   pdf.setTextColor(100, 100, 100);
   const pageText = `Página ${pageNumber} de ${totalPages}`;
@@ -326,18 +343,14 @@ export async function generateReportPDF(element: HTMLElement, options: GenerateP
     const contentTop = margins + headerHeight;
     const contentBottom = pageHeight - margins - footerHeight;
 
-    // Get all major sections (excluding logo and footer)
+    // Get all major sections (excluding logo)
     const allSections = Array.from(
       element.querySelectorAll('#valuation-report > *:not(script):not(style)'),
     ) as HTMLElement[];
 
     const sections = allSections.filter((section) => {
-      // Exclude logo section
+      // Exclude logo section (it's rendered in the PDF header)
       if (section.classList.contains('justify-center') && section.querySelector('img[alt="ValuPro"]')) {
-        return false;
-      }
-      // Exclude promotional footer section
-      if (section.classList.contains('border-t-2') && section.textContent?.includes('valupro.lat')) {
         return false;
       }
       return true;
