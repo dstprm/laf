@@ -5,7 +5,7 @@ import { LogOut } from 'lucide-react';
 import { MouseEvent } from 'react';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { useClerk } from '@clerk/nextjs';
-import { LightDarkToggle } from '@/components/ui/light-dark-toggle';
+// import { LightDarkToggle } from '@/components/ui/light-dark-toggle';
 
 export function SidebarUserInfo() {
   const { user } = useUserInfo();
@@ -29,7 +29,7 @@ export function SidebarUserInfo() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <LightDarkToggle className="h-6 w-6" />
+          {/* <LightDarkToggle className="h-6 w-6" /> */}
           <LogOut onClick={handleLogout} className={'h-6 w-6 text-muted-foreground cursor-pointer'} />
         </div>
       </div>

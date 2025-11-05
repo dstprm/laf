@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { LightDarkToggle } from '@/components/ui/light-dark-toggle';
+// import { LightDarkToggle } from '@/components/ui/light-dark-toggle';
 import { Menu } from 'lucide-react';
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -89,7 +89,7 @@ export default function Header({ user }: Props) {
         <div className="flex flex-1 items-center justify-start">
           <Link className="flex items-center" href={'/'}>
             <>
-              <Image className="block dark:hidden" src="/logo.svg" width={140} height={32} alt="Ready to SaaS" />
+              <Image className="block dark:hidden" src="/logo-white.svg" width={140} height={32} alt="Ready to SaaS" />
               <Image className="hidden dark:block" src="/logo-dark.svg" width={140} height={32} alt="Ready to SaaS" />
             </>
           </Link>
@@ -139,7 +139,7 @@ export default function Header({ user }: Props) {
         </div>
         <div className="flex flex-1 items-center justify-end">
           <div className="hidden md:flex items-center space-x-4">
-            <LightDarkToggle />
+            {/* <LightDarkToggle /> */}
             {user?.id ? (
               <Button variant={'secondary'} asChild={true}>
                 <Link href={'/dashboard/valuations'}>Panel</Link>
@@ -162,7 +162,7 @@ export default function Header({ user }: Props) {
               <SheetContent side="right" className="w-full sm:max-w-xs" onCloseAutoFocus={(e) => e.preventDefault()}>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Menú</span>
-                  <LightDarkToggle />
+                  {/* <LightDarkToggle /> */}
                 </div>
                 <div className="mt-6 grid gap-2 text-sm">
                   <SheetClose asChild>
