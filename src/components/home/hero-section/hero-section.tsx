@@ -104,7 +104,7 @@ export function HeroSection() {
         </p>
 
         <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
-          <Button asChild={true} size="lg" className="h-12 px-8 text-base font-semibold">
+          <Button asChild={true} size="lg" variant="secondary" className="h-12 px-8 text-base font-semibold">
             <Link href="/free-valuation">Valorización Gratuita</Link>
           </Button>
           <Button
