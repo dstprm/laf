@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 const items = [
   'Flujos descontados y múltiplos',
   'Comparables por industria',
-  'Rango de valoración',
+  'Rango de valorización',
   'Informe exportable',
   'Análisis de sensibilidad',
   'Versión gratuita en minutos',

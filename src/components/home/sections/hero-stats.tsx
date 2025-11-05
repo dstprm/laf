@@ -2,7 +2,7 @@ export function HeroStats() {
   const stats = [
     {
       title: 'Análisis en Minutos',
-      description: 'Obtén un rango de valoración profesional en menos de 5 minutos con nuestra herramienta',
+      description: 'Obtén un rango de valorización profesional en menos de 5 minutos con nuestra herramienta',
     },
     {
       title: 'Múltiples Metodologías',

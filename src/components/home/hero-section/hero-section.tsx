@@ -86,7 +86,7 @@ export function HeroSection() {
 
       <div className={'mx-auto w-full max-w-5xl text-center'}>
         <p className="mx-auto mb-5 inline-flex rounded-full border border-white/20 bg-white/5 px-3.5 py-1.5 text-xs font-medium tracking-wide text-white/80 backdrop-blur-sm">
-          Análisis financiero y valoración de empresas
+          Análisis financiero y valorización de empresas
         </p>
         <h1
           className={

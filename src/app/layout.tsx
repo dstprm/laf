@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description: 'Valora tu empresa en minutos con DCF, múltiplos y comparables. Gratis y listo para compartir.',
   keywords: [
     'valorización de empresas',
-    'valoración empresarial',
+    'valorización empresarial',
     'DCF',
     'múltiplos',
     'comparables',

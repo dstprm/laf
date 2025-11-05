@@ -11,7 +11,7 @@ export function HowItWorks() {
     },
     {
       title: 'Obtén tu informe',
-      description: 'Resultados claros, rango de valoración y recomendaciones accionables. Listo para compartir.',
+      description: 'Resultados claros, rango de valorización y recomendaciones accionables. Listo para compartir.',
     },
   ];
 

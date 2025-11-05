@@ -14,19 +14,19 @@ export function WelcomeEmail({ firstName }: WelcomeEmailProps) {
     <BaseEmail preview={`¡Te damos la bienvenida a ValuPro, ${displayName}!`}>
       <EmailHeader
         title={`¡Te damos la bienvenida a ValuPro, ${displayName}! 🎉`}
-        subtitle="Tu plataforma para valoraciones financieras simples y precisas"
+        subtitle="Tu plataforma para valorizaciones empresariales simples y precisas"
       />
 
       <Text style={paragraph}>
-        Gracias por registrarte. Ya puedes acceder a tu panel y comenzar a crear valoraciones en minutos.
+        Gracias por registrarte. Ya puedes acceder a tu panel y comenzar a crear valorizaciones en minutos.
       </Text>
 
       <Text style={paragraph}>Esto es lo que puedes hacer ahora:</Text>
 
       <ul style={list}>
-        <li style={listItem}>Crear tu primera valoración</li>
+        <li style={listItem}>Crear tu primera valorización</li>
         <li style={listItem}>Explorar el panel y las funcionalidades disponibles</li>
-        <li style={listItem}>Probar escenarios y ajustar variables de valoración</li>
+        <li style={listItem}>Probar escenarios y ajustar variables de valorización</li>
         <li style={listItem}>Solicitar asesoría profesional</li>
       </ul>
 

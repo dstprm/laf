@@ -4,7 +4,7 @@ export function Testimonials() {
     {
       name: 'Founder SaaS',
       role: 'Pre-seed',
-      quote: 'La claridad del informe me ayudó a explicar mi valoración a inversionistas en la primera reunión.',
+      quote: 'La claridad del informe me ayudó a explicar mi valorización a inversionistas en la primera reunión.',
     },
     {
       name: 'CFO PyME',

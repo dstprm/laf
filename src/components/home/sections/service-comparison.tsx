@@ -8,7 +8,7 @@ export function ServiceComparison() {
     'Valorización automatizada basada en Flujos de Cajas Descontados (DCF)',
     'Informe one-pager listo para compartir',
     'Resultados y sensibilización en minutos',
-    'Estimación de rango de valoración',
+    'Estimación de rango de valorización',
   ];
 
   const professionalFeatures = [
