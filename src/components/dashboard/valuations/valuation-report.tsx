@@ -193,15 +193,7 @@ export function ValuationReport({
       {/* Executive Summary */}
       {reportComment && (
         <div className="bg-blue-50 border-l-4 border-blue-600 rounded-lg p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <svg className="h-5 w-5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
+          <div className="mb-3">
             <h3 className="text-base font-bold text-blue-900">Resumen Ejecutivo</h3>
           </div>
           <p className="text-sm text-blue-900 whitespace-pre-wrap leading-relaxed">{reportComment}</p>
@@ -418,16 +410,24 @@ export function ValuationReport({
               <h4 className="text-md font-semibold text-gray-900 mb-3">Cálculo de WACC</h4>
               {/* WACC Result */}
               <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4">
-                <p className="text-sm font-medium text-gray-600 mb-2">Weighted Average Cost of Capital (WACC)</p>
-                <div className="flex items-end justify-between">
+                <div className="flex items-start justify-between gap-6">
                   <div>
-                    <p className="text-2xl font-bold text-gray-900 mb-2">
+                    <p className="text-sm font-medium text-gray-600 mb-2">Weighted Average Cost of Capital (WACC)</p>
+                    <p className="text-2xl font-bold text-gray-900">
                       {wacc !== null && wacc !== undefined ? formatPercent(wacc) : 'N/A'}
                     </p>
-                    <div className="flex items-baseline gap-3 text-xs text-gray-500">
-                      <span>Equity Weight: {(waccComponents.equityWeight * 100).toFixed(1)}%</span>
-                      <span>•</span>
-                      <span>Debt Weight: {(waccComponents.debtWeight * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="min-w-[180px]">
+                    <p className="text-sm font-medium text-gray-600 mb-2">Estructura de Capital</p>
+                    <div className="space-y-1 text-sm text-gray-700">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Patrimonio:</span>
+                        <span className="font-semibold">{(waccComponents.equityWeight * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Deuda:</span>
+                        <span className="font-semibold">{(waccComponents.debtWeight * 100).toFixed(1)}%</span>
+                      </div>
                     </div>
                   </div>
                 </div>

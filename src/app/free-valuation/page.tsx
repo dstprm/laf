@@ -749,7 +749,7 @@ export default function FreeValuationPage() {
 
     setIsSaving(true);
     try {
-      const defaultName = `Valuación - ${new Date().toLocaleDateString()}`;
+      const defaultName = `Valorización - ${new Date().toLocaleDateString()}`;
       const valuationDisplayName = companyName.trim() || defaultName;
       const fullPhoneNumber = companyPhone.trim() ? `${phoneCountryCode} ${companyPhone}` : undefined;
 
