@@ -4,6 +4,7 @@ import React from 'react';
 import { RevenueEbitdaChart } from './revenue-ebitda-chart';
 import { FootballFieldChart } from './football-field-chart';
 import { countryRiskPremiumStatic } from '@/app/valuation/countryRiskPremiumStatic';
+import { calculateWacc, calculateWaccComponents } from '@/utils/wacc-calculator';
 
 interface Scenario {
   id: string;
@@ -82,7 +83,11 @@ export function ValuationReport({
   const ebitda: number[] = (resultsData?.ebitda as number[]) || [];
   const ebitdaMargin: number[] = (resultsData?.ebitdaMargin as number[]) || [];
   const freeCashFlow: number[] = (resultsData?.freeCashFlow as number[]) || [];
-  const wacc = modelData?.terminalValue?.wacc;
+
+  // Calculate WACC at runtime from risk profile to maintain consistency
+  const riskProfile = modelData?.riskProfile;
+  const wacc = riskProfile ? calculateWacc(riskProfile) * 100 : modelData?.terminalValue?.wacc;
+
   const terminalGrowthRate = modelData?.terminalValue?.terminalGrowthRate;
   const periods: string[] = (modelData?.periods?.periodLabels as string[]) || [];
   const numberOfYears = modelData?.periods?.numberOfYears || 5;
@@ -118,8 +123,7 @@ export function ValuationReport({
         }
       : null;
 
-  // Calculate WACC components
-  const riskProfile = modelData?.riskProfile;
+  // Calculate WACC components using utility function
   // Prefer taxes.percentOfEBIT if present (Advanced mode) to display tax shield consistently
   const taxesPercent =
     modelData?.taxes?.percentMethod === 'uniform' && typeof modelData?.taxes?.percentOfEBIT === 'number'
@@ -135,16 +139,21 @@ export function ValuationReport({
       ? riskProfile.corporateTaxRate
       : (countryTaxRate ?? riskProfile?.corporateTaxRate));
 
-  const waccComponents = riskProfile
-    ? {
-        costOfEquity:
-          riskProfile.riskFreeRate +
-          riskProfile.leveredBeta * (riskProfile.equityRiskPremium + riskProfile.countryRiskPremium),
-        costOfDebt: riskProfile.riskFreeRate + riskProfile.adjustedDefaultSpread + riskProfile.companySpread,
-        equityWeight: 1 / (1 + riskProfile.deRatio),
-        debtWeight: riskProfile.deRatio / (1 + riskProfile.deRatio),
-      }
-    : null;
+  const waccComponents = riskProfile ? calculateWaccComponents(riskProfile) : null;
+
+  console.log('riskProfile', riskProfile);
+  console.log('wacc components', waccComponents);
+  console.log('wacc', wacc);
+  console.log('risk free rate', riskProfile?.riskFreeRate);
+  console.log('levered beta', riskProfile?.leveredBeta);
+  console.log('equity risk premium', riskProfile?.equityRiskPremium);
+  console.log('country risk premium', riskProfile?.countryRiskPremium);
+  console.log('adjusted default spread', riskProfile?.adjustedDefaultSpread);
+  console.log('company spread', riskProfile?.companySpread);
+  console.log('debt ratio', riskProfile?.deRatio);
+  console.log('corporate tax rate', riskProfile?.corporateTaxRate);
+  console.log('country tax rate', countryTaxRate);
+  console.log('display corporate tax rate', displayCorporateTaxRate);
 
   return (
     <div id={id} className={`space-y-6 p-8 pb-16 bg-white ${className}`}>
@@ -239,7 +248,7 @@ export function ValuationReport({
             <p className="text-2xl font-bold text-gray-900 mt-1">{formatPercent(terminalGrowthRate)}</p>
           </div>
         )}
-        {resultsData?.terminalValue && (
+        {/* {resultsData?.terminalValue && (
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
             <p className="text-sm font-medium text-gray-600">Valor Terminal</p>
             <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(resultsData.terminalValue)}</p>
@@ -250,7 +259,7 @@ export function ValuationReport({
             <p className="text-sm font-medium text-gray-600">TV % de EV</p>
             <p className="text-2xl font-bold text-gray-900 mt-1">{terminalValuePercent.toFixed(1)}%</p>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Valuation Multiples */}
@@ -380,7 +389,7 @@ export function ValuationReport({
 
       {/* Key Assumptions */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm break-inside-avoid mt-8 mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Suposiciones Clave</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Supuestos Clave</h3>
 
         {/* General Assumptions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -470,7 +479,7 @@ export function ValuationReport({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium text-gray-600">Peso de Equity (E/V)</p>
                 <p className="text-base text-gray-900 mt-1">{(waccComponents.equityWeight * 100).toFixed(1)}%</p>
@@ -489,7 +498,7 @@ export function ValuationReport({
                   <p className="text-base text-gray-900 mt-1">{riskProfile.unleveredBeta.toFixed(2)}</p>
                 </div>
               )}
-            </div>
+            </div> */}
           </>
         )}
       </div>
@@ -497,10 +506,11 @@ export function ValuationReport({
       {/* Disclaimer */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <p className="text-sm text-yellow-800">
-          <strong>Disclaimer:</strong> Este informe de valuación es para fines informativos y no debe ser considerado
-          como asesoría financiera. Todas las proyecciones y suposiciones se basan en los datos proporcionados y pueden
-          no reflejar resultados futuros reales. Por favor, consulte con un profesional financiero calificado antes de
-          tomar decisiones de inversión.
+          <strong>Disclaimer:</strong> Este informe de valorización se ha elaborado sólo para fines informativos, y
+          representa una referencia de valor a partir de los supuestos considerados y en base a la información
+          proporcionada. La estimación de flujos futuros podría no reflejar los resultados reales, y por ende este
+          informe no debe ser considerado como una recomendación de tipo financiera. Por favor, consulte con un
+          profesional financiero calificado antes de tomar decisiones de inversión
         </p>
       </div>
     </div>

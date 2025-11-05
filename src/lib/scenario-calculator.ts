@@ -6,7 +6,8 @@
 
 import { useModelStore } from '@/app/valuation/store/modelStore';
 import type { FinancialModel, CalculatedFinancials } from '@/lib/valuation.types';
-import type { ScenarioVariableType, VariableAdjustment } from './scenario-variables';
+import type { VariableAdjustment } from './scenario-variables';
+import { calculateWacc, calculateDebtWeight } from '@/utils/wacc-calculator';
 
 /**
  * Apply variable adjustments to a model and return a new modified model
@@ -32,8 +33,7 @@ export function applyVariableAdjustments(
 
           // When D/E = 0, WACC = Cost of Equity only, so adjust equity risk premium
           // When D/E > 0, adjust company spread to affect cost of debt
-          const equityWeight = 1 / (1 + model.riskProfile.deRatio);
-          const debtWeight = model.riskProfile.deRatio / (1 + model.riskProfile.deRatio);
+          const debtWeight = calculateDebtWeight(model.riskProfile.deRatio);
 
           if (model.riskProfile.deRatio === 0 || debtWeight < 0.01) {
             // No debt or negligible debt: adjust equity risk premium
@@ -120,20 +120,6 @@ export function applyVariableAdjustments(
   });
 
   return model;
-}
-
-/**
- * Calculate WACC from risk profile
- */
-function calculateWacc(riskProfile: any): number {
-  const costOfEquity =
-    riskProfile.riskFreeRate +
-    riskProfile.leveredBeta * (riskProfile.equityRiskPremium + riskProfile.countryRiskPremium);
-  const costOfDebt = riskProfile.riskFreeRate + riskProfile.adjustedDefaultSpread + riskProfile.companySpread;
-  const equityWeight = 1 / (1 + riskProfile.deRatio);
-  const debtWeight = riskProfile.deRatio / (1 + riskProfile.deRatio);
-
-  return equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - riskProfile.corporateTaxRate);
 }
 
 /**

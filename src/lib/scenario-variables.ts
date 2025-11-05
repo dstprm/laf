@@ -4,6 +4,8 @@
  * Defines which model variables can be used for scenario analysis
  */
 
+import { calculateWaccPercent } from '@/utils/wacc-calculator';
+
 export type ScenarioVariableType =
   | 'wacc'
   | 'revenue_growth'
@@ -129,14 +131,10 @@ export function getVariableBaseValue(
 ): number | null {
   switch (variableId) {
     case 'wacc':
-      // Calculate WACC from risk profile
+      // Calculate WACC from risk profile using utility function
       const rp = model.riskProfile;
       if (!rp) return null;
-      const costOfEquity = rp.riskFreeRate + rp.leveredBeta * (rp.equityRiskPremium + rp.countryRiskPremium);
-      const costOfDebt = rp.riskFreeRate + rp.adjustedDefaultSpread + rp.companySpread;
-      const equityWeight = 1 / (1 + rp.deRatio);
-      const debtWeight = rp.deRatio / (1 + rp.deRatio);
-      return (equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - rp.corporateTaxRate)) * 100;
+      return calculateWaccPercent(rp);
 
     case 'revenue_growth':
       // Prefer uniform growth rate if available; otherwise approximate from calculated revenue
