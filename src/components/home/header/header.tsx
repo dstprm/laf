@@ -89,7 +89,7 @@ export default function Header({ user }: Props) {
         <div className="flex flex-1 items-center justify-start">
           <Link className="flex items-center" href={'/'}>
             <>
-              <Image className="block dark:hidden" src="/logo.svg" width={140} height={32} alt="Ready to SaaS" />
+              <Image className="block dark:hidden" src="/logo-white.svg" width={140} height={32} alt="Ready to SaaS" />
               <Image className="hidden dark:block" src="/logo-dark.svg" width={140} height={32} alt="Ready to SaaS" />
             </>
           </Link>
