@@ -749,7 +749,7 @@ export default function FreeValuationPage() {
 
     setIsSaving(true);
     try {
-      const defaultName = `Valuación - ${new Date().toLocaleDateString()}`;
+      const defaultName = `Valorización - ${new Date().toLocaleDateString()}`;
       const valuationDisplayName = companyName.trim() || defaultName;
       const fullPhoneNumber = companyPhone.trim() ? `${phoneCountryCode} ${companyPhone}` : undefined;
 
@@ -783,8 +783,8 @@ export default function FreeValuationPage() {
         savedValuation = await response.json();
 
         toast({
-          title: 'Valuación actualizada',
-          description: 'Tu valuación se actualizó correctamente.',
+          title: 'Valorización actualizada',
+          description: 'Tu valorización se actualizó correctamente.',
         });
       } else {
         // Create new valuation
@@ -811,7 +811,7 @@ export default function FreeValuationPage() {
       console.error('Failed to save valuation:', error);
       toast({
         variant: 'destructive',
-        title: 'No se pudo guardar la valuación',
+        title: 'No se pudo guardar la valorización',
         description: error instanceof Error ? error.message : 'Por favor intenta nuevamente.',
       });
     } finally {
@@ -870,7 +870,7 @@ export default function FreeValuationPage() {
         <div className="bg-white border-b border-gray-200">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-6">
-              <h1 className="text-2xl font-bold text-gray-900">Valuación</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Valorización</h1>
               <p className="mt-1 text-gray-600">Estimación rápida o avanzada del valor de la empresa</p>
             </div>
           </div>
@@ -1005,9 +1005,9 @@ export default function FreeValuationPage() {
         <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Inicia sesión para ver tu valuación</DialogTitle>
+              <DialogTitle>Inicia sesión para ver tu valorización</DialogTitle>
               <DialogDescription>
-                Para ver los resultados de tu valuación y guardarlos, inicia sesión o crea una cuenta.
+                Para ver los resultados de tu valorización y guardarlos, inicia sesión o crea una cuenta.
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-center py-4">
@@ -1038,9 +1038,9 @@ export default function FreeValuationPage() {
                   </svg>
                 </div>
               </div>
-              <DialogTitle className="text-center text-2xl">¡Valuación guardada con éxito!</DialogTitle>
+              <DialogTitle className="text-center text-2xl">¡Valorización guardada con éxito!</DialogTitle>
               <DialogDescription className="text-center">
-                Tu valuación se guardó en tu panel. ¿Qué te gustaría hacer ahora?
+                Tu valorización se guardó en tu panel. ¿Qué te gustaría hacer ahora?
               </DialogDescription>
             </DialogHeader>
 

@@ -15,19 +15,19 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://valupro.lat'),
   applicationName: 'ValuPro',
   title: {
-    default: 'ValuPro — Valuación de empresas',
+    default: 'ValuPro — Valorización de empresas',
     template: '%s — ValuPro',
   },
   description: 'Valora tu empresa en minutos con DCF, múltiplos y comparables. Gratis y listo para compartir.',
   keywords: [
-    'valuación de empresas',
+    'valorización de empresas',
     'valoración empresarial',
     'DCF',
     'múltiplos',
     'comparables',
     'finanzas corporativas',
     'startup',
-    'valuación gratis',
+    'valorización gratis',
   ],
   alternates: {
     canonical: '/',
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     type: 'website',
     url: '/',
     siteName: 'ValuPro',
-    title: 'ValuPro — Valuación de empresas',
+    title: 'ValuPro — Valorización de empresas',
     description: 'Valora tu empresa en minutos con DCF, múltiplos y comparables. Gratis y listo para compartir.',
     images: [
       {
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ValuPro — Valuación de empresas',
+    title: 'ValuPro — Valorización de empresas',
     description: 'Valora tu empresa en minutos con DCF, múltiplos y comparables. Gratis y listo para compartir.',
     images: ['/opengraph-image.png'],
   },

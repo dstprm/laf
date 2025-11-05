@@ -124,7 +124,7 @@ export function ValuationResultsDisplay({
               max: s.maxValue,
               base: baseValue,
             }))}
-            title="Análisis de sensibilidad de valuación"
+            title="Análisis de sensibilidad de valorización"
           />
         </div>
       )}
@@ -189,7 +189,7 @@ export function ValuationResultsDisplay({
           </Button>
           {savedValuationId && onSave && (
             <Button onClick={onSave} disabled={isSaving}>
-              {isSaving ? 'Actualizando...' : 'Actualizar valuación'}
+              {isSaving ? 'Actualizando...' : 'Actualizar valorización'}
             </Button>
           )}
         </div>

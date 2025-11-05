@@ -498,10 +498,10 @@ export default function ValuationEditClient({
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Resumen de Valuación</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Resumen de Valorización</h2>
               <p className="text-sm text-gray-600 mt-1">Resumen de las principales métricas y suposiciones</p>
             </div>
-            <Button onClick={() => setIsEditMode(true)}>Editar Valuación</Button>
+            <Button onClick={() => setIsEditMode(true)}>Editar Valorización</Button>
           </div>
 
           {/* Summary Grid */}
@@ -535,7 +535,7 @@ export default function ValuationEditClient({
 
             {/* Valuation Metrics */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Métricas de Valuación</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Métricas de Valorización</h3>
               <dl className="space-y-2">
                 <div className="flex justify-between items-center">
                   <dt className="text-sm text-gray-500">Valor Empresarial</dt>

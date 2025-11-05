@@ -85,7 +85,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
 
       toast({
         title: 'Éxito',
-        description: 'Valuación eliminada correctamente',
+        description: 'Valorización eliminada correctamente',
         variant: 'default',
       });
 
@@ -95,7 +95,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       console.error('Error deleting valuation:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo eliminar la valuación',
+        description: 'No se pudo eliminar la valorización',
         variant: 'destructive',
       });
     } finally {
@@ -267,14 +267,14 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
           />
         </svg>
-        <h3 className="mt-2 text-sm font-medium text-gray-900">Sin valuaciones</h3>
-        <p className="mt-1 text-sm text-gray-500">Comienza creando una nueva valuación.</p>
+        <h3 className="mt-2 text-sm font-medium text-gray-900">Sin valorizaciones</h3>
+        <p className="mt-1 text-sm text-gray-500">Comienza creando una nueva valorización.</p>
         <div className="mt-6">
           <Link
             href="/free-valuation"
             className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
-            Crear valuación
+            Crear valorización
           </Link>
         </div>
       </div>
@@ -295,7 +295,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="text-base font-semibold text-blue-700 truncate">
-                        {valuation.name || `Valuación - ${formatDate(valuation.createdAt)}`}
+                        {valuation.name || `Valorización - ${formatDate(valuation.createdAt)}`}
                       </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-gray-600">
                         {valuation.industry && (
@@ -331,7 +331,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                             <Eye className="h-4 w-4" />
                           </button>
                         </Tooltip>
-                        <Tooltip content="Compartir valuación">
+                        <Tooltip content="Compartir valorización">
                           <button
                             onClick={(e) => handleShare(valuation, e)}
                             className="h-8 w-8 inline-flex items-center justify-center text-gray-600 border border-gray-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-full transition-colors"
@@ -339,7 +339,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
                             <Share2 className="h-4 w-4" />
                           </button>
                         </Tooltip>
-                        <Tooltip content="Eliminar valuación">
+                        <Tooltip content="Eliminar valorización">
                           <button
                             onClick={(e) => handleDelete(valuation.id, valuation.name, e)}
                             disabled={deletingId === valuation.id}
@@ -365,8 +365,8 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       <Confirmation
         isOpen={confirmOpen}
         onClose={setConfirmOpen}
-        title="¿Eliminar valuación?"
-        description={`¿Seguro que quieres eliminar "${valuationToDelete?.name || 'esta valuación'}"? Esta acción no se puede deshacer.`}
+        title="¿Eliminar valorización?"
+        description={`¿Seguro que quieres eliminar "${valuationToDelete?.name || 'esta valorización'}"? Esta acción no se puede deshacer.`}
         actionText="Eliminar"
         actionVariant="destructive"
         onConfirm={confirmDelete}
@@ -376,7 +376,7 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent className="w-[90vw] max-w-[90vw] sm:max-w-[600px] px-6 sm:px-8">
           <DialogHeader>
-            <DialogTitle>Compartir informe de valuación</DialogTitle>
+            <DialogTitle>Compartir informe de valorización</DialogTitle>
             <DialogDescription>
               {selectedValuation?.isPublished
                 ? 'Tu informe está publicado y accesible mediante el siguiente enlace.'
@@ -411,8 +411,8 @@ export function ValuationsList({ valuations }: ValuationsListProps) {
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-sm text-blue-800">
-                    <strong>Nota:</strong> Cualquiera con este enlace puede ver tu informe de valuación. El informe es
-                    de solo lectura y no incluye información personal.
+                    <strong>Nota:</strong> Cualquiera con este enlace puede ver tu informe de valorización. El informe
+                    es de solo lectura y no incluye información personal.
                   </p>
                 </div>
               </>

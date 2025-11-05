@@ -45,7 +45,7 @@ describe('FootballFieldChart', () => {
 
   it('should render chart with default title when no title provided', () => {
     render(<FootballFieldChart ranges={mockRanges} />);
-    expect(screen.getByText('Análisis de rango de valuación')).toBeInTheDocument();
+    expect(screen.getByText('Análisis de rango de valorización')).toBeInTheDocument();
   });
 
   it('should display summary statistics', () => {
@@ -67,7 +67,7 @@ describe('FootballFieldChart', () => {
 
   it('should handle empty ranges array', () => {
     render(<FootballFieldChart ranges={[]} />);
-    expect(screen.getByText('Análisis de rango de valuación')).toBeInTheDocument();
+    expect(screen.getByText('Análisis de rango de valorización')).toBeInTheDocument();
   });
 
   it('should handle single range', () => {

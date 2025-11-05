@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useModelStore } from '../store/modelStore';
+import { calculateWaccPercent } from '@/utils/wacc-calculator';
 
 export const TerminalValueInput: React.FC = () => {
   const { 
@@ -180,13 +181,9 @@ export const TerminalValueInput: React.FC = () => {
                   const rp = model.riskProfile;
                   if (!rp) return '9.0%';
                   
-                  const costOfEquity = rp.riskFreeRate + rp.leveredBeta * (rp.equityRiskPremium + rp.countryRiskPremium);
-                  const costOfDebt = rp.riskFreeRate + rp.adjustedDefaultSpread + rp.companySpread;
-                  const equityWeight = 1 / (1 + rp.deRatio);
-                  const debtWeight = rp.deRatio / (1 + rp.deRatio);
-                  const wacc = (equityWeight * costOfEquity) + (debtWeight * costOfDebt * (1 - rp.corporateTaxRate));
+                  const wacc = calculateWaccPercent(rp);
                   
-                  return `${(wacc * 100).toFixed(2)}%`;
+                  return `${wacc.toFixed(2)}%`;
                 })()}
               </div>
               <div>

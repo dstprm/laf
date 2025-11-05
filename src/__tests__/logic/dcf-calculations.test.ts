@@ -14,6 +14,15 @@
 
 import { useModelStore } from '@/app/valuation/store/modelStore';
 import type { FinancialModel } from '@/lib/valuation.types';
+import {
+  calculateWacc,
+  calculateWaccComponents,
+  calculateWaccPercent,
+  calculateCostOfEquity,
+  calculateCostOfDebt,
+  calculateEquityWeight,
+  calculateDebtWeight,
+} from '@/utils/wacc-calculator';
 
 // Helper to create a test model
 function createTestModel(overrides: Partial<FinancialModel> = {}): FinancialModel {
@@ -503,7 +512,143 @@ describe('DCF Calculation Logic', () => {
     });
   });
 
-  describe('WACC Calculation', () => {
+  describe('WACC Calculation Utility', () => {
+    it('should calculate WACC components correctly with precise numbers', () => {
+      // Test Case: Realistic company with moderate debt
+      const riskProfile = {
+        riskFreeRate: 0.0425,      // 4.25% - US 10-year Treasury rate
+        leveredBeta: 1.15,         // Levered beta
+        equityRiskPremium: 0.055,  // 5.5% - Historical US equity risk premium
+        countryRiskPremium: 0.015, // 1.5% - Emerging market country risk
+        adjustedDefaultSpread: 0.0275, // 2.75% - BBB rated company default spread
+        companySpread: 0.0125,     // 1.25% - Company-specific spread
+        deRatio: 0.4,              // D/E = 0.4 (28.57% debt, 71.43% equity)
+        corporateTaxRate: 0.21,    // 21% - US federal corporate tax rate
+      };
+
+      // Calculate individual components
+      const costOfEquity = calculateCostOfEquity(riskProfile);
+      const costOfDebt = calculateCostOfDebt(riskProfile);
+      const equityWeight = calculateEquityWeight(riskProfile.deRatio);
+      const debtWeight = calculateDebtWeight(riskProfile.deRatio);
+
+      // Expected calculations (manually computed for verification):
+      // Cost of Equity = Rf + β × (ERP + CRP)
+      // = 0.0425 + 1.15 × (0.055 + 0.015)
+      // = 0.0425 + 1.15 × 0.07
+      // = 0.0425 + 0.0805
+      // = 0.1230 (12.30%)
+      expect(costOfEquity).toBe(0.123);
+
+      // Cost of Debt (pre-tax) = Rf + Default Spread + Company Spread
+      // = 0.0425 + 0.0275 + 0.0125
+      // = 0.0825 (8.25%)
+      expect(costOfDebt).toBe(0.0825);
+
+      // Equity Weight = E/V = 1 / (1 + D/E)
+      // = 1 / (1 + 0.4)
+      // = 1 / 1.4
+      // = 0.7142857...
+      expect(equityWeight).toBeCloseTo(0.7142857142857143, 10);
+
+      // Debt Weight = D/V = (D/E) / (1 + D/E)
+      // = 0.4 / 1.4
+      // = 0.2857142...
+      expect(debtWeight).toBeCloseTo(0.2857142857142857, 10);
+
+      // Verify weights sum to 1
+      expect(equityWeight + debtWeight).toBeCloseTo(1.0, 10);
+
+      // WACC = (E/V × Re) + (D/V × Rd × (1 - Tc))
+      // = (0.7142857142857143 × 0.123) + (0.2857142857142857 × 0.0825 × (1 - 0.21))
+      // = 0.08785714285714286 + (0.2857142857142857 × 0.0825 × 0.79)
+      // = 0.08785714285714286 + 0.018621428571428573
+      // = 0.10647857142857143 (10.6479%)
+      const wacc = calculateWacc(riskProfile);
+      expect(wacc).toBeCloseTo(0.10647857142857143, 8);
+
+      // Test the components function
+      const waccComponents = calculateWaccComponents(riskProfile);
+      expect(waccComponents.costOfEquity).toBe(0.123);
+      expect(waccComponents.costOfDebt).toBe(0.0825);
+      expect(waccComponents.equityWeight).toBeCloseTo(0.7142857142857143, 10);
+      expect(waccComponents.debtWeight).toBeCloseTo(0.2857142857142857, 10);
+      expect(waccComponents.wacc).toBeCloseTo(0.10647857142857143, 8);
+
+      // Test percentage conversion
+      const waccPercent = calculateWaccPercent(riskProfile);
+      expect(waccPercent).toBeCloseTo(10.647857142857143, 8);
+    });
+
+    it('should calculate WACC correctly for 100% equity financed company (no debt)', () => {
+      const riskProfile = {
+        riskFreeRate: 0.04,
+        leveredBeta: 1.0,
+        equityRiskPremium: 0.06,
+        countryRiskPremium: 0.0,
+        adjustedDefaultSpread: 0.02,
+        companySpread: 0.01,
+        deRatio: 0.0, // No debt
+        corporateTaxRate: 0.25,
+      };
+
+      const wacc = calculateWacc(riskProfile);
+      
+      // With D/E = 0, WACC = Cost of Equity
+      // Cost of Equity = 0.04 + 1.0 × (0.06 + 0.0) = 0.10 (10%)
+      expect(wacc).toBe(0.1);
+      expect(calculateWaccPercent(riskProfile)).toBe(10);
+    });
+
+    it('should calculate WACC correctly for highly leveraged company', () => {
+      const riskProfile = {
+        riskFreeRate: 0.045,
+        leveredBeta: 1.5,
+        equityRiskPremium: 0.06,
+        countryRiskPremium: 0.02,
+        adjustedDefaultSpread: 0.04,
+        companySpread: 0.02,
+        deRatio: 1.0, // D/E = 1.0 (50% debt, 50% equity)
+        corporateTaxRate: 0.25,
+      };
+
+      // Cost of Equity = 0.045 + 1.5 × (0.06 + 0.02) = 0.045 + 0.12 = 0.165
+      // Cost of Debt = 0.045 + 0.04 + 0.02 = 0.105
+      // E/V = 1/(1+1) = 0.5, D/V = 1/(1+1) = 0.5
+      // WACC = 0.5 × 0.165 + 0.5 × 0.105 × (1 - 0.25)
+      // = 0.0825 + 0.039375
+      // = 0.121875 (12.1875%)
+      
+      const wacc = calculateWacc(riskProfile);
+      expect(wacc).toBeCloseTo(0.121875, 10);
+      expect(calculateWaccPercent(riskProfile)).toBeCloseTo(12.1875, 10);
+    });
+
+    it('should handle edge case with very high country risk premium', () => {
+      const riskProfile = {
+        riskFreeRate: 0.03,
+        leveredBeta: 0.8,
+        equityRiskPremium: 0.05,
+        countryRiskPremium: 0.12, // 12% country risk (high-risk country)
+        adjustedDefaultSpread: 0.06,
+        companySpread: 0.03,
+        deRatio: 0.3,
+        corporateTaxRate: 0.30,
+      };
+
+      // Cost of Equity = 0.03 + 0.8 × (0.05 + 0.12) = 0.03 + 0.136 = 0.166
+      // Cost of Debt = 0.03 + 0.06 + 0.03 = 0.12
+      // E/V = 1/1.3 = 0.7692307..., D/V = 0.3/1.3 = 0.2307692...
+      // WACC = 0.7692307 × 0.166 + 0.2307692 × 0.12 × (1 - 0.30)
+      // = 0.1276923 + 0.01938461
+      // = 0.14707691... (14.71%)
+      
+      const wacc = calculateWacc(riskProfile);
+      expect(wacc).toBeCloseTo(0.14707692307692307, 10);
+    });
+  });
+
+  describe('WACC Calculation in DCF', () => {
     it('should calculate WACC correctly for zero debt', () => {
       const model = createTestModel({
         riskProfile: {

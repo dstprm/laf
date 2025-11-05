@@ -4,6 +4,7 @@ import { betasStatic } from '../betasStatic';
 import { countryRiskPremiumStatic } from '../countryRiskPremiumStatic';
 import { useModelStore } from '../store/modelStore';
 import { Tooltip } from '@/components/ui/tooltip';
+import { calculateWacc } from '@/utils/wacc-calculator';
 
 interface IndustryCountrySelectorProps {
   className?: string;
@@ -276,14 +277,14 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     // Don't include updateRiskProfile and updateSelectedIndustry to avoid infinite loops
   ]);
 
-  // Calculate Cost of Equity and Cost of Debt
+  // Calculate Cost of Equity and Cost of Debt using utility functions
   const costOfEquity = riskFreeRate + leveredBeta * (equityRiskPremium + countryRiskPremium);
   const costOfDebt = riskFreeRate + adjustedDefaultSpread + companySpread;
 
-  // Calculate WACC
-  const equityWeight = 1 / (1 + deRatio); // E/V
-  const debtWeight = deRatio / (1 + deRatio); // D/V
-  const wacc = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - corporateTaxRate);
+  // Calculate WACC using utility function
+  const wacc = model.riskProfile 
+    ? calculateWacc(model.riskProfile)
+    : (1 / (1 + deRatio)) * costOfEquity + (deRatio / (1 + deRatio)) * costOfDebt * (1 - corporateTaxRate);
 
   return (
     <div className={`bg-white rounded-lg border border-gray-200 shadow-sm ${className}`}>

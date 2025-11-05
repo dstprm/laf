@@ -787,7 +787,7 @@ export function AdvancedValuationForm({
         )}
       </div>
 
-      {/* Paso 5: Estructura de capital (D/E) - Solo para valuación gratuita */}
+      {/* Paso 5: Estructura de capital (D/E) - Solo para valorización gratuita */}
       {!hideDeRatio && (
         <div
           className={`transition-all duration-500 ease-out ${showAllSteps || advState.advStep >= 5 ? 'opacity-100 translate-y-0 max-h-[1000px]' : 'opacity-0 -translate-y-2 max-h-0'} overflow-hidden`}

@@ -21,12 +21,21 @@ function oklchToRgb(colorString: string): string {
 
   if (!ctx) {
     console.warn('Could not get canvas context for color conversion:', colorString);
-    return colorString;
+    return 'rgb(0, 0, 0)'; // Return black as fallback
   }
 
   try {
+    // Normalize the color string - ensure proper spacing around /
+    const normalizedColor = colorString.replace(/\s*\/\s*/g, ' / ');
+
     // Try to use the color - if browser supports it, it will render
-    ctx.fillStyle = colorString;
+    ctx.fillStyle = normalizedColor;
+
+    // If fillStyle is still empty or couldn't parse, try original
+    if (ctx.fillStyle === 'rgba(0, 0, 0, 0)' || ctx.fillStyle === '') {
+      ctx.fillStyle = colorString;
+    }
+
     ctx.fillRect(0, 0, 1, 1);
 
     // Get the rendered color data
@@ -34,9 +43,9 @@ function oklchToRgb(colorString: string): string {
     const [r, g, b, a] = imageData.data;
 
     if (a === 0) {
-      // Color wasn't supported or is transparent
-      console.warn('Color conversion failed (transparent):', colorString);
-      return colorString;
+      // Color wasn't supported or is transparent - return a reasonable fallback
+      console.warn('Color conversion resulted in transparent, using fallback:', colorString);
+      return 'rgb(255, 255, 255)'; // White fallback
     }
 
     const rgbColor = a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(3)})`;
@@ -44,7 +53,7 @@ function oklchToRgb(colorString: string): string {
     return rgbColor;
   } catch (e) {
     console.warn('Error converting color:', colorString, e);
-    return colorString;
+    return 'rgb(0, 0, 0)'; // Return black as fallback
   }
 }
 
@@ -64,14 +73,15 @@ function convertColorsToRgb(styleValue: string): string {
   // Match all modern color patterns and replace them
   let result = styleValue;
 
-  // Replace oklch colors
-  result = result.replace(/oklch\([^)]+\)/g, (match) => oklchToRgb(match));
+  // Replace oklch colors (handles both with and without alpha channel)
+  // Matches: oklch(...), oklch(... / ...), oklch(.../ ...)
+  result = result.replace(/oklch\([^)]+\)/gi, (match) => oklchToRgb(match));
 
   // Replace oklab colors
-  result = result.replace(/oklab\([^)]+\)/g, (match) => oklchToRgb(match));
+  result = result.replace(/oklab\([^)]+\)/gi, (match) => oklchToRgb(match));
 
   // Replace color() function
-  result = result.replace(/color\([^)]+\)/g, (match) => oklchToRgb(match));
+  result = result.replace(/color\([^)]+\)/gi, (match) => oklchToRgb(match));
 
   return result;
 }
@@ -105,6 +115,9 @@ async function waitForResources(element: HTMLElement): Promise<void> {
  * Inlines all computed styles to override any CSS rules
  */
 function inlineAllStyles(element: HTMLElement, computedStyle: CSSStyleDeclaration): void {
+  // SVG-specific properties that might contain colors
+  const svgColorProps = ['stroke', 'fill', 'stop-color', 'flood-color', 'lighting-color'];
+
   // Copy ALL computed styles to ensure nothing is missed
   for (let i = 0; i < computedStyle.length; i++) {
     const prop = computedStyle[i];
@@ -121,6 +134,126 @@ function inlineAllStyles(element: HTMLElement, computedStyle: CSSStyleDeclaratio
       }
     }
   }
+
+  // Additional handling for SVG elements
+  if (element instanceof SVGElement) {
+    svgColorProps.forEach((prop) => {
+      const value = computedStyle.getPropertyValue(prop);
+      if (value && value !== '' && value !== 'none') {
+        const fixedValue = convertColorsToRgb(value);
+        try {
+          element.style.setProperty(prop, fixedValue, 'important');
+        } catch {
+          // Ignore errors
+        }
+      }
+    });
+  }
+}
+
+/**
+ * Resolve CSS variables to their computed values and convert any oklch colors
+ */
+function resolveCssVariables(element: HTMLElement, computedStyle: CSSStyleDeclaration): void {
+  // Color-related properties that might use CSS variables
+  const colorProps = [
+    'color',
+    'background-color',
+    'border-color',
+    'border-top-color',
+    'border-right-color',
+    'border-bottom-color',
+    'border-left-color',
+    'outline-color',
+    'fill',
+    'stroke',
+    'stop-color',
+    'flood-color',
+    'lighting-color',
+    'text-decoration-color',
+  ];
+
+  colorProps.forEach((prop) => {
+    const value = computedStyle.getPropertyValue(prop);
+    if (value && value !== '' && value !== 'none' && value !== 'transparent') {
+      // Convert any oklch colors to rgb
+      const rgbValue = convertColorsToRgb(value);
+      try {
+        element.style.setProperty(prop, rgbValue, 'important');
+      } catch {
+        // Ignore errors
+      }
+    }
+  });
+
+  // Handle currentColor specially for SVG elements
+  if (element instanceof SVGElement) {
+    const stroke = element.getAttribute('stroke');
+    const fill = element.getAttribute('fill');
+
+    if (stroke === 'currentColor' || stroke === null) {
+      const computedColor = computedStyle.getPropertyValue('color');
+      const rgbColor = convertColorsToRgb(computedColor);
+      element.setAttribute('stroke', rgbColor);
+      element.style.setProperty('stroke', rgbColor, 'important');
+    }
+
+    if (fill === 'currentColor' || fill === null) {
+      const computedColor = computedStyle.getPropertyValue('color');
+      const rgbColor = convertColorsToRgb(computedColor);
+      element.setAttribute('fill', rgbColor);
+      element.style.setProperty('fill', rgbColor, 'important');
+    }
+  }
+}
+
+/**
+ * Final pass to ensure no oklch colors remain anywhere in the element tree
+ */
+function finalColorCleanup(element: HTMLElement): void {
+  const allElements = [element, ...Array.from(element.querySelectorAll('*'))];
+
+  allElements.forEach((el) => {
+    if (!(el instanceof HTMLElement)) return;
+
+    // Get fresh computed style for this element
+    const computedStyle = window.getComputedStyle(el);
+
+    // Resolve CSS variables to computed RGB values
+    resolveCssVariables(el, computedStyle);
+
+    // Check and fix all inline styles
+    const style = el.style;
+    for (let i = 0; i < style.length; i++) {
+      const prop = style[i];
+      const value = style.getPropertyValue(prop);
+
+      if (
+        value &&
+        (value.includes('oklch') || value.includes('oklab') || value.includes('color(') || value.includes('var('))
+      ) {
+        const fixedValue = convertColorsToRgb(value);
+        try {
+          el.style.setProperty(prop, fixedValue, 'important');
+        } catch {
+          // Ignore errors
+        }
+      }
+    }
+
+    // For SVG elements, also check presentation attributes
+    if (el instanceof SVGElement) {
+      ['fill', 'stroke', 'stop-color'].forEach((attr) => {
+        const value = el.getAttribute(attr);
+        if (value && (value.includes('oklch') || value.includes('oklab') || value === 'currentColor')) {
+          const computedColor = computedStyle.getPropertyValue(attr === 'stroke' || attr === 'fill' ? attr : 'color');
+          const fixedValue = convertColorsToRgb(computedColor || value);
+          el.setAttribute(attr, fixedValue);
+          el.style.setProperty(attr, fixedValue, 'important');
+        }
+      });
+    }
+  });
 }
 
 /**
@@ -163,7 +296,13 @@ function cloneAndFixColors(originalElement: HTMLElement): HTMLElement {
 
     // Inline all critical styles
     inlineAllStyles(clonedEl, computedStyle);
+
+    // Also resolve CSS variables for this specific element
+    resolveCssVariables(clonedEl, computedStyle);
   });
+
+  // Final cleanup pass to catch any remaining oklch colors
+  finalColorCleanup(clone);
 
   return clone;
 }
@@ -193,6 +332,67 @@ async function captureElementAsCanvas(element: HTMLElement, scale: number): Prom
     y: 0,
     foreignObjectRendering: false,
     imageTimeout: 0,
+    onclone: (clonedDoc: Document) => {
+      // This callback is called after html2canvas clones the document
+      // but before it starts parsing. This is our chance to fix colors.
+
+      // Inject RGB stylesheet into the cloned document
+      const style = clonedDoc.createElement('style');
+      style.textContent = `
+        :root {
+          --background: rgb(255, 255, 255) !important;
+          --foreground: rgb(37, 37, 37) !important;
+          --card: rgb(255, 255, 255) !important;
+          --card-foreground: rgb(37, 37, 37) !important;
+          --popover: rgb(255, 255, 255) !important;
+          --popover-foreground: rgb(37, 37, 37) !important;
+          --primary: rgb(52, 52, 52) !important;
+          --primary-foreground: rgb(251, 251, 251) !important;
+          --secondary: rgb(247, 247, 247) !important;
+          --secondary-foreground: rgb(52, 52, 52) !important;
+          --muted: rgb(247, 247, 247) !important;
+          --muted-foreground: rgb(142, 142, 142) !important;
+          --accent: rgb(247, 247, 247) !important;
+          --accent-foreground: rgb(52, 52, 52) !important;
+          --destructive: rgb(220, 38, 38) !important;
+          --border: rgb(235, 235, 235) !important;
+          --input: rgb(235, 235, 235) !important;
+          --ring: rgb(180, 180, 180) !important;
+        }
+        
+        * {
+          color: inherit !important;
+        }
+        
+        svg[stroke="currentColor"], svg [stroke="currentColor"] {
+          stroke: rgb(37, 37, 37) !important;
+        }
+        
+        svg[fill="currentColor"], svg [fill="currentColor"] {
+          fill: rgb(37, 37, 37) !important;
+        }
+      `;
+      clonedDoc.head.appendChild(style);
+
+      // Also apply inline styles to all SVG elements in the cloned document
+      const allSvgs = clonedDoc.querySelectorAll('svg, svg *');
+      allSvgs.forEach((svg) => {
+        if (svg instanceof SVGElement) {
+          const stroke = svg.getAttribute('stroke');
+          const fill = svg.getAttribute('fill');
+
+          if (stroke === 'currentColor') {
+            svg.setAttribute('stroke', 'rgb(37, 37, 37)');
+            (svg as any).style.stroke = 'rgb(37, 37, 37)';
+          }
+
+          if (fill === 'currentColor') {
+            svg.setAttribute('fill', 'rgb(37, 37, 37)');
+            (svg as any).style.fill = 'rgb(37, 37, 37)';
+          }
+        }
+      });
+    },
   });
 }
 
@@ -286,20 +486,37 @@ function addFooter(
 ): void {
   const footerY = pageHeight - margins + 2;
 
-  // Add line above footer
-  pdf.setDrawColor(200, 200, 200);
-  pdf.setLineWidth(0.1);
+  // Add separator line above footer (darker, thicker line to match the border-t-2 style)
+  pdf.setDrawColor(209, 213, 219); // gray-300
+  pdf.setLineWidth(0.5); // Thicker line to match border-t-2
   pdf.line(margins, pageHeight - margins - 5, pageWidth - margins, pageHeight - margins - 5);
 
-  // Add promotional text
-  pdf.setFontSize(8);
-  pdf.setTextColor(100, 100, 100);
-  const promoText = 'Crea una valorización gratuita en https://valupro.lat';
-  const textWidth = pdf.getTextWidth(promoText);
-  const textX = (pageWidth - textWidth) / 2;
-  pdf.text(promoText, textX, footerY);
+  // Add promotional text (centered, matching the component style)
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(75, 85, 99); // gray-600 for main text
 
-  // Add page number
+  // Split into parts: regular text + link
+  const regularText = 'Crea tu propio reporte de manera gratuita en ';
+  const linkText = 'https://valupro.lat';
+
+  const regularWidth = pdf.getTextWidth(regularText);
+  const linkWidth = pdf.getTextWidth(linkText);
+  const totalWidth = regularWidth + linkWidth;
+
+  // Center the entire line
+  const startX = (pageWidth - totalWidth) / 2;
+
+  // Draw regular text in gray
+  pdf.text(regularText, startX, footerY);
+
+  // Draw link text in blue and bold
+  pdf.setTextColor(37, 99, 235); // blue-600
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(linkText, startX + regularWidth, footerY);
+
+  // Add page number (right-aligned)
+  pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
   pdf.setTextColor(100, 100, 100);
   const pageText = `Página ${pageNumber} de ${totalPages}`;
@@ -326,18 +543,14 @@ export async function generateReportPDF(element: HTMLElement, options: GenerateP
     const contentTop = margins + headerHeight;
     const contentBottom = pageHeight - margins - footerHeight;
 
-    // Get all major sections (excluding logo and footer)
+    // Get all major sections (excluding logo)
     const allSections = Array.from(
       element.querySelectorAll('#valuation-report > *:not(script):not(style)'),
     ) as HTMLElement[];
 
     const sections = allSections.filter((section) => {
-      // Exclude logo section
+      // Exclude logo section (it's rendered in the PDF header)
       if (section.classList.contains('justify-center') && section.querySelector('img[alt="ValuPro"]')) {
-        return false;
-      }
-      // Exclude promotional footer section
-      if (section.classList.contains('border-t-2') && section.textContent?.includes('valupro.lat')) {
         return false;
       }
       return true;

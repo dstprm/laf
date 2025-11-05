@@ -1,8 +1,8 @@
 import { Section } from './section';
 export function Stats() {
   const stats = [
-    { value: '5 min', label: 'hasta tu primera valuación' },
-    { value: '3+', label: 'métodos de valuación' },
+    { value: '5 min', label: 'hasta tu primera valorización' },
+    { value: '3+', label: 'métodos de valorización' },
     { value: '100%', label: 'gratis ahora' },
     { value: '1', label: 'informe listo para compartir' },
   ];

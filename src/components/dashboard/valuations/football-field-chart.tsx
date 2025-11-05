@@ -50,7 +50,7 @@ interface FootballFieldChartProps {
  */
 export function FootballFieldChart({
   ranges,
-  title = 'Análisis de rango de valuación',
+  title = 'Análisis de rango de valorización',
   height = 400,
   className = '',
   forceDesktop = false,
@@ -60,7 +60,7 @@ export function FootballFieldChart({
   React.useEffect(() => {
     // Check if we're in a PDF generation context
     const isPDF = document.querySelector('[data-is-pdf="true"]') !== null;
-    
+
     if (forceDesktop || isPDF) {
       setIsMobile(false);
       return;
@@ -301,7 +301,7 @@ export function FootballFieldChart({
               <p className="text-sm font-semibold text-red-600">{formatCurrency(ranges[0]?.base || 0)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Rango de valuación</p>
+              <p className="text-xs text-gray-600">Rango de valorización</p>
               <p className="text-sm font-semibold text-gray-900">
                 {formatCurrency(Math.max(...ranges.map((r) => r.max)) - Math.min(...ranges.map((r) => r.min)))}
               </p>

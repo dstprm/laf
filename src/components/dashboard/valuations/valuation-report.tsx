@@ -4,6 +4,7 @@ import React from 'react';
 import { RevenueEbitdaChart } from './revenue-ebitda-chart';
 import { FootballFieldChart } from './football-field-chart';
 import { countryRiskPremiumStatic } from '@/app/valuation/countryRiskPremiumStatic';
+import { calculateWacc, calculateWaccComponents } from '@/utils/wacc-calculator';
 
 interface Scenario {
   id: string;
@@ -82,7 +83,11 @@ export function ValuationReport({
   const ebitda: number[] = (resultsData?.ebitda as number[]) || [];
   const ebitdaMargin: number[] = (resultsData?.ebitdaMargin as number[]) || [];
   const freeCashFlow: number[] = (resultsData?.freeCashFlow as number[]) || [];
-  const wacc = modelData?.terminalValue?.wacc;
+
+  // Calculate WACC at runtime from risk profile to maintain consistency
+  const riskProfile = modelData?.riskProfile;
+  const wacc = riskProfile ? calculateWacc(riskProfile) * 100 : modelData?.terminalValue?.wacc;
+
   const terminalGrowthRate = modelData?.terminalValue?.terminalGrowthRate;
   const periods: string[] = (modelData?.periods?.periodLabels as string[]) || [];
   const numberOfYears = modelData?.periods?.numberOfYears || 5;
@@ -118,8 +123,7 @@ export function ValuationReport({
         }
       : null;
 
-  // Calculate WACC components
-  const riskProfile = modelData?.riskProfile;
+  // Calculate WACC components using utility function
   // Prefer taxes.percentOfEBIT if present (Advanced mode) to display tax shield consistently
   const taxesPercent =
     modelData?.taxes?.percentMethod === 'uniform' && typeof modelData?.taxes?.percentOfEBIT === 'number'
@@ -135,16 +139,21 @@ export function ValuationReport({
       ? riskProfile.corporateTaxRate
       : (countryTaxRate ?? riskProfile?.corporateTaxRate));
 
-  const waccComponents = riskProfile
-    ? {
-        costOfEquity:
-          riskProfile.riskFreeRate +
-          riskProfile.leveredBeta * (riskProfile.equityRiskPremium + riskProfile.countryRiskPremium),
-        costOfDebt: riskProfile.riskFreeRate + riskProfile.adjustedDefaultSpread + riskProfile.companySpread,
-        equityWeight: 1 / (1 + riskProfile.deRatio),
-        debtWeight: riskProfile.deRatio / (1 + riskProfile.deRatio),
-      }
-    : null;
+  const waccComponents = riskProfile ? calculateWaccComponents(riskProfile) : null;
+
+  console.log('riskProfile', riskProfile);
+  console.log('wacc components', waccComponents);
+  console.log('wacc', wacc);
+  console.log('risk free rate', riskProfile?.riskFreeRate);
+  console.log('levered beta', riskProfile?.leveredBeta);
+  console.log('equity risk premium', riskProfile?.equityRiskPremium);
+  console.log('country risk premium', riskProfile?.countryRiskPremium);
+  console.log('adjusted default spread', riskProfile?.adjustedDefaultSpread);
+  console.log('company spread', riskProfile?.companySpread);
+  console.log('debt ratio', riskProfile?.deRatio);
+  console.log('corporate tax rate', riskProfile?.corporateTaxRate);
+  console.log('country tax rate', countryTaxRate);
+  console.log('display corporate tax rate', displayCorporateTaxRate);
 
   return (
     <div id={id} className={`space-y-6 p-8 pb-16 bg-white ${className}`}>
@@ -158,7 +167,7 @@ export function ValuationReport({
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 shadow-md">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold">{companyName || name || 'Informe de Valuación'}</h1>
+              <h1 className="text-3xl font-bold">{companyName || name || 'Informe de Valorización'}</h1>
               {companyName && name && companyName !== name && <p className="text-blue-100 mt-1">{name}</p>}
               <div className="flex items-center gap-4 mt-3 text-sm text-blue-100">
                 {industry && (
@@ -184,15 +193,7 @@ export function ValuationReport({
       {/* Executive Summary */}
       {reportComment && (
         <div className="bg-blue-50 border-l-4 border-blue-600 rounded-lg p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <svg className="h-5 w-5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
+          <div className="mb-3">
             <h3 className="text-base font-bold text-blue-900">Resumen Ejecutivo</h3>
           </div>
           <p className="text-sm text-blue-900 whitespace-pre-wrap leading-relaxed">{reportComment}</p>
@@ -226,7 +227,7 @@ export function ValuationReport({
       </div>
 
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {wacc !== null && wacc !== undefined && (
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
             <p className="text-sm font-medium text-gray-600">WACC.</p>
@@ -251,11 +252,11 @@ export function ValuationReport({
             <p className="text-2xl font-bold text-gray-900 mt-1">{terminalValuePercent.toFixed(1)}%</p>
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* Valuation Multiples */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Múltiplos de Valuación Implícitos</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Múltiplos de Valorización Implícitos</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {evEbitdaMultipleCurrent !== null && (
             <div>
@@ -308,7 +309,7 @@ export function ValuationReport({
         <div className="break-inside-avoid mt-8 mb-8">
           <FootballFieldChart
             ranges={footballFieldData}
-            title="Análisis de Rango de Valuación (Análisis de Escenarios)"
+            title="Análisis de Rango de Valorización (Análisis de Escenarios)"
             forceDesktop={isPDF}
           />
         </div>
@@ -380,7 +381,7 @@ export function ValuationReport({
 
       {/* Key Assumptions */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm break-inside-avoid mt-8 mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Suposiciones Clave</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Supuestos Clave</h3>
 
         {/* General Assumptions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -388,12 +389,6 @@ export function ValuationReport({
             <p className="text-sm font-medium text-gray-600">Período de Proyección</p>
             <p className="text-base text-gray-900 mt-1">{numberOfYears} años</p>
           </div>
-          {wacc !== null && wacc !== undefined && (
-            <div>
-              <p className="text-sm font-medium text-gray-600">Tasa de Descuento (WACC)</p>
-              <p className="text-base text-gray-900 mt-1">{formatPercent(wacc)}</p>
-            </div>
-          )}
           {terminalGrowthRate !== null && terminalGrowthRate !== undefined && (
             <div>
               <p className="text-sm font-medium text-gray-600">Tasa de Crecimiento Terminal</p>
@@ -412,7 +407,31 @@ export function ValuationReport({
         {waccComponents && (
           <>
             <div className="border-t border-gray-200 pt-4 mb-4">
-              <h4 className="text-md font-semibold text-gray-900 mb-3">Componentes de WACC</h4>
+              <h4 className="text-md font-semibold text-gray-900 mb-3">Cálculo de WACC</h4>
+              {/* WACC Result */}
+              <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4">
+                <div className="flex items-start justify-between gap-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-2">Weighted Average Cost of Capital (WACC)</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {wacc !== null && wacc !== undefined ? formatPercent(wacc) : 'N/A'}
+                    </p>
+                  </div>
+                  <div className="min-w-[180px]">
+                    <p className="text-sm font-medium text-gray-600 mb-2">Estructura de Capital</p>
+                    <div className="space-y-1 text-sm text-gray-700">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Patrimonio:</span>
+                        <span className="font-semibold">{(waccComponents.equityWeight * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Deuda:</span>
+                        <span className="font-semibold">{(waccComponents.debtWeight * 100).toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="bg-blue-50 rounded-lg p-3">
@@ -470,7 +489,7 @@ export function ValuationReport({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium text-gray-600">Peso de Equity (E/V)</p>
                 <p className="text-base text-gray-900 mt-1">{(waccComponents.equityWeight * 100).toFixed(1)}%</p>
@@ -489,7 +508,7 @@ export function ValuationReport({
                   <p className="text-base text-gray-900 mt-1">{riskProfile.unleveredBeta.toFixed(2)}</p>
                 </div>
               )}
-            </div>
+            </div> */}
           </>
         )}
       </div>
@@ -497,25 +516,11 @@ export function ValuationReport({
       {/* Disclaimer */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <p className="text-sm text-yellow-800">
-          <strong>Disclaimer:</strong> Este informe de valuación es para fines informativos y no debe ser considerado
-          como asesoría financiera. Todas las proyecciones y suposiciones se basan en los datos proporcionados y pueden
-          no reflejar resultados futuros reales. Por favor, consulte con un profesional financiero calificado antes de
-          tomar decisiones de inversión.
-        </p>
-      </div>
-
-      {/* Promotional Footer */}
-      <div className="mt-8 pt-6 border-t-2 border-gray-200 text-center">
-        <p className="text-sm text-gray-600">
-          Crea tu propio reporte de manera gratuita en{' '}
-          <a
-            href="https://valupro.lat"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 font-semibold hover:text-blue-700 hover:underline"
-          >
-            https://valupro.lat
-          </a>
+          <strong>Disclaimer:</strong> Este informe de valorización se ha elaborado sólo para fines informativos, y
+          representa una referencia de valor a partir de los supuestos considerados y en base a la información
+          proporcionada. La estimación de flujos futuros podría no reflejar los resultados reales, y por ende este
+          informe no debe ser considerado como una recomendación de tipo financiera. Por favor, consulte con un
+          profesional financiero calificado antes de tomar decisiones de inversión
         </p>
       </div>
     </div>

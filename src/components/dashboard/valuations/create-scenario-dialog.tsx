@@ -258,7 +258,7 @@ export function CreateScenarioDialog({
         <DialogHeader>
           <DialogTitle>Crear escenario</DialogTitle>
           <DialogDescription>
-            Selecciona variables a ajustar y el sistema calculará el rango de valuación.
+            Selecciona variables a ajustar y el sistema calculará el rango de valorización.
           </DialogDescription>
         </DialogHeader>
 
