@@ -128,10 +128,16 @@ export function FootballFieldChart({
     const baseRatio = denom > 0 ? (base - min) / denom : 0.5;
     const basePosition = barX + (Number.isFinite(baseRatio) ? baseRatio : 0.5) * barWidth;
 
-    // Calculate min and max positions for labels (draw inside to free outer space)
+    // Calculate min and max positions for labels
     const minPosition = barX + 6;
-    const maxPosition = barX + barWidth - 6;
+    // On mobile, place max label outside the bar; on desktop, inside
+    const maxPosition = isMobile ? barX + barWidth + 8 : barX + barWidth - 6;
     const labelY = barY + barHeight / 2;
+
+    // Use smaller font size on mobile to prevent squashing
+    const fontSize = isMobile ? '9' : '12';
+    // On mobile, max label is outside (start alignment), on desktop it's inside (end alignment)
+    const maxTextAnchor = isMobile ? 'start' : 'end';
 
     return (
       <g>
@@ -143,7 +149,7 @@ export function FootballFieldChart({
           x={minPosition}
           y={labelY}
           fill="#374151"
-          fontSize="12"
+          fontSize={fontSize}
           fontWeight="600"
           dominantBaseline="middle"
           textAnchor="start"
@@ -151,15 +157,15 @@ export function FootballFieldChart({
           {formatCurrency(min)}
         </text>
 
-        {/* Max value label - inside right */}
+        {/* Max value label - outside right on mobile, inside right on desktop */}
         <text
           x={maxPosition}
           y={labelY}
           fill="#374151"
-          fontSize="12"
+          fontSize={fontSize}
           fontWeight="600"
           dominantBaseline="middle"
-          textAnchor="end"
+          textAnchor={maxTextAnchor}
         >
           {formatCurrency(max)}
         </text>
@@ -228,7 +234,7 @@ export function FootballFieldChart({
             layout="vertical"
             margin={{
               top: isMobile ? 12 : 20,
-              right: isMobile ? 20 : 40,
+              right: isMobile ? 50 : 40,
               left: isMobile ? 4 : 16,
               bottom: isMobile ? 8 : 20,
             }}
