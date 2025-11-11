@@ -133,6 +133,9 @@ export function FootballFieldChart({
     const maxPosition = barX + barWidth - 6;
     const labelY = barY + barHeight / 2;
 
+    // Use smaller font size on mobile to prevent squashing
+    const fontSize = isMobile ? '9' : '12';
+
     return (
       <g>
         {/* Main range bar */}
@@ -143,7 +146,7 @@ export function FootballFieldChart({
           x={minPosition}
           y={labelY}
           fill="#374151"
-          fontSize="12"
+          fontSize={fontSize}
           fontWeight="600"
           dominantBaseline="middle"
           textAnchor="start"
@@ -156,7 +159,7 @@ export function FootballFieldChart({
           x={maxPosition}
           y={labelY}
           fill="#374151"
-          fontSize="12"
+          fontSize={fontSize}
           fontWeight="600"
           dominantBaseline="middle"
           textAnchor="end"

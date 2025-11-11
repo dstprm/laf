@@ -201,24 +201,32 @@ export function ValuationReport({
       )}
 
       {/* Enterprise Value Highlight */}
-      <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-sm">
+      <div className="bg-white border-2 border-blue-200 rounded-lg p-4 sm:p-6 shadow-sm">
         <div className="text-center">
-          <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Enterprise Value (Caso Base)</p>
-          <p className="text-4xl font-bold text-blue-600 mt-2 mb-6">{formatCurrency(enterpriseValue)}</p>
+          <p className="text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wide">
+            Enterprise Value (Caso Base)
+          </p>
+          <p className="text-2xl sm:text-4xl font-bold text-blue-600 mt-2 mb-4 sm:mb-6">
+            {formatCurrency(enterpriseValue)}
+          </p>
 
           {/* Show scenario range if available */}
           {scenarioRange && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
               <p className="text-xs font-medium text-gray-500 uppercase mb-3">Rango de Escenarios</p>
-              <div className="flex items-center justify-center gap-6">
+              <div className="flex items-center justify-center gap-4 sm:gap-6">
                 <div>
                   <p className="text-xs text-gray-500">Bajo</p>
-                  <p className="text-lg font-semibold text-gray-700">{formatCurrency(scenarioRange.min)}</p>
+                  <p className="text-base sm:text-lg font-semibold text-gray-700">
+                    {formatCurrency(scenarioRange.min)}
+                  </p>
                 </div>
                 <div className="text-gray-400">—</div>
                 <div>
                   <p className="text-xs text-gray-500">Alto</p>
-                  <p className="text-lg font-semibold text-gray-700">{formatCurrency(scenarioRange.max)}</p>
+                  <p className="text-base sm:text-lg font-semibold text-gray-700">
+                    {formatCurrency(scenarioRange.max)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -410,14 +418,14 @@ export function ValuationReport({
               <h4 className="text-md font-semibold text-gray-900 mb-3">Cálculo de WACC</h4>
               {/* WACC Result */}
               <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4">
-                <div className="flex items-start justify-between gap-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-2">Weighted Average Cost of Capital (WACC)</p>
                     <p className="text-2xl font-bold text-gray-900">
                       {wacc !== null && wacc !== undefined ? formatPercent(wacc) : 'N/A'}
                     </p>
                   </div>
-                  <div className="min-w-[180px]">
+                  <div className="sm:min-w-[180px]">
                     <p className="text-sm font-medium text-gray-600 mb-2">Estructura de Capital</p>
                     <div className="space-y-1 text-sm text-gray-700">
                       <div className="flex items-center justify-between">
