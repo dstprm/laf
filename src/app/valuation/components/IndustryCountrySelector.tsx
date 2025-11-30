@@ -50,6 +50,9 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   const [corporateTaxRateStr, setCorporateTaxRateStr] = useState<string>(
     formatPercent(model.riskProfile?.corporateTaxRate || 0),
   );
+  const [waccPremiumStr, setWaccPremiumStr] = useState<string>(
+    formatPercent(model.riskProfile?.waccPremium || 0),
+  );
 
   // Parse numeric values for calculations
   const unleveredBeta = parseFloat(unleveredBetaStr) || 0;
@@ -61,6 +64,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   const companySpread = parsePercent(companySpreadStr) || 0;
   const riskFreeRate = parsePercent(riskFreeRateStr) || 0;
   const corporateTaxRate = parsePercent(corporateTaxRateStr) || 0;
+  const waccPremium = parsePercent(waccPremiumStr) || 0;
 
   // Get available industries and countries
   const industries = Object.keys(betasStatic);
@@ -106,6 +110,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     setCompanySpreadStr(formatPercent(model.riskProfile.companySpread || 0.05));
     setRiskFreeRateStr(formatPercent(model.riskProfile.riskFreeRate || 0.0444));
     setCorporateTaxRateStr(formatPercent(model.riskProfile.corporateTaxRate || 0.25));
+    setWaccPremiumStr(formatPercent(model.riskProfile.waccPremium || 0));
 
     // Reset isSyncing after a short delay to ensure state updates have completed
     setTimeout(() => {
@@ -257,6 +262,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
         companySpread,
         riskFreeRate,
         corporateTaxRate,
+        waccPremium,
       });
     } else {
       console.log('[IndustryCountrySelector] Skipping store update (syncing from store)');
@@ -274,6 +280,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
     companySpread,
     riskFreeRate,
     corporateTaxRate,
+    waccPremium,
     // Don't include updateRiskProfile and updateSelectedIndustry to avoid infinite loops
   ]);
 
@@ -553,6 +560,23 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
                       placeholder="0.00"
                     />
                   </div>
+
+                  <div>
+                    <label className="flex items-center gap-1 text-xs font-medium text-gray-700 mb-1">
+                      WACC Premium (%)
+                      <Tooltip content="Additional premium added directly to the final WACC calculation. Use this to account for company-specific risks or other adjustments.">
+                        <HelpCircle className="w-3 h-3 text-gray-400 hover:text-gray-600" />
+                      </Tooltip>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={waccPremiumStr}
+                      onChange={(e) => setWaccPremiumStr(e.target.value)}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="0.00"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -576,7 +600,10 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
                   <div className="bg-white rounded-md p-2 border border-purple-200">
                     <div className="text-xs text-gray-600 mb-1">WACC</div>
                     <div className="text-lg font-semibold text-purple-700">{formatPercent(wacc)}%</div>
-                    <div className="text-xs text-gray-500 mt-1">(E/V × CoE) + (D/V × CoD × (1-Tax))</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      (E/V × CoE) + (D/V × CoD × (1-Tax))
+                      {waccPremium !== 0 && <span> + Premium</span>}
+                    </div>
                   </div>
                 </div>
               </div>

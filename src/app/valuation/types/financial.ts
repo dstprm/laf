@@ -283,6 +283,7 @@ export interface RiskProfile {
   companySpread: number;
   riskFreeRate: number;
   corporateTaxRate: number;
+  waccPremium: number; // Additional premium added directly to final WACC calculation
 }
 
 export interface FinancialModel {
