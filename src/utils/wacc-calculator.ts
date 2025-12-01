@@ -15,6 +15,7 @@ export interface RiskProfile {
   companySpread: number;
   deRatio: number;
   corporateTaxRate: number;
+  waccPremium?: number; // Optional additional premium added directly to final WACC
 }
 
 export interface WaccComponents {
@@ -62,7 +63,7 @@ export function calculateDebtWeight(deRatio: number): number {
 
 /**
  * Calculate WACC (Weighted Average Cost of Capital)
- * Formula: WACC = (E/V × Re) + (D/V × Rd × (1 - Tc))
+ * Formula: WACC = (E/V × Re) + (D/V × Rd × (1 - Tc)) + WACC Premium
  *
  * @param riskProfile - The risk profile containing all necessary parameters
  * @returns WACC as a decimal (e.g., 0.12 for 12%)
@@ -73,7 +74,8 @@ export function calculateWacc(riskProfile: RiskProfile): number {
   const equityWeight = calculateEquityWeight(riskProfile.deRatio);
   const debtWeight = calculateDebtWeight(riskProfile.deRatio);
 
-  return equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - riskProfile.corporateTaxRate);
+  const baseWacc = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - riskProfile.corporateTaxRate);
+  return baseWacc + (riskProfile.waccPremium || 0);
 }
 
 /**
@@ -88,7 +90,8 @@ export function calculateWaccComponents(riskProfile: RiskProfile): WaccComponent
   const costOfDebt = calculateCostOfDebt(riskProfile);
   const equityWeight = calculateEquityWeight(riskProfile.deRatio);
   const debtWeight = calculateDebtWeight(riskProfile.deRatio);
-  const wacc = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - riskProfile.corporateTaxRate);
+  const baseWacc = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - riskProfile.corporateTaxRate);
+  const wacc = baseWacc + (riskProfile.waccPremium || 0);
 
   return {
     costOfEquity,

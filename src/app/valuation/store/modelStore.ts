@@ -113,6 +113,7 @@ const initialModel: FinancialModel = {
     companySpread: 0.05,
     riskFreeRate: 0.0444,
     corporateTaxRate: 0.25,
+    waccPremium: 0,
   },
   revenue: {
     inputType: 'consolidated',
@@ -1230,6 +1231,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         companySpread,
         deRatio,
         corporateTaxRate,
+        waccPremium,
       } = riskProfile;
 
       // Cost of Equity: Rf + Beta × (ERP + CRP)
@@ -1238,10 +1240,11 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       // Cost of Debt: Rf + Adjusted Default Spread + Company Spread
       const costOfDebt = riskFreeRate + adjustedDefaultSpread + companySpread;
 
-      // WACC: (E/V × CoE) + (D/V × CoD × (1-Tax))
+      // WACC: (E/V × CoE) + (D/V × CoD × (1-Tax)) + WACC Premium
       const equityWeight = 1 / (1 + deRatio); // E/V
       const debtWeight = deRatio / (1 + deRatio); // D/V
-      discountRate = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - corporateTaxRate);
+      const baseWacc = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - corporateTaxRate);
+      discountRate = baseWacc + (waccPremium || 0);
     }
 
     // Calculate Discounted Cash Flows: FCF_year_n / (1 + WACC)^n
@@ -2319,6 +2322,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
             companySpread: 0.05,
             riskFreeRate: 0.0444,
             corporateTaxRate: 0.25,
+            waccPremium: 0,
           }),
           ...riskProfile,
         },

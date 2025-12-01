@@ -497,6 +497,23 @@ export function ValuationReport({
               </div>
             </div>
 
+            {/* WACC Premium - Show only if non-zero */}
+            {riskProfile.waccPremium && riskProfile.waccPremium !== 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-amber-900">WACC Premium</p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      Prima adicional agregada al WACC base
+                    </p>
+                  </div>
+                  <p className="text-lg font-bold text-amber-800">
+                    {formatPercent(riskProfile.waccPremium * 100)}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium text-gray-600">Peso de Equity (E/V)</p>

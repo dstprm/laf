@@ -25,29 +25,20 @@ export function applyVariableAdjustments(
 
     switch (adjustment.variableId) {
       case 'wacc':
-        // WACC adjustment requires recalculating risk profile
+        // WACC adjustment: use waccPremium for direct adjustment
         if (model.riskProfile && value !== undefined) {
           const targetWacc = value / 100;
-          const currentWacc = calculateWacc(model.riskProfile);
-          const waccDiff = targetWacc - currentWacc;
 
-          // When D/E = 0, WACC = Cost of Equity only, so adjust equity risk premium
-          // When D/E > 0, adjust company spread to affect cost of debt
-          const debtWeight = calculateDebtWeight(model.riskProfile.deRatio);
+          // Calculate base WACC (without premium) by temporarily setting premium to 0
+          const tempRiskProfile = { ...model.riskProfile, waccPremium: 0 };
+          const baseWacc = calculateWacc(tempRiskProfile);
 
-          if (model.riskProfile.deRatio === 0 || debtWeight < 0.01) {
-            // No debt or negligible debt: adjust equity risk premium
-            // WACC = Cost of Equity when D/E = 0
-            // Cost of Equity = Rf + Beta × (ERP + CRP)
-            // So: waccDiff = Beta × erpAdjustment
-            const erpAdjustment =
-              model.riskProfile.leveredBeta !== 0 ? waccDiff / model.riskProfile.leveredBeta : waccDiff / 1; // Fallback if beta is 0
-            model.riskProfile.equityRiskPremium = Math.max(0, model.riskProfile.equityRiskPremium + erpAdjustment);
-          } else {
-            // Has significant debt: adjust company spread
-            const spreadAdjustment = waccDiff / (debtWeight * (1 - model.riskProfile.corporateTaxRate));
-            model.riskProfile.companySpread = Math.max(0, model.riskProfile.companySpread + spreadAdjustment);
-          }
+          // The difference between target and base WACC becomes the new premium
+          const newWaccPremium = targetWacc - baseWacc;
+
+          // Set the WACC premium to achieve the target WACC
+          // This can be positive (increase WACC) or negative (decrease WACC)
+          model.riskProfile.waccPremium = newWaccPremium;
         }
         break;
 
