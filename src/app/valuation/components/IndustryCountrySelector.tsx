@@ -50,9 +50,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   const [corporateTaxRateStr, setCorporateTaxRateStr] = useState<string>(
     formatPercent(model.riskProfile?.corporateTaxRate || 0),
   );
-  const [waccPremiumStr, setWaccPremiumStr] = useState<string>(
-    formatPercent(model.riskProfile?.waccPremium || 0),
-  );
+  const [waccPremiumStr, setWaccPremiumStr] = useState<string>(formatPercent(model.riskProfile?.waccPremium || 0));
 
   // Parse numeric values for calculations
   const unleveredBeta = parseFloat(unleveredBetaStr) || 0;
@@ -289,7 +287,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   const costOfDebt = riskFreeRate + adjustedDefaultSpread + companySpread;
 
   // Calculate WACC using utility function
-  const wacc = model.riskProfile 
+  const wacc = model.riskProfile
     ? calculateWacc(model.riskProfile)
     : (1 / (1 + deRatio)) * costOfEquity + (deRatio / (1 + deRatio)) * costOfDebt * (1 - corporateTaxRate);
 
