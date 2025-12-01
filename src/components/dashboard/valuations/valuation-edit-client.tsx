@@ -184,6 +184,7 @@ export default function ValuationEditClient({
             companySpread: initialModelData.riskProfile?.companySpread || 0.05,
             riskFreeRate: initialModelData.riskProfile?.riskFreeRate || 0.0444,
             corporateTaxRate,
+            waccPremium: initialModelData.riskProfile?.waccPremium || 0,
           };
         } else {
           // Fallback to existing data with updated industry/country
@@ -191,6 +192,7 @@ export default function ValuationEditClient({
             ...(initialModelData.riskProfile as RiskProfile),
             selectedIndustry,
             selectedCountry,
+            waccPremium: initialModelData.riskProfile?.waccPremium ?? 0,
           };
         }
       } else if (initialModelData.riskProfile) {
@@ -199,6 +201,7 @@ export default function ValuationEditClient({
           ...initialModelData.riskProfile,
           selectedIndustry,
           selectedCountry,
+          waccPremium: initialModelData.riskProfile.waccPremium ?? 0,
         };
       } else {
         // No riskProfile exists, create default one
@@ -214,6 +217,7 @@ export default function ValuationEditClient({
           companySpread: 0.05,
           riskFreeRate: 0.0444,
           corporateTaxRate: 0.25,
+          waccPremium: 0,
         };
       }
 
