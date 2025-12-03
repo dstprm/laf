@@ -50,7 +50,7 @@ const createMockModel = (): FinancialModel => {
     periods: {
       startYear: currentYear,
       numberOfYears: 5,
-      periodLabels: Array.from({ length: 5 }, (_, i) => `${currentYear + i}E`),
+      periodLabels: ['Base', ...Array.from({ length: 5 }, (_, i) => `${currentYear + i}E`)],
     },
     riskProfile: {
       selectedIndustry: null,
@@ -64,6 +64,7 @@ const createMockModel = (): FinancialModel => {
       companySpread: 0.05,
       riskFreeRate: 0.0444,
       corporateTaxRate: 0.25,
+      waccPremium: 0,
     },
     revenue: {
       inputType: 'consolidated',
@@ -299,8 +300,9 @@ describe('ValuationResultsDisplay', () => {
     render(<ValuationResultsDisplay {...defaultProps} showYears={3} />);
 
     const chart = screen.getByTestId('revenue-ebitda-chart');
-    expect(chart).toHaveTextContent('Revenues: 3');
-    expect(chart).toHaveTextContent('Margins: 3');
+    // showYears=3 means base + 3 projections = 4 total periods
+    expect(chart).toHaveTextContent('Revenues: 4');
+    expect(chart).toHaveTextContent('Margins: 4');
   });
 
   it('should use custom chartTitle when provided', () => {

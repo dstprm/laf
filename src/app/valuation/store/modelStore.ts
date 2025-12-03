@@ -1237,6 +1237,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         companySpread,
         deRatio,
         corporateTaxRate,
+        waccPremium,
       } = riskProfile;
 
       // Cost of Equity: Rf + Beta × (ERP + CRP)
@@ -1245,10 +1246,11 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       // Cost of Debt: Rf + Adjusted Default Spread + Company Spread
       const costOfDebt = riskFreeRate + adjustedDefaultSpread + companySpread;
 
-      // WACC: (E/V × CoE) + (D/V × CoD × (1-Tax))
+      // WACC: (E/V × CoE) + (D/V × CoD × (1-Tax)) + WACC Premium
       const equityWeight = 1 / (1 + deRatio); // E/V
       const debtWeight = deRatio / (1 + deRatio); // D/V
-      discountRate = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - corporateTaxRate);
+      const baseWacc = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - corporateTaxRate);
+      discountRate = baseWacc + (waccPremium || 0);
     }
 
     // Calculate Discounted Cash Flows

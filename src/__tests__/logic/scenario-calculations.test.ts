@@ -37,6 +37,7 @@ function createTestModel(overrides: Partial<FinancialModel> = {}): FinancialMode
       companySpread: 0.05,
       riskFreeRate: 0.0444,
       corporateTaxRate: 0.25,
+      waccPremium: 0,
     },
     revenue: {
       inputType: 'consolidated',
@@ -373,7 +374,7 @@ describe('Scenario Calculation Logic', () => {
       expect(result.enterpriseValue).toBeGreaterThan(0);
       expect(result.calculatedFinancials).toBeDefined();
       expect(result.calculatedFinancials.enterpriseValue).toBeGreaterThan(0);
-      expect(result.calculatedFinancials.revenue).toHaveLength(5);
+      expect(result.calculatedFinancials.revenue).toHaveLength(6); // base + 5 projection years
     });
 
     it('should not mutate the original model', () => {
