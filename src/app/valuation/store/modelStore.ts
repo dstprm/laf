@@ -98,8 +98,11 @@ const currentYear = new Date().getFullYear();
 const initialModel: FinancialModel = {
   periods: {
     startYear: currentYear,
+    // numberOfYears represents the number of projection years (excluding base year)
     numberOfYears: 5,
-    periodLabels: Array.from({ length: 5 }, (_, i) => `${currentYear + i}E`),
+    // periodLabels includes an explicit base year followed by projection years
+    // e.g., ['Base', '2025E', '2026E', '2027E', '2028E', '2029E']
+    periodLabels: ['Base', ...Array.from({ length: 5 }, (_, i) => `${currentYear + i}E`)],
   },
   riskProfile: {
     selectedIndustry: null,
@@ -528,8 +531,12 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       const updatedPeriods = { ...state.model.periods, ...periods };
       if (periods.numberOfYears || periods.startYear) {
         const startYear = updatedPeriods.startYear;
-        const numberOfYears = updatedPeriods.numberOfYears;
-        updatedPeriods.periodLabels = Array.from({ length: numberOfYears }, (_, i) => `${startYear + i}E`);
+        const projectionYears = updatedPeriods.numberOfYears;
+        const totalPeriods = projectionYears + 1; // base year + projection years
+
+        updatedPeriods.periodLabels = Array.from({ length: totalPeriods }, (_, i) =>
+          i === 0 ? 'Base' : `${startYear + i - 1}E`,
+        );
       }
       const newModel = {
         ...state.model,
@@ -633,7 +640,9 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
   calculateFinancials: () => {
     const { model } = get();
+    // numberOfYears = projection years; totalPeriods = base year + projections
     const numberOfYears = model.periods.numberOfYears;
+    const totalPeriods = numberOfYears + 1;
 
     // Calculate Revenue (base calculation with proper year-over-year growth)
     const revenueCalculated: number[] = [];
@@ -645,7 +654,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
         const calculatedRevenue = calculateRevenueWithGrowth(
           baseValue,
-          numberOfYears,
+          totalPeriods,
           growthMethod,
           model.revenue.consolidated.growthRate,
           model.revenue.consolidated.individualGrowthRates,
@@ -654,7 +663,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         revenueCalculated.push(...calculatedRevenue);
       } else {
         // Direct input method - use yearlyValues if available
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           if (model.revenue.consolidated.yearlyValues?.[i] !== undefined) {
             revenueCalculated.push(model.revenue.consolidated.yearlyValues[i]);
           } else {
@@ -664,19 +673,19 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       }
     } else if (model.revenue.inputType === 'segments' && model.revenue.segments) {
       // Segment-based calculation
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         let totalRevenue = 0;
 
         // Sum up all segment revenues for this period
         for (const segment of model.revenue.segments) {
-          const segmentValues = calculateSegmentValues(segment, numberOfYears);
+          const segmentValues = calculateSegmentValues(segment, totalPeriods);
           totalRevenue += segmentValues[i] || 0;
         }
 
         revenueCalculated.push(totalRevenue);
       }
     } else {
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         revenueCalculated.push(0);
       }
     }
@@ -698,7 +707,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     if (model.cogs.inputType === 'consolidated' && model.cogs.consolidated) {
       if (model.cogs.consolidated.inputMethod === 'direct') {
         // Direct yearly values input
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           cogsCalculated.push(model.cogs.consolidated.yearlyValues?.[i] || 0);
         }
       } else if (model.cogs.consolidated.inputMethod === 'growth') {
@@ -708,7 +717,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
         if (growthMethod === 'uniform') {
           const growthRate = (model.cogs.consolidated.growthRate || 0) / 100;
-          for (let i = 0; i < numberOfYears; i++) {
+          for (let i = 0; i < totalPeriods; i++) {
             cogsCalculated.push(baseValue * Math.pow(1 + growthRate, i));
           }
         } else {
@@ -717,7 +726,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
           let currentValue = baseValue;
           cogsCalculated.push(currentValue);
 
-          for (let i = 1; i < numberOfYears; i++) {
+          for (let i = 1; i < totalPeriods; i++) {
             const growthRate = (individualGrowthRates[i] || 0) / 100;
             currentValue = currentValue * (1 + growthRate);
             cogsCalculated.push(currentValue);
@@ -725,7 +734,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         }
       } else if (model.cogs.consolidated.inputMethod === 'grossMargin') {
         const grossMarginPercent = (model.cogs.consolidated.grossMarginPercent || 0) / 100;
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           cogsCalculated.push(revenue[i] * (1 - grossMarginPercent));
         }
       } else if (model.cogs.consolidated.inputMethod === 'revenueMargin') {
@@ -733,12 +742,12 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
         if (percentMethod === 'uniform') {
           const revenueMarginPercent = (model.cogs.consolidated.revenueMarginPercent || 0) / 100;
-          for (let i = 0; i < numberOfYears; i++) {
+          for (let i = 0; i < totalPeriods; i++) {
             cogsCalculated.push(revenue[i] * revenueMarginPercent);
           }
         } else {
           // Individual percentages per period
-          for (let i = 0; i < numberOfYears; i++) {
+          for (let i = 0; i < totalPeriods; i++) {
             const periodPercent = model.cogs.consolidated.individualPercents?.[i] || 0;
             const percentDecimal = periodPercent / 100;
             cogsCalculated.push(revenue[i] * percentDecimal);
@@ -747,7 +756,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       }
     } else if (model.cogs.inputType === 'segments' && model.cogs.segments) {
       // Segment-based COGS calculation
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         let totalCogs = 0;
 
         for (const cogsSegment of model.cogs.segments) {
@@ -757,18 +766,18 @@ export const useModelStore = create<ModelStore>((set, get) => ({
             const revenueSegment = model.revenue.segments.find((seg) => seg.id === revenueSegmentId);
 
             if (revenueSegment) {
-              const revenueSegmentValues = calculateSegmentValues(revenueSegment, numberOfYears);
+              const revenueSegmentValues = calculateSegmentValues(revenueSegment, totalPeriods);
               const cogsSegmentValues = calculateCOGSSegmentValues(
                 cogsSegment,
                 revenueSegmentValues,
-                numberOfYears,
+                totalPeriods,
                 revenue,
               );
               totalCogs += cogsSegmentValues[i] || 0;
             }
           } else {
             // Independent COGS segments - calculate directly using segment configuration
-            const cogsSegmentValues = calculateCOGSSegmentValues(cogsSegment, [], numberOfYears, revenue);
+            const cogsSegmentValues = calculateCOGSSegmentValues(cogsSegment, [], totalPeriods, revenue);
             totalCogs += cogsSegmentValues[i] || 0;
           }
         }
@@ -776,7 +785,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         cogsCalculated.push(totalCogs);
       }
     } else {
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         cogsCalculated.push(0);
       }
     }
@@ -792,7 +801,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     const opexCalculated: number[] = [];
     if (model.opex.inputType === 'consolidated' && model.opex.consolidated) {
       if (model.opex.consolidated.inputMethod === 'direct') {
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           opexCalculated.push(model.opex.consolidated.yearlyValues?.[i] || 0);
         }
       } else if (model.opex.consolidated.inputMethod === 'growth') {
@@ -801,7 +810,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
         const calculatedValues = calculateRevenueWithGrowth(
           baseValue,
-          numberOfYears,
+          totalPeriods,
           growthMethod,
           model.opex.consolidated.growthRate,
           model.opex.consolidated.individualGrowthRates,
@@ -813,11 +822,11 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
         if (percentMethod === 'uniform') {
           const percentOfRevenue = (model.opex.consolidated.percentOfRevenue || 0) / 100;
-          for (let i = 0; i < numberOfYears; i++) {
+          for (let i = 0; i < totalPeriods; i++) {
             opexCalculated.push(revenue[i] * percentOfRevenue);
           }
         } else if (percentMethod === 'individual') {
-          for (let i = 0; i < numberOfYears; i++) {
+          for (let i = 0; i < totalPeriods; i++) {
             const percent = (model.opex.consolidated.individualPercents?.[i] || 0) / 100;
             opexCalculated.push(revenue[i] * percent);
           }
@@ -825,18 +834,18 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       }
     } else if (model.opex.inputType === 'segments' && model.opex.segments) {
       // Calculate segments-based OpEx
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         let totalOpEx = 0;
 
         for (const opexSegment of model.opex.segments) {
-          const opexSegmentValues = calculateOpExSegmentValues(opexSegment, revenue, numberOfYears);
+          const opexSegmentValues = calculateOpExSegmentValues(opexSegment, revenue, totalPeriods);
           totalOpEx += opexSegmentValues[i] || 0;
         }
 
         opexCalculated.push(totalOpEx);
       }
     } else {
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         opexCalculated.push(0);
       }
     }
@@ -848,7 +857,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     const otherIncomeCalculated: number[] = [];
     if (model.otherIncome.inputType === 'consolidated' && model.otherIncome.consolidated) {
       if (model.otherIncome.consolidated.inputMethod === 'direct') {
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           otherIncomeCalculated.push(model.otherIncome.consolidated.yearlyValues?.[i] || 0);
         }
       } else if (model.otherIncome.consolidated.inputMethod === 'growth') {
@@ -857,7 +866,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
         const calculatedValues = calculateRevenueWithGrowth(
           baseValue,
-          numberOfYears,
+          totalPeriods,
           growthMethod,
           model.otherIncome.consolidated.growthRate,
           model.otherIncome.consolidated.individualGrowthRates,
@@ -869,11 +878,11 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
         if (percentMethod === 'uniform') {
           const percentOfRevenue = (model.otherIncome.consolidated.percentOfRevenue || 0) / 100;
-          for (let i = 0; i < numberOfYears; i++) {
+          for (let i = 0; i < totalPeriods; i++) {
             otherIncomeCalculated.push(revenue[i] * percentOfRevenue);
           }
         } else if (percentMethod === 'individual') {
-          for (let i = 0; i < numberOfYears; i++) {
+          for (let i = 0; i < totalPeriods; i++) {
             const percent = (model.otherIncome.consolidated.individualPercents?.[i] || 0) / 100;
             otherIncomeCalculated.push(revenue[i] * percent);
           }
@@ -881,22 +890,18 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       }
     } else if (model.otherIncome.inputType === 'segments' && model.otherIncome.segments) {
       // Calculate segments-based Other Income
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         let totalOtherIncome = 0;
 
         for (const otherIncomeSegment of model.otherIncome.segments) {
-          const otherIncomeSegmentValues = calculateOtherIncomeSegmentValues(
-            otherIncomeSegment,
-            revenue,
-            numberOfYears,
-          );
+          const otherIncomeSegmentValues = calculateOtherIncomeSegmentValues(otherIncomeSegment, revenue, totalPeriods);
           totalOtherIncome += otherIncomeSegmentValues[i] || 0;
         }
 
         otherIncomeCalculated.push(totalOtherIncome);
       }
     } else {
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         otherIncomeCalculated.push(0);
       }
     }
@@ -908,7 +913,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     const otherExpensesCalculated: number[] = [];
     if (model.otherExpenses.inputType === 'consolidated' && model.otherExpenses.consolidated) {
       if (model.otherExpenses.consolidated.inputMethod === 'direct') {
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           otherExpensesCalculated.push(model.otherExpenses.consolidated.yearlyValues?.[i] || 0);
         }
       } else if (model.otherExpenses.consolidated.inputMethod === 'growth') {
@@ -917,7 +922,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
         const calculatedValues = calculateRevenueWithGrowth(
           baseValue,
-          numberOfYears,
+          totalPeriods,
           growthMethod,
           model.otherExpenses.consolidated.growthRate,
           model.otherExpenses.consolidated.individualGrowthRates,
@@ -929,11 +934,11 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
         if (percentMethod === 'uniform') {
           const percentOfRevenue = (model.otherExpenses.consolidated.percentOfRevenue || 0) / 100;
-          for (let i = 0; i < numberOfYears; i++) {
+          for (let i = 0; i < totalPeriods; i++) {
             otherExpensesCalculated.push(revenue[i] * percentOfRevenue);
           }
         } else if (percentMethod === 'individual') {
-          for (let i = 0; i < numberOfYears; i++) {
+          for (let i = 0; i < totalPeriods; i++) {
             const percent = (model.otherExpenses.consolidated.individualPercents?.[i] || 0) / 100;
             otherExpensesCalculated.push(revenue[i] * percent);
           }
@@ -941,14 +946,14 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       }
     } else if (model.otherExpenses.inputType === 'segments' && model.otherExpenses.segments) {
       // Calculate segments-based Other Expenses
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         let totalOtherExpenses = 0;
 
         for (const otherExpensesSegment of model.otherExpenses.segments) {
           const otherExpensesSegmentValues = calculateOtherExpensesSegmentValues(
             otherExpensesSegment,
             revenue,
-            numberOfYears,
+            totalPeriods,
           );
           totalOtherExpenses += otherExpensesSegmentValues[i] || 0;
         }
@@ -956,7 +961,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         otherExpensesCalculated.push(totalOtherExpenses);
       }
     } else {
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         otherExpensesCalculated.push(0);
       }
     }
@@ -974,7 +979,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     // Calculate D&A
     const daCalculated: number[] = [];
     if (model.da.inputMethod === 'direct') {
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         daCalculated.push(model.da.yearlyValues?.[i] || 0);
       }
     } else if (model.da.inputMethod === 'growth') {
@@ -983,7 +988,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
       const calculatedValues = calculateRevenueWithGrowth(
         baseValue,
-        numberOfYears,
+        totalPeriods,
         growthMethod,
         model.da.growthRate,
         model.da.individualGrowthRates,
@@ -995,11 +1000,11 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
       if (percentMethod === 'uniform') {
         const percentOfRevenue = (model.da.percentOfRevenue || 0) / 100;
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           daCalculated.push(revenue[i] * percentOfRevenue);
         }
       } else if (percentMethod === 'individual') {
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           const percent = (model.da.individualPercents?.[i] || 0) / 100;
           daCalculated.push(revenue[i] * percent);
         }
@@ -1020,7 +1025,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     // Calculate Taxes
     const taxesCalculated: number[] = [];
     if (model.taxes.inputMethod === 'direct') {
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         taxesCalculated.push(model.taxes.yearlyValues?.[i] || 0);
       }
     } else if (model.taxes.inputMethod === 'growth') {
@@ -1029,7 +1034,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
       const calculatedValues = calculateRevenueWithGrowth(
         baseValue,
-        numberOfYears,
+        totalPeriods,
         growthMethod,
         model.taxes.growthRate,
         model.taxes.individualGrowthRates,
@@ -1041,13 +1046,13 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
       if (percentMethod === 'uniform') {
         const percentOfEBIT = (model.taxes.percentOfEBIT || 0) / 100;
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           // Only calculate taxes if EBIT is positive
           const taxableIncome = Math.max(0, ebit[i]);
           taxesCalculated.push(taxableIncome * percentOfEBIT);
         }
       } else if (percentMethod === 'individual') {
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           const percent = (model.taxes.individualPercents?.[i] || 0) / 100;
           // Only calculate taxes if EBIT is positive
           const taxableIncome = Math.max(0, ebit[i]);
@@ -1066,7 +1071,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     // Calculate CAPEX
     const capexCalculated: number[] = [];
     if (model.capex.inputMethod === 'direct') {
-      for (let i = 0; i < numberOfYears; i++) {
+      for (let i = 0; i < totalPeriods; i++) {
         capexCalculated.push(model.capex.yearlyValues?.[i] || 0);
       }
     } else if (model.capex.inputMethod === 'growth') {
@@ -1075,7 +1080,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
       const calculatedValues = calculateRevenueWithGrowth(
         baseValue,
-        numberOfYears,
+        totalPeriods,
         growthMethod,
         model.capex.growthRate,
         model.capex.individualGrowthRates,
@@ -1087,11 +1092,11 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
       if (percentMethod === 'uniform') {
         const percentOfRevenue = (model.capex.percentOfRevenue || 0) / 100;
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           capexCalculated.push(revenue[i] * percentOfRevenue);
         }
       } else if (percentMethod === 'individual') {
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           const percent = (model.capex.individualPercents?.[i] || 0) / 100;
           capexCalculated.push(revenue[i] * percent);
         }
@@ -1101,11 +1106,11 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
       if (percentMethod === 'uniform') {
         const percentOfEBIT = (model.capex.percentOfEBIT || 0) / 100;
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           capexCalculated.push(ebit[i] * percentOfEBIT);
         }
       } else if (percentMethod === 'individual') {
-        for (let i = 0; i < numberOfYears; i++) {
+        for (let i = 0; i < totalPeriods; i++) {
           const percent = (model.capex.individualPercents?.[i] || 0) / 100;
           capexCalculated.push(ebit[i] * percent);
         }
@@ -1123,7 +1128,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     // We calculate NWC for numberOfYears + 1 periods (base year + projection years)
     // to properly calculate change in NWC starting from year 0
     const nwcCalculated: number[] = [];
-    const nwcPeriodsToCalculate = numberOfYears + 1; // Add one extra period for base year
+    const nwcPeriodsToCalculate = numberOfYears + 1; // base year + projection years
 
     if (model.netWorkingCapital.inputMethod === 'direct') {
       for (let i = 0; i < nwcPeriodsToCalculate; i++) {
@@ -1200,14 +1205,14 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     // Apply manual overrides to NWC (extended array)
     const nwcWithBaseYear = applyManualOverrides(nwcCalculated, model.netWorkingCapital.manualOverrides);
 
-    // Extract the display NWC values (projection years only, excluding base year)
-    const netWorkingCapital = nwcWithBaseYear.slice(1);
+    // Display NWC values for base year + all projection years so arrays align with periods
+    const netWorkingCapital = nwcWithBaseYear;
 
     // Calculate change in NWC (for FCF calculation)
-    // Now we properly calculate the change from base year (index 0) to year 1 (index 1), etc.
-    const changeInNWC: number[] = [];
-    for (let i = 0; i < numberOfYears; i++) {
-      changeInNWC.push(nwcWithBaseYear[i + 1] - nwcWithBaseYear[i]);
+    // Index 0 (base year) has no prior period, so change is 0.
+    const changeInNWC: number[] = [0];
+    for (let i = 1; i < nwcWithBaseYear.length; i++) {
+      changeInNWC.push(nwcWithBaseYear[i] - nwcWithBaseYear[i - 1]);
     }
 
     // Calculate Net Income
@@ -1215,6 +1220,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     const netIncomeMargin = revenue.map((rev, i) => (rev > 0 ? (netIncome[i] / rev) * 100 : 0));
 
     // Calculate Free Cash Flow: Net Income + D&A - CAPEX - Change in NWC
+    // Note: index 0 represents the base year; projection years start at index 1.
     const freeCashFlow = netIncome.map((ni, i) => ni + da[i] - capex[i] - changeInNWC[i]);
 
     // Calculate WACC for discounting
@@ -1231,7 +1237,6 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         companySpread,
         deRatio,
         corporateTaxRate,
-        waccPremium,
       } = riskProfile;
 
       // Cost of Equity: Rf + Beta × (ERP + CRP)
@@ -1240,16 +1245,20 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       // Cost of Debt: Rf + Adjusted Default Spread + Company Spread
       const costOfDebt = riskFreeRate + adjustedDefaultSpread + companySpread;
 
-      // WACC: (E/V × CoE) + (D/V × CoD × (1-Tax)) + WACC Premium
+      // WACC: (E/V × CoE) + (D/V × CoD × (1-Tax))
       const equityWeight = 1 / (1 + deRatio); // E/V
       const debtWeight = deRatio / (1 + deRatio); // D/V
-      const baseWacc = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - corporateTaxRate);
-      discountRate = baseWacc + (waccPremium || 0);
+      discountRate = equityWeight * costOfEquity + debtWeight * costOfDebt * (1 - corporateTaxRate);
     }
 
-    // Calculate Discounted Cash Flows: FCF_year_n / (1 + WACC)^n
+    // Calculate Discounted Cash Flows
+    // - Index 0 is the base year and should NOT contribute to enterprise value (no discounting)
+    // - Projection Year 1 is stored at index 1, discounted with exponent 1, etc.
     const discountedCashFlows = freeCashFlow.map((fcf, index) => {
-      const yearNumber = index + 1; // Years start from 1, not 0
+      if (index === 0) {
+        return 0;
+      }
+      const yearNumber = index; // Year 1 at index 1, Year 2 at index 2, etc.
       return fcf / Math.pow(1 + discountRate, yearNumber);
     });
 
@@ -1258,7 +1267,8 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     let presentValueTerminalValue = 0;
 
     if (numberOfYears > 0) {
-      const finalYearIndex = numberOfYears - 1;
+      // Final projection year is the last element in the arrays (index = totalPeriods - 1)
+      const finalYearIndex = totalPeriods - 1;
 
       if (model.terminalValue.method === 'growth') {
         // Growth method: TV = FCF(final year) * (1 + g) / (WACC - g)
@@ -1267,8 +1277,10 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
         if (discountRate > growthRate && finalYearFCF > 0) {
           terminalValue = (finalYearFCF * (1 + growthRate)) / (discountRate - growthRate);
-          // Discount back from end of final year (which is numberOfYears periods from today)
-          presentValueTerminalValue = terminalValue / Math.pow(1 + discountRate, numberOfYears);
+          // Discount back from end of final projection year.
+          // With a base year at index 0, the last projection year is `numberOfYears` periods from today.
+          const terminalExponent = Math.max(numberOfYears, 1);
+          presentValueTerminalValue = terminalValue / Math.pow(1 + discountRate, terminalExponent);
         }
       } else if (model.terminalValue.method === 'multiples') {
         // Multiples method: TV = Final Year Metric * Multiple
@@ -1293,14 +1305,15 @@ export const useModelStore = create<ModelStore>((set, get) => ({
 
         if (baseValue > 0) {
           terminalValue = baseValue * multiple;
-          // Discount back from end of final year (which is numberOfYears periods from today)
-          presentValueTerminalValue = terminalValue / Math.pow(1 + discountRate, numberOfYears);
+          // Discount back from end of final projection year.
+          const terminalExponent = Math.max(numberOfYears, 1);
+          presentValueTerminalValue = terminalValue / Math.pow(1 + discountRate, terminalExponent);
         }
       }
     }
 
-    // Calculate Enterprise Value: Sum of Discounted Cash Flows + PV of Terminal Value
-    const enterpriseValue = discountedCashFlows.reduce((sum, dcf) => sum + dcf, 0) + presentValueTerminalValue;
+    // Calculate Enterprise Value: Sum of Discounted Cash Flows (projection years only) + PV of Terminal Value
+    const enterpriseValue = discountedCashFlows.slice(1).reduce((sum, dcf) => sum + dcf, 0) + presentValueTerminalValue;
 
     // Calculate Equity Value: EV - Net Debt + Cash
     const equityValueAssumptions = model.equityValue;
@@ -1359,7 +1372,8 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     const revenueGrowthRates: number[] = [];
     const growthRateOverrides: ManualOverrides = {};
 
-    for (let i = 0; i < model.periods.numberOfYears; i++) {
+    const totalPeriods = calculatedFinancials.revenue.length;
+    for (let i = 0; i < totalPeriods; i++) {
       if (i === 0) {
         revenueGrowthRates.push(0); // No growth for base year
       } else {
@@ -1398,7 +1412,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     // Add segment rows if using segments and segments are visible
     if (model.revenue.inputType === 'segments' && model.revenue.segments && segmentsVisible) {
       model.revenue.segments.forEach((segment) => {
-        const segmentValues = calculateSegmentValues(segment, model.periods.numberOfYears);
+        const segmentValues = calculateSegmentValues(segment, totalPeriods);
 
         tableData.push({
           id: `segment_${segment.id}`,
@@ -1414,7 +1428,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         // Add factor rows if segment is multiplication type and factors are expanded
         if (segment.segmentType === 'multiplication' && segment.rows && expandedSegmentFactors.has(segment.id)) {
           segment.rows.forEach((row) => {
-            const rowValues = calculateSegmentRowValues(row, model.periods.numberOfYears);
+            const rowValues = calculateSegmentRowValues(row, totalPeriods);
 
             tableData.push({
               id: `factor_${segment.id}_${row.id}`,
@@ -1467,22 +1481,17 @@ export const useModelStore = create<ModelStore>((set, get) => ({
           const revenueSegment = model.revenue.segments.find((seg) => seg.id === revenueSegmentId);
 
           if (revenueSegment) {
-            const revenueSegmentValues = calculateSegmentValues(revenueSegment, model.periods.numberOfYears);
+            const revenueSegmentValues = calculateSegmentValues(revenueSegment, totalPeriods);
             segmentValues = calculateCOGSSegmentValues(
               cogsSegment,
               revenueSegmentValues,
-              model.periods.numberOfYears,
+              totalPeriods,
               calculatedFinancials.revenue,
             );
           }
         } else {
           // Independent COGS segments - calculate directly
-          segmentValues = calculateCOGSSegmentValues(
-            cogsSegment,
-            [],
-            model.periods.numberOfYears,
-            calculatedFinancials.revenue,
-          );
+          segmentValues = calculateCOGSSegmentValues(cogsSegment, [], totalPeriods, calculatedFinancials.revenue);
         }
 
         tableData.push({
@@ -1503,7 +1512,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
           expandedSegmentFactors.has(cogsSegment.id)
         ) {
           cogsSegment.rows.forEach((row) => {
-            const rowValues = calculateSegmentRowValues(row, model.periods.numberOfYears);
+            const rowValues = calculateSegmentRowValues(row, totalPeriods);
 
             tableData.push({
               id: `cogs_factor_${cogsSegment.id}_${row.id}`,
@@ -1555,11 +1564,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     // Add OpEx segment rows if using segments and segments are visible
     if (model.opex.inputType === 'segments' && model.opex.segments && opexSegmentsVisible) {
       model.opex.segments.forEach((opexSegment) => {
-        const segmentValues = calculateOpExSegmentValues(
-          opexSegment,
-          calculatedFinancials.revenue,
-          model.periods.numberOfYears,
-        );
+        const segmentValues = calculateOpExSegmentValues(opexSegment, calculatedFinancials.revenue, totalPeriods);
 
         tableData.push({
           id: `opex_segment_${opexSegment.id}`,
@@ -1579,7 +1584,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
           expandedSegmentFactors.has(opexSegment.id)
         ) {
           opexSegment.rows.forEach((row) => {
-            const rowValues = calculateSegmentRowValues(row, model.periods.numberOfYears);
+            const rowValues = calculateSegmentRowValues(row, totalPeriods);
 
             tableData.push({
               id: `opex_factor_${opexSegment.id}_${row.id}`,
@@ -1614,7 +1619,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         const segmentValues = calculateOtherIncomeSegmentValues(
           otherIncomeSegment,
           calculatedFinancials.revenue,
-          model.periods.numberOfYears,
+          totalPeriods,
         );
 
         tableData.push({
@@ -1635,7 +1640,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
           expandedSegmentFactors.has(otherIncomeSegment.id)
         ) {
           otherIncomeSegment.rows.forEach((row) => {
-            const rowValues = calculateSegmentRowValues(row, model.periods.numberOfYears);
+            const rowValues = calculateSegmentRowValues(row, totalPeriods);
 
             tableData.push({
               id: `otherIncome_factor_${otherIncomeSegment.id}_${row.id}`,
@@ -1670,7 +1675,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         const segmentValues = calculateOtherExpensesSegmentValues(
           otherExpensesSegment,
           calculatedFinancials.revenue,
-          model.periods.numberOfYears,
+          totalPeriods,
         );
 
         tableData.push({
@@ -1691,7 +1696,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
           expandedSegmentFactors.has(otherExpensesSegment.id)
         ) {
           otherExpensesSegment.rows.forEach((row) => {
-            const rowValues = calculateSegmentRowValues(row, model.periods.numberOfYears);
+            const rowValues = calculateSegmentRowValues(row, totalPeriods);
 
             tableData.push({
               id: `otherExpenses_factor_${otherExpensesSegment.id}_${row.id}`,
@@ -1834,7 +1839,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       {
         id: 'terminalValue',
         label: 'Terminal Value',
-        values: [...Array(model.periods.numberOfYears - 1).fill(''), calculatedFinancials.terminalValue],
+        values: [...Array(calculatedFinancials.revenue.length - 1).fill(''), calculatedFinancials.terminalValue],
         isCalculated: true,
         section: 'terminalValue',
         format: 'currency',
@@ -1843,7 +1848,10 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       {
         id: 'presentValueTerminalValue',
         label: 'PV of Terminal Value',
-        values: [calculatedFinancials.presentValueTerminalValue, ...Array(model.periods.numberOfYears - 1).fill('')],
+        values: [
+          calculatedFinancials.presentValueTerminalValue,
+          ...Array(calculatedFinancials.revenue.length - 1).fill(''),
+        ],
         isCalculated: true,
         section: 'terminalValue',
         format: 'currency',
@@ -1852,7 +1860,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       {
         id: 'enterpriseValue',
         label: 'Enterprise Value',
-        values: [calculatedFinancials.enterpriseValue, ...Array(model.periods.numberOfYears - 1).fill('')],
+        values: [calculatedFinancials.enterpriseValue, ...Array(calculatedFinancials.revenue.length - 1).fill('')],
         isCalculated: true,
         section: 'equityValue',
         format: 'currency',
@@ -1861,7 +1869,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       {
         id: 'equityValue',
         label: 'Equity Value',
-        values: [calculatedFinancials.equityValue, ...Array(model.periods.numberOfYears - 1).fill('')],
+        values: [calculatedFinancials.equityValue, ...Array(calculatedFinancials.revenue.length - 1).fill('')],
         isCalculated: true,
         section: 'equityValue',
         format: 'currency',
@@ -2310,7 +2318,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       model: {
         ...state.model,
         riskProfile: {
-          ...(state.model.riskProfile || {
+          ...((state.model.riskProfile ?? {
             selectedIndustry: null,
             selectedCountry: null,
             unleveredBeta: 0,
@@ -2323,7 +2331,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
             riskFreeRate: 0.0444,
             corporateTaxRate: 0.25,
             waccPremium: 0,
-          }),
+          }) as RiskProfile),
           ...riskProfile,
         },
       },

@@ -590,14 +590,18 @@ export const DCFTable: React.FC = () => {
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-56 min-w-56">
                 Line Item
               </th>
-              {model.periods.periodLabels.map((period, index) => (
-                <th
-                  key={index}
-                  className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32"
-                >
-                  {period}
-                </th>
-              ))}
+              {model.periods.periodLabels.map((period, index) => {
+                const isBaseYear = index === 0;
+                const baseYearBorderClass = isBaseYear ? 'border-l-2 border-r-2 border-gray-300' : '';
+                return (
+                  <th
+                    key={index}
+                    className={`px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32 ${baseYearBorderClass}`}
+                  >
+                    {period}
+                  </th>
+                );
+              })}
               <th className="px-3 py-2 w-6"></th>
             </tr>
           </thead>
@@ -665,45 +669,56 @@ export const DCFTable: React.FC = () => {
                       </div>
                     </div>
                   </td>
-                  {row.values.map((value, index) => (
-                    <td
-                      key={index}
-                      className="px-2 py-1 whitespace-nowrap text-center"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {row.isEditable && !row.id.startsWith('segment_') ? (
-                        <EditableCell
-                          value={value as number}
-                          format={row.format}
-                          isEditable={row.isEditable}
-                          isOverridden={row.manualOverrides?.[index] !== undefined}
-                          onSave={(newValue) => handleCellSave(row.id, index, newValue)}
-                          onClear={() => handleCellClear(row.id, index)}
-                          rowId={row.id}
-                          cellIndex={index}
-                        />
-                      ) : (
-                        <div
-                          className={`px-2 py-1 text-center ${
-                            [
-                              'ebitda',
-                              'ebit',
-                              'netIncome',
-                              'grossProfit',
-                              'freeCashFlow',
-                              'discountedCashFlows',
-                              'enterpriseValue',
-                              'equityValue',
-                            ].includes(row.id)
-                              ? 'text-sm font-bold text-gray-900'
-                              : 'text-xs'
-                          }`}
-                        >
-                          {formatValue(value, row.format)}
-                        </div>
-                      )}
-                    </td>
-                  ))}
+                  {row.values.map((value, index) => {
+                    const isBaseYear = index === 0;
+                    const baseYearBorderClass =
+                      isBaseYear && row.id !== 'terminalValue' && row.id !== 'presentValueTerminalValue'
+                        ? 'border-l-2 border-r-2 border-gray-300'
+                        : '';
+                    const shouldGrayBaseYear = isBaseYear && row.id !== 'enterpriseValue' && row.id !== 'equityValue';
+                    const baseYearTextClass = shouldGrayBaseYear ? 'text-gray-500' : '';
+
+                    return (
+                      <td
+                        key={index}
+                        className={`px-2 py-1 whitespace-nowrap text-center ${baseYearBorderClass}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {row.isEditable && !row.id.startsWith('segment_') ? (
+                          <EditableCell
+                            value={value as number}
+                            format={row.format}
+                            isEditable={row.isEditable}
+                            isOverridden={row.manualOverrides?.[index] !== undefined}
+                            onSave={(newValue) => handleCellSave(row.id, index, newValue)}
+                            onClear={() => handleCellClear(row.id, index)}
+                            rowId={row.id}
+                            cellIndex={index}
+                            isBaseYear={shouldGrayBaseYear}
+                          />
+                        ) : (
+                          <div
+                            className={`px-2 py-1 text-center ${
+                              [
+                                'ebitda',
+                                'ebit',
+                                'netIncome',
+                                'grossProfit',
+                                'freeCashFlow',
+                                'discountedCashFlows',
+                                'enterpriseValue',
+                                'equityValue',
+                              ].includes(row.id)
+                                ? `text-sm font-bold ${shouldGrayBaseYear ? 'text-gray-500' : 'text-gray-900'}`
+                                : `text-xs ${baseYearTextClass}`
+                            }`}
+                          >
+                            {formatValue(value, row.format)}
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
                   <td className="px-3 py-2 whitespace-nowrap text-right">{/* Empty cell for spacing */}</td>
                 </tr>
 

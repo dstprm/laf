@@ -13,7 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/home/header/header';
 import { useUserInfo } from '@/hooks/useUserInfo';
-import type { CreateValuationInput } from '@/lib/valuation.types';
+import type { CalculatedFinancials, CreateValuationInput } from '@/lib/valuation.types';
 import { SimpleValuationForm } from '@/components/shared/valuation/simple-valuation-form';
 import {
   AdvancedValuationForm,
@@ -467,7 +467,10 @@ export default function FreeValuationPage() {
           });
         }
       } else {
-        const yearlyValues = buildArrayFromList(advState.advYears, advState.revenueDirectList);
+        // Direct revenue values are provided for projection years only.
+        // Prepend base-year revenue so arrays align as [base, Year1..YearN].
+        const projectionValues = buildArrayFromList(advState.advYears, advState.revenueDirectList);
+        const yearlyValues = [revenue0, ...projectionValues];
         if (typeof window !== 'undefined') {
           console.log('[DEBUG][FreeAdvanced] Applying direct revenue', { yearlyValues });
         }
@@ -480,27 +483,35 @@ export default function FreeValuationPage() {
 
       // EBITDA via OpEx
       if (advState.ebitdaInputType === 'percent') {
+        const projectionYears = advState.advYears;
+        const periodCount = projectionYears + 1; // base year + projections
         let marginArr: number[] = [];
         if (advState.ebitdaPctMode === 'uniform') {
           const m = advState.advEbitdaUniformPct.trim() !== '' ? parseFloat(advState.advEbitdaUniformPct) : 0;
-          marginArr = Array.from({ length: advState.advYears }, () => m);
+          marginArr = Array.from({ length: periodCount }, () => m);
         } else if (advState.ebitdaPctMode === 'perYear') {
-          const parts = buildArrayFromList(advState.advYears, advState.ebitdaPercentPerYearList);
-          marginArr = Array.from({ length: advState.advYears }, (_, i) =>
-            i < parts.length ? parts[i] || 0 : parts[parts.length - 1] || 0,
-          );
+          const parts = buildArrayFromList(projectionYears, advState.ebitdaPercentPerYearList);
+          // parts represent projection-year margins; extend to base year by repeating first projection margin
+          marginArr = Array.from({ length: periodCount }, (_, i) => {
+            if (i === 0) {
+              return parts[0] || 0;
+            }
+            const idx = Math.min(i - 1, parts.length - 1);
+            return parts[idx] || 0;
+          });
         } else {
           const startM = parseFloat(advState.advEbitdaStart || '0');
           const targetM = parseFloat(advState.advEbitdaTarget || advState.advEbitdaStart || '0');
           const arr: number[] = [];
-          for (let i = 0; i < advState.advYears; i++) {
-            const ratio = advState.advYears === 1 ? 0 : i / (advState.advYears - 1);
+          // Build margins for base (index 0) through final projection year (index periodCount - 1)
+          for (let i = 0; i < periodCount; i++) {
+            const ratio = periodCount === 1 ? 0 : i / (periodCount - 1);
             arr.push(startM + (targetM - startM) * ratio);
           }
           marginArr = arr.map((v) => Math.min(100, Math.max(0, v)));
         }
         const individualPercents: { [k: number]: number } = {};
-        for (let i = 0; i < advState.advYears; i++) {
+        for (let i = 0; i < periodCount; i++) {
           individualPercents[i] = Math.max(0, 100 - (marginArr[i] || 0));
         }
         if (typeof window !== 'undefined') {
@@ -522,15 +533,16 @@ export default function FreeValuationPage() {
         }
         updateOpEx({
           inputType: 'consolidated',
-          consolidated: { inputMethod: 'direct', yearlyValues: Array(advState.advYears).fill(0) },
+          consolidated: { inputMethod: 'direct', yearlyValues: Array(advState.advYears + 1).fill(0) },
         });
       }
 
       // CAPEX
       if (advState.capexMethod === 'direct') {
+        const projectionValues = buildArrayFromList(advState.advYears, advState.capexPercentsList);
         updateCapex({
           inputMethod: 'direct',
-          yearlyValues: buildArrayFromList(advState.advYears, advState.capexPercentsList),
+          yearlyValues: [0, ...projectionValues],
         });
       } else if (advState.capexPercentMode === 'uniform') {
         updateCapex({
@@ -539,18 +551,25 @@ export default function FreeValuationPage() {
           percentOfRevenue: parseFloat(advState.advCapexPct || '0'),
         });
       } else {
+        const rawMap = buildIndividualPercentsMap(advState.advYears, advState.capexPercentsList);
+        const shifted: { [k: number]: number } = {};
+        shifted[0] = rawMap[0] ?? 0;
+        for (let i = 0; i < advState.advYears; i++) {
+          shifted[i + 1] = rawMap[i] ?? 0;
+        }
         updateCapex({
           inputMethod: 'percentOfRevenue',
           percentMethod: 'individual',
-          individualPercents: buildIndividualPercentsMap(advState.advYears, advState.capexPercentsList),
+          individualPercents: shifted,
         });
       }
 
       // NWC
       if (advState.nwcMethod === 'direct') {
+        const projectionValues = buildArrayFromList(advState.advYears, advState.nwcPercentsList);
         updateNetWorkingCapital({
           inputMethod: 'direct',
-          yearlyValues: buildArrayFromList(advState.advYears, advState.nwcPercentsList),
+          yearlyValues: [0, ...projectionValues],
         });
       } else if (advState.nwcPercentMode === 'uniform') {
         updateNetWorkingCapital({
@@ -559,18 +578,25 @@ export default function FreeValuationPage() {
           percentOfRevenue: parseFloat(advState.advNwcPct || '0'),
         });
       } else {
+        const rawMap = buildIndividualPercentsMap(advState.advYears, advState.nwcPercentsList);
+        const shifted: { [k: number]: number } = {};
+        shifted[0] = rawMap[0] ?? 0;
+        for (let i = 0; i < advState.advYears; i++) {
+          shifted[i + 1] = rawMap[i] ?? 0;
+        }
         updateNetWorkingCapital({
           inputMethod: 'percentOfRevenue',
           percentMethod: 'individual',
-          individualPercents: buildIndividualPercentsMap(advState.advYears, advState.nwcPercentsList),
+          individualPercents: shifted,
         });
       }
 
       // D&A
       if (advState.daMethod === 'direct') {
+        const projectionValues = buildArrayFromList(advState.advYears, advState.daPercentsList);
         updateDA({
           inputMethod: 'direct',
-          yearlyValues: buildArrayFromList(advState.advYears, advState.daPercentsList),
+          yearlyValues: [0, ...projectionValues],
         });
       } else if (advState.daPercentMode === 'uniform') {
         updateDA({
@@ -579,18 +605,25 @@ export default function FreeValuationPage() {
           percentOfRevenue: parseFloat(advState.advDaPct || '0'),
         });
       } else {
+        const rawMap = buildIndividualPercentsMap(advState.advYears, advState.daPercentsList);
+        const shifted: { [k: number]: number } = {};
+        shifted[0] = rawMap[0] ?? 0;
+        for (let i = 0; i < advState.advYears; i++) {
+          shifted[i + 1] = rawMap[i] ?? 0;
+        }
         updateDA({
           inputMethod: 'percentOfRevenue',
           percentMethod: 'individual',
-          individualPercents: buildIndividualPercentsMap(advState.advYears, advState.daPercentsList),
+          individualPercents: shifted,
         });
       }
 
       // Taxes
       if (advState.taxesMethod === 'direct') {
+        const projectionValues = buildArrayFromList(advState.advYears, advState.taxesDirectList);
         updateTaxes({
           inputMethod: 'direct',
-          yearlyValues: buildArrayFromList(advState.advYears, advState.taxesDirectList),
+          yearlyValues: [0, ...projectionValues],
         });
       } else {
         const taxPct = advState.taxesPct.trim() !== '' ? parseFloat(advState.taxesPct) : 0;
@@ -605,7 +638,10 @@ export default function FreeValuationPage() {
       if (advState.ebitdaInputType === 'direct') {
         const state = useModelStore.getState();
         const currentRevenue = state.calculatedFinancials.revenue;
-        const targetEbitda = buildArrayFromList(advState.advYears, advState.ebitdaDirectList);
+        const projectionYears = advState.advYears;
+        const targetProjection = buildArrayFromList(projectionYears, advState.ebitdaDirectList);
+        // Align target EBITDA so index 0 is base year (0 by default) and 1..N are projections
+        const targetEbitda: number[] = [0, ...targetProjection];
         const opexValues = currentRevenue.map((rev, i) => Math.max(0, (rev || 0) - (targetEbitda[i] || 0)));
         if (typeof window !== 'undefined') {
           console.log('[DEBUG][FreeAdvanced] EBITDA direct adjustment', { targetEbitda, opexValues });
@@ -753,11 +789,18 @@ export default function FreeValuationPage() {
       const valuationDisplayName = companyName.trim() || defaultName;
       const fullPhoneNumber = companyPhone.trim() ? `${phoneCountryCode} ${companyPhone}` : undefined;
 
+      // Ensure resultsData has numeric enterpriseValue/equityValue for API validation
+      const safeResultsData: CalculatedFinancials = {
+        ...calculatedFinancials,
+        enterpriseValue: Number(calculatedFinancials.enterpriseValue ?? 0),
+        equityValue: Number(calculatedFinancials.equityValue ?? calculatedFinancials.enterpriseValue ?? 0),
+      };
+
       const payload: CreateValuationInput = {
         name: valuationDisplayName,
         modelData: model,
-        resultsData: calculatedFinancials,
-        enterpriseValue: calculatedFinancials.enterpriseValue,
+        resultsData: safeResultsData,
+        enterpriseValue: safeResultsData.enterpriseValue,
         industry: industry || undefined,
         country: country || undefined,
         companyName: companyName.trim() || undefined,
@@ -926,7 +969,7 @@ export default function FreeValuationPage() {
                   onSave={handleSaveValuation}
                   onNavigateToDashboard={() => router.push('/dashboard/valuations')}
                   showYears={5}
-                  chartTitle="Proyección de Ingresos y Margen EBITDA (5 años)"
+                  chartTitle="Revenue and EBITDA Margin Projection (5 years)"
                   useLocalScenariosOnly
                 />
               )}
@@ -971,7 +1014,7 @@ export default function FreeValuationPage() {
                   onSave={handleSaveValuation}
                   onNavigateToDashboard={() => router.push('/dashboard/valuations')}
                   showYears={advState.advYears}
-                  chartTitle={`Proyección de Ingresos y Margen EBITDA (${advState.advYears} años)`}
+                  chartTitle={`Revenue and EBITDA Margin Projection (${advState.advYears} years)`}
                 />
               )}
             </TabsContent>
