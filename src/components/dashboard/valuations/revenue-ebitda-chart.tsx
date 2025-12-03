@@ -1,7 +1,18 @@
 'use client';
 
 import React from 'react';
-import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
 
 interface RevenueEbitdaChartProps {
   /**
@@ -63,7 +74,7 @@ export function RevenueEbitdaChart({
   React.useEffect(() => {
     // Check if we're in a PDF generation context
     const isPDF = document.querySelector('[data-is-pdf="true"]') !== null;
-    
+
     if (forceDesktop || isPDF) {
       setIsMobile(false);
       return;
@@ -181,7 +192,11 @@ export function RevenueEbitdaChart({
               fill="#3b82f6"
               radius={[4, 4, 0, 0]}
               barSize={isMobile ? 18 : undefined}
-            />
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={index === 0 ? '#9ca3af' : '#3b82f6'} />
+              ))}
+            </Bar>
             <Line
               yAxisId="right"
               type="monotone"

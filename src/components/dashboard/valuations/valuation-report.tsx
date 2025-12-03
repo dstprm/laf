@@ -303,9 +303,9 @@ export function ValuationReport({
       {revenue.length > 0 && (
         <div className="break-inside-avoid mt-8 mb-8">
           <RevenueEbitdaChart
-            revenues={revenue.slice(0, numberOfYears)}
-            ebitdaMargins={ebitdaMargin.slice(0, numberOfYears)}
-            years={periods.slice(0, numberOfYears)}
+            revenues={revenue.slice(0, numberOfYears + 1)}
+            ebitdaMargins={ebitdaMargin.slice(0, numberOfYears + 1)}
+            years={periods.slice(0, numberOfYears + 1)}
             title="Proyección de Ingresos y Margen EBITDA"
             forceDesktop={isPDF}
           />
@@ -336,49 +336,94 @@ export function ValuationReport({
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Métrica
                   </th>
-                  {periods.slice(0, numberOfYears).map((period, idx) => (
-                    <th
-                      key={idx}
-                      className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {period}
-                    </th>
-                  ))}
+                  {periods.slice(0, numberOfYears + 1).map((period, idx) => {
+                    const isBaseYear = idx === 0;
+                    return (
+                      <th
+                        key={idx}
+                        className={`px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                          isBaseYear ? 'bg-gray-100 border-l-2 border-r-2 border-gray-300' : ''
+                        }`}
+                      >
+                        {period}
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 <tr>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">Ingresos</td>
-                  {revenue.slice(0, numberOfYears).map((val, idx) => (
-                    <td key={idx} className="px-4 py-3 text-sm text-right text-gray-600">
-                      {formatCurrency(val)}
-                    </td>
-                  ))}
+                  {revenue.slice(0, numberOfYears + 1).map((val, idx) => {
+                    const isBaseYear = idx === 0;
+                    return (
+                      <td
+                        key={idx}
+                        className={`px-4 py-3 text-sm text-right ${
+                          isBaseYear
+                            ? 'bg-gray-50 border-l-2 border-r-2 border-gray-300 text-gray-500'
+                            : 'text-gray-600'
+                        }`}
+                      >
+                        {formatCurrency(val)}
+                      </td>
+                    );
+                  })}
                 </tr>
                 <tr className="bg-gray-50">
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">EBITDA</td>
-                  {ebitda.slice(0, numberOfYears).map((val, idx) => (
-                    <td key={idx} className="px-4 py-3 text-sm text-right text-gray-600">
-                      {formatCurrency(val)}
-                    </td>
-                  ))}
+                  {ebitda.slice(0, numberOfYears + 1).map((val, idx) => {
+                    const isBaseYear = idx === 0;
+                    return (
+                      <td
+                        key={idx}
+                        className={`px-4 py-3 text-sm text-right ${
+                          isBaseYear
+                            ? 'bg-gray-100 border-l-2 border-r-2 border-gray-300 text-gray-500'
+                            : 'text-gray-600'
+                        }`}
+                      >
+                        {formatCurrency(val)}
+                      </td>
+                    );
+                  })}
                 </tr>
                 <tr>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">Margen EBITDA</td>
-                  {ebitdaMargin.slice(0, numberOfYears).map((val, idx) => (
-                    <td key={idx} className="px-4 py-3 text-sm text-right text-gray-600">
-                      {formatPercent(val)}
-                    </td>
-                  ))}
+                  {ebitdaMargin.slice(0, numberOfYears + 1).map((val, idx) => {
+                    const isBaseYear = idx === 0;
+                    return (
+                      <td
+                        key={idx}
+                        className={`px-4 py-3 text-sm text-right ${
+                          isBaseYear
+                            ? 'bg-gray-50 border-l-2 border-r-2 border-gray-300 text-gray-500'
+                            : 'text-gray-600'
+                        }`}
+                      >
+                        {formatPercent(val)}
+                      </td>
+                    );
+                  })}
                 </tr>
                 {freeCashFlow.length > 0 && (
                   <tr className="bg-gray-50">
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">Flujo de Caja Libre</td>
-                    {freeCashFlow.slice(0, numberOfYears).map((val, idx) => (
-                      <td key={idx} className="px-4 py-3 text-sm text-right text-gray-600">
-                        {formatCurrency(val)}
-                      </td>
-                    ))}
+                    {freeCashFlow.slice(0, numberOfYears + 1).map((val, idx) => {
+                      const isBaseYear = idx === 0;
+                      return (
+                        <td
+                          key={idx}
+                          className={`px-4 py-3 text-sm text-right ${
+                            isBaseYear
+                              ? 'bg-gray-100 border-l-2 border-r-2 border-gray-300 text-gray-500'
+                              : 'text-gray-600'
+                          }`}
+                        >
+                          {formatCurrency(val)}
+                        </td>
+                      );
+                    })}
                   </tr>
                 )}
               </tbody>
@@ -503,13 +548,9 @@ export function ValuationReport({
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-amber-900">WACC Premium</p>
-                    <p className="text-xs text-amber-700 mt-1">
-                      Prima adicional agregada al WACC base
-                    </p>
+                    <p className="text-xs text-amber-700 mt-1">Prima adicional agregada al WACC base</p>
                   </div>
-                  <p className="text-lg font-bold text-amber-800">
-                    {formatPercent(riskProfile.waccPremium * 100)}
-                  </p>
+                  <p className="text-lg font-bold text-amber-800">{formatPercent(riskProfile.waccPremium * 100)}</p>
                 </div>
               </div>
             )}

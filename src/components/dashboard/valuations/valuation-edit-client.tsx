@@ -594,17 +594,15 @@ export default function ValuationEditClient({
               <RevenueEbitdaChart
                 revenues={(initialResultsData as any).revenue.slice(
                   0,
-                  (initialModelData as any)?.periods?.numberOfYears || (initialResultsData as any).revenue.length,
+                  ((initialModelData as any)?.periods?.numberOfYears || 5) + 1,
                 )}
                 ebitdaMargins={(initialResultsData as any).ebitdaMargin.slice(
                   0,
-                  (initialModelData as any)?.periods?.numberOfYears || (initialResultsData as any).ebitdaMargin.length,
+                  ((initialModelData as any)?.periods?.numberOfYears || 5) + 1,
                 )}
                 years={(initialModelData as any)?.periods?.periodLabels?.slice(
                   0,
-                  (initialModelData as any)?.periods?.numberOfYears ||
-                    (initialModelData as any)?.periods?.periodLabels?.length ||
-                    0,
+                  ((initialModelData as any)?.periods?.numberOfYears || 5) + 1,
                 )}
                 title="Proyección de Ingresos y Margen EBITDA"
               />
@@ -1132,9 +1130,9 @@ export default function ValuationEditClient({
         {/* Revenue & EBITDA Chart */}
         {calculatedFinancials.revenue && calculatedFinancials.revenue.length > 0 && (
           <RevenueEbitdaChart
-            revenues={calculatedFinancials.revenue.slice(0, model.periods?.numberOfYears || 5)}
-            ebitdaMargins={calculatedFinancials.ebitdaMargin.slice(0, model.periods?.numberOfYears || 5)}
-            years={model.periods?.periodLabels?.slice(0, model.periods?.numberOfYears || 5)}
+            revenues={calculatedFinancials.revenue.slice(0, (model.periods?.numberOfYears || 5) + 1)}
+            ebitdaMargins={calculatedFinancials.ebitdaMargin.slice(0, (model.periods?.numberOfYears || 5) + 1)}
+            years={model.periods?.periodLabels?.slice(0, (model.periods?.numberOfYears || 5) + 1)}
             title="Revenue & EBITDA Margin Projection"
           />
         )}

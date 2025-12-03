@@ -68,18 +68,63 @@ export function isFinancialModel(data: unknown): data is FinancialModel {
  * Type guard to check if data is valid CalculatedFinancials
  */
 export function isCalculatedFinancials(data: unknown): data is CalculatedFinancials {
-  if (!data || typeof data !== 'object') return false;
+  if (!data || typeof data !== 'object') {
+    // Server-side diagnostic logging to understand invalid payloads
+    console.error('isCalculatedFinancials: data is not an object or is null', { data });
+    return false;
+  }
   const calcs = data as Partial<CalculatedFinancials>;
-  return (
-    Array.isArray(calcs.revenue) &&
-    Array.isArray(calcs.cogs) &&
-    Array.isArray(calcs.grossProfit) &&
-    Array.isArray(calcs.opex) &&
-    Array.isArray(calcs.ebitda) &&
-    Array.isArray(calcs.freeCashFlow) &&
-    typeof calcs.enterpriseValue === 'number' &&
-    typeof calcs.equityValue === 'number'
-  );
+  // Be permissive on array fields to avoid false negatives when lengths/shapes evolve.
+  // The core requirement for persistence is that we have numeric enterprise and equity values.
+  if (typeof calcs.enterpriseValue !== 'number' || typeof calcs.equityValue !== 'number') {
+    console.error('isCalculatedFinancials: missing or non-numeric EV/equity', {
+      enterpriseValue: calcs.enterpriseValue,
+      equityValue: calcs.equityValue,
+      types: {
+        enterpriseValue: typeof calcs.enterpriseValue,
+        equityValue: typeof calcs.equityValue,
+      },
+    });
+    return false;
+  }
+
+  // For arrays, just ensure they are present when provided; missing ones will be treated as empty.
+  const arrayFields: (keyof CalculatedFinancials)[] = [
+    'revenue',
+    'cogs',
+    'grossProfit',
+    'grossMargin',
+    'opex',
+    'ebitda',
+    'ebitdaMargin',
+    'otherIncome',
+    'otherExpenses',
+    'da',
+    'ebit',
+    'ebitMargin',
+    'taxes',
+    'netIncome',
+    'netIncomeMargin',
+    'capex',
+    'netWorkingCapital',
+    'changeInNWC',
+    'freeCashFlow',
+    'discountedCashFlows',
+  ];
+
+  for (const key of arrayFields) {
+    const value = calcs[key];
+    if (value !== undefined && !Array.isArray(value)) {
+      console.error('isCalculatedFinancials: non-array field where array expected', {
+        field: key,
+        value,
+        valueType: typeof value,
+      });
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**

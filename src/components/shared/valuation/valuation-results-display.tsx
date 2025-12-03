@@ -105,12 +105,19 @@ export function ValuationResultsDisplay({
       {/* Revenue & EBITDA Margin Chart */}
       {calculatedFinancials.revenue.length > 0 && (
         <div className="mt-6">
-          <RevenueEbitdaChart
-            revenues={calculatedFinancials.revenue.slice(0, showYears)}
-            ebitdaMargins={calculatedFinancials.ebitdaMargin.slice(0, showYears)}
-            years={model.periods.periodLabels.slice(0, showYears)}
-            title={chartTitle || `Proyección de Ingresos y Margen EBITDA (${showYears} años)`}
-          />
+          {(() => {
+            const totalPeriods = calculatedFinancials.revenue.length;
+            // showYears represents projection years; include base year as well
+            const periodsToShow = Math.min(totalPeriods, showYears + 1);
+            return (
+              <RevenueEbitdaChart
+                revenues={calculatedFinancials.revenue.slice(0, periodsToShow)}
+                ebitdaMargins={calculatedFinancials.ebitdaMargin.slice(0, periodsToShow)}
+                years={model.periods.periodLabels.slice(0, periodsToShow)}
+                title={chartTitle || `Proyección de Ingresos y Margen EBITDA (${showYears} años)`}
+              />
+            );
+          })()}
         </div>
       )}
 

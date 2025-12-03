@@ -12,6 +12,7 @@ interface EditableCellProps {
   onClear: () => void;
   rowId?: string;
   cellIndex?: number;
+  isBaseYear?: boolean;
 }
 
 export const EditableCell: React.FC<EditableCellProps> = ({
@@ -23,6 +24,7 @@ export const EditableCell: React.FC<EditableCellProps> = ({
   onClear,
   rowId,
   cellIndex,
+  isBaseYear = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
@@ -122,7 +124,7 @@ export const EditableCell: React.FC<EditableCellProps> = ({
       <div className="flex items-center justify-center">
         <span
           className={`font-mono text-xs ${
-            !isActuallyEditable && rowId === 'revenueGrowth' && cellIndex === 0 ? 'text-gray-500' : ''
+            isBaseYear || (!isActuallyEditable && rowId === 'revenueGrowth' && cellIndex === 0) ? 'text-gray-500' : ''
           }`}
         >
           {formatValue(value)}

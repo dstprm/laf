@@ -45,6 +45,7 @@ function createTestModel(overrides: Partial<FinancialModel> = {}): FinancialMode
       companySpread: 0.05,
       riskFreeRate: 0.0444,
       corporateTaxRate: 0.25,
+      waccPremium: 0,
     },
     revenue: {
       inputType: 'consolidated',
@@ -178,12 +179,13 @@ describe('DCF Calculation Logic', () => {
 
       const { revenue } = useModelStore.getState().calculatedFinancials;
 
-      expect(revenue).toHaveLength(5);
-      expect(revenue[0]).toBeCloseTo(1000000, 0);
-      expect(revenue[1]).toBeCloseTo(1100000, 0); // 1M * 1.1
-      expect(revenue[2]).toBeCloseTo(1210000, 0); // 1.1M * 1.1
-      expect(revenue[3]).toBeCloseTo(1331000, 0); // 1.21M * 1.1
-      expect(revenue[4]).toBeCloseTo(1464100, 0); // 1.331M * 1.1
+      expect(revenue).toHaveLength(6); // base + 5 projection years
+      expect(revenue[0]).toBeCloseTo(1000000, 0); // Base year
+      expect(revenue[1]).toBeCloseTo(1100000, 0); // Year 1: 1M * 1.1
+      expect(revenue[2]).toBeCloseTo(1210000, 0); // Year 2: 1.1M * 1.1
+      expect(revenue[3]).toBeCloseTo(1331000, 0); // Year 3: 1.21M * 1.1
+      expect(revenue[4]).toBeCloseTo(1464100, 0); // Year 4: 1.331M * 1.1
+      expect(revenue[5]).toBeCloseTo(1610510, 0); // Year 5: 1.4641M * 1.1
     });
 
     it('should calculate revenue with individual growth rates correctly', () => {
@@ -419,6 +421,7 @@ describe('DCF Calculation Logic', () => {
           companySpread,
           riskFreeRate,
           corporateTaxRate,
+          waccPremium: 0,
         },
       });
 
@@ -438,16 +441,19 @@ describe('DCF Calculation Logic', () => {
       console.log('wacc', wacc);
       console.log(useModelStore.getState().calculatedFinancials);
 
-      // Verify each DCF is discounted correctly
+      // Verify each DCF is discounted correctly for projection years (skip base year at index 0)
       discountedCashFlows.forEach((dcf, index) => {
-        const yearNumber = index + 1;
+        if (index === 0) {
+          expect(dcf).toBeCloseTo(0, 0);
+          return;
+        }
+        const yearNumber = index; // Year 1 at index 1, etc.
         const expectedDCF = freeCashFlow[index] / Math.pow(1 + wacc, yearNumber);
         expect(dcf).toBeCloseTo(expectedDCF, 0);
       });
 
-      // No esta funcionando porque logica de NWC esta incorrecta
-      // Later years should be discounted more
-      expect(discountedCashFlows[0]).toBeGreaterThan(discountedCashFlows[4]);
+      // Later projection years should be discounted more than earlier ones
+      expect(discountedCashFlows[1]).toBeGreaterThan(discountedCashFlows[4]);
     });
   });
 
@@ -516,14 +522,14 @@ describe('DCF Calculation Logic', () => {
     it('should calculate WACC components correctly with precise numbers', () => {
       // Test Case: Realistic company with moderate debt
       const riskProfile = {
-        riskFreeRate: 0.0425,      // 4.25% - US 10-year Treasury rate
-        leveredBeta: 1.15,         // Levered beta
-        equityRiskPremium: 0.055,  // 5.5% - Historical US equity risk premium
+        riskFreeRate: 0.0425, // 4.25% - US 10-year Treasury rate
+        leveredBeta: 1.15, // Levered beta
+        equityRiskPremium: 0.055, // 5.5% - Historical US equity risk premium
         countryRiskPremium: 0.015, // 1.5% - Emerging market country risk
         adjustedDefaultSpread: 0.0275, // 2.75% - BBB rated company default spread
-        companySpread: 0.0125,     // 1.25% - Company-specific spread
-        deRatio: 0.4,              // D/E = 0.4 (28.57% debt, 71.43% equity)
-        corporateTaxRate: 0.21,    // 21% - US federal corporate tax rate
+        companySpread: 0.0125, // 1.25% - Company-specific spread
+        deRatio: 0.4, // D/E = 0.4 (28.57% debt, 71.43% equity)
+        corporateTaxRate: 0.21, // 21% - US federal corporate tax rate
       };
 
       // Calculate individual components
@@ -593,7 +599,7 @@ describe('DCF Calculation Logic', () => {
       };
 
       const wacc = calculateWacc(riskProfile);
-      
+
       // With D/E = 0, WACC = Cost of Equity
       // Cost of Equity = 0.04 + 1.0 × (0.06 + 0.0) = 0.10 (10%)
       expect(wacc).toBe(0.1);
@@ -618,7 +624,7 @@ describe('DCF Calculation Logic', () => {
       // WACC = 0.5 × 0.165 + 0.5 × 0.105 × (1 - 0.25)
       // = 0.0825 + 0.039375
       // = 0.121875 (12.1875%)
-      
+
       const wacc = calculateWacc(riskProfile);
       expect(wacc).toBeCloseTo(0.121875, 10);
       expect(calculateWaccPercent(riskProfile)).toBeCloseTo(12.1875, 10);
@@ -633,7 +639,7 @@ describe('DCF Calculation Logic', () => {
         adjustedDefaultSpread: 0.06,
         companySpread: 0.03,
         deRatio: 0.3,
-        corporateTaxRate: 0.30,
+        corporateTaxRate: 0.3,
       };
 
       // Cost of Equity = 0.03 + 0.8 × (0.05 + 0.12) = 0.03 + 0.136 = 0.166
@@ -642,7 +648,7 @@ describe('DCF Calculation Logic', () => {
       // WACC = 0.7692307 × 0.166 + 0.2307692 × 0.12 × (1 - 0.30)
       // = 0.1276923 + 0.01938461
       // = 0.14707691... (14.71%)
-      
+
       const wacc = calculateWacc(riskProfile);
       expect(wacc).toBeCloseTo(0.14707692307692307, 10);
     });
@@ -663,6 +669,7 @@ describe('DCF Calculation Logic', () => {
           companySpread: 0.05,
           riskFreeRate: 0.0444,
           corporateTaxRate: 0.25,
+          waccPremium: 0,
         },
       });
 
@@ -676,8 +683,9 @@ describe('DCF Calculation Logic', () => {
       // Verify WACC is used correctly in discounting
       const { freeCashFlow, discountedCashFlows } = useModelStore.getState().calculatedFinancials;
 
-      const dcfYear1 = discountedCashFlows[0];
-      const expectedDCF = freeCashFlow[0] / (1 + expectedWACC);
+      // First projection year DCF is at index 1 (index 0 is base year and should be zero)
+      const dcfYear1 = discountedCashFlows[1];
+      const expectedDCF = freeCashFlow[1] / (1 + expectedWACC);
       expect(dcfYear1).toBeCloseTo(expectedDCF, 0);
     });
 
@@ -695,6 +703,7 @@ describe('DCF Calculation Logic', () => {
           companySpread: 0.03,
           riskFreeRate: 0.0444,
           corporateTaxRate: 0.25,
+          waccPremium: 0,
         },
       });
 
@@ -714,8 +723,8 @@ describe('DCF Calculation Logic', () => {
 
       const { freeCashFlow, discountedCashFlows } = useModelStore.getState().calculatedFinancials;
 
-      const dcfYear1 = discountedCashFlows[0];
-      const expectedDCF = freeCashFlow[0] / (1 + expectedWACC);
+      const dcfYear1 = discountedCashFlows[1];
+      const expectedDCF = freeCashFlow[1] / (1 + expectedWACC);
       expect(dcfYear1).toBeCloseTo(expectedDCF, 0);
     });
   });
@@ -745,22 +754,19 @@ describe('DCF Calculation Logic', () => {
 
         const { netWorkingCapital, changeInNWC } = useModelStore.getState().calculatedFinancials;
 
-        // The displayed NWC array corresponds to projection years
-        // Note: NWC is calculated from an extended array that includes base year
-        // Year 0 (base, not displayed): revenue = 1,000,000, NWC = 100,000
-        // Year 1 (displayed index 0): revenue = 1,100,000, NWC = 110,000
-        // Year 2 (displayed index 1): revenue = 1,210,000, NWC = 121,000
+        // NWC array includes base year at index 0
+        // Base year (index 0): revenue = 1,000,000, NWC = 100,000
+        // Year 1 (index 1): revenue = 1,100,000, NWC = 110,000
+        // Year 2 (index 2): revenue = 1,210,000, NWC = 121,000
 
-        // Verify displayed NWC values match projection year revenues
-        expect(netWorkingCapital[0]).toBeCloseTo(1100000 * 0.1, 0); // Year 1
-        expect(netWorkingCapital[1]).toBeCloseTo(1210000 * 0.1, 0); // Year 2
-
-        // Verify change in NWC
+        // Verify NWC values match revenues
+        // Base year (index 0) has no prior period, so change is 0
+        expect(changeInNWC[0]).toBeCloseTo(0, 0);
         // Year 1 Change: 110,000 - 100,000 = 10,000
-        expect(changeInNWC[0]).toBeCloseTo(10000, 0);
+        expect(changeInNWC[1]).toBeCloseTo(10000, 0);
 
         // Year 2 Change: 121,000 - 110,000 = 11,000
-        expect(changeInNWC[1]).toBeCloseTo(11000, 0);
+        expect(changeInNWC[2]).toBeCloseTo(11000, 0);
 
         // Verify no NaN values
         changeInNWC.forEach((change) => {
@@ -798,14 +804,15 @@ describe('DCF Calculation Logic', () => {
 
         const { changeInNWC } = useModelStore.getState().calculatedFinancials;
 
-        // Base year (Year 0): 1,000,000 * 0.10 = 100,000
-        // Year 1: 1,000,000 * 0.12 = 120,000
-        // Change: 120,000 - 100,000 = 20,000
-        expect(changeInNWC[0]).toBeCloseTo(20000, 0);
+        // Base year (index 0): 1,000,000 * 0.10 = 100,000
+        // Year 1 (index 1): 1,000,000 * 0.12 = 120,000
+        // Change from base to Year 1: 120,000 - 100,000 = 20,000
+        expect(changeInNWC[0]).toBeCloseTo(0, 0); // Base year has no change
+        expect(changeInNWC[1]).toBeCloseTo(20000, 0); // Year 1 change
 
-        // Year 2: 1,000,000 * 0.11 = 110,000
+        // Year 2 (index 2): 1,000,000 * 0.11 = 110,000
         // Change: 110,000 - 120,000 = -10,000
-        expect(changeInNWC[1]).toBeCloseTo(-10000, 0);
+        expect(changeInNWC[2]).toBeCloseTo(-10000, 0);
 
         // Verify no NaN values
         changeInNWC.forEach((change) => {
@@ -917,16 +924,19 @@ describe('DCF Calculation Logic', () => {
 
         const { netWorkingCapital, changeInNWC } = useModelStore.getState().calculatedFinancials;
 
-        // Base year (Year 0): 100,000
-        // Year 1: 100,000 * 1.05 = 105,000
-        expect(netWorkingCapital[0]).toBeCloseTo(105000, 0);
-        // Change Year 1: 105,000 - 100,000 = 5,000
-        expect(changeInNWC[0]).toBeCloseTo(5000, 0);
+        // Base year (index 0): 100,000
+        expect(netWorkingCapital[0]).toBeCloseTo(100000, 0);
+        expect(changeInNWC[0]).toBeCloseTo(0, 0); // Base year has no change
 
-        // Year 2: 105,000 * 1.05 = 110,250
-        expect(netWorkingCapital[1]).toBeCloseTo(110250, 0);
+        // Year 1 (index 1): 100,000 * 1.05 = 105,000
+        expect(netWorkingCapital[1]).toBeCloseTo(105000, 0);
+        // Change Year 1: 105,000 - 100,000 = 5,000
+        expect(changeInNWC[1]).toBeCloseTo(5000, 0);
+
+        // Year 2 (index 2): 105,000 * 1.05 = 110,250
+        expect(netWorkingCapital[2]).toBeCloseTo(110250, 0);
         // Change Year 2: 110,250 - 105,000 = 5,250
-        expect(changeInNWC[1]).toBeCloseTo(5250, 0);
+        expect(changeInNWC[2]).toBeCloseTo(5250, 0);
 
         // Verify no NaN values
         changeInNWC.forEach((change) => {
@@ -965,14 +975,17 @@ describe('DCF Calculation Logic', () => {
 
         const { netWorkingCapital, changeInNWC } = useModelStore.getState().calculatedFinancials;
 
-        // Base year (Year 0): 100,000
-        // Year 1: 100,000 * 1.05 = 105,000
-        expect(netWorkingCapital[0]).toBeCloseTo(105000, 0);
-        expect(changeInNWC[0]).toBeCloseTo(5000, 0);
+        // Base year (index 0): 100,000
+        expect(netWorkingCapital[0]).toBeCloseTo(100000, 0);
+        expect(changeInNWC[0]).toBeCloseTo(0, 0); // Base year has no change
 
-        // Year 2: 105,000 * 1.10 = 115,500
-        expect(netWorkingCapital[1]).toBeCloseTo(115500, 0);
-        expect(changeInNWC[1]).toBeCloseTo(10500, 0);
+        // Year 1 (index 1): 100,000 * 1.05 = 105,000
+        expect(netWorkingCapital[1]).toBeCloseTo(105000, 0);
+        expect(changeInNWC[1]).toBeCloseTo(5000, 0);
+
+        // Year 2 (index 2): 105,000 * 1.10 = 115,500
+        expect(netWorkingCapital[2]).toBeCloseTo(115500, 0);
+        expect(changeInNWC[2]).toBeCloseTo(10500, 0);
 
         // Verify no NaN values
         changeInNWC.forEach((change) => {
@@ -1004,17 +1017,21 @@ describe('DCF Calculation Logic', () => {
 
         const { netWorkingCapital, changeInNWC } = useModelStore.getState().calculatedFinancials;
 
-        // Year 1: 110,000, Base: 100,000, Change: 10,000
-        expect(netWorkingCapital[0]).toBeCloseTo(110000, 0);
-        expect(changeInNWC[0]).toBeCloseTo(10000, 0);
+        // Base year (index 0): 100,000
+        expect(netWorkingCapital[0]).toBeCloseTo(100000, 0);
+        expect(changeInNWC[0]).toBeCloseTo(0, 0); // Base year has no change
 
-        // Year 2: 115,000, Previous: 110,000, Change: 5,000
-        expect(netWorkingCapital[1]).toBeCloseTo(115000, 0);
-        expect(changeInNWC[1]).toBeCloseTo(5000, 0);
+        // Year 1 (index 1): 110,000, Change: 110,000 - 100,000 = 10,000
+        expect(netWorkingCapital[1]).toBeCloseTo(110000, 0);
+        expect(changeInNWC[1]).toBeCloseTo(10000, 0);
 
-        // Year 5: 130,000, Previous: 125,000, Change: 5,000
-        expect(netWorkingCapital[4]).toBeCloseTo(130000, 0);
-        expect(changeInNWC[4]).toBeCloseTo(5000, 0);
+        // Year 2 (index 2): 115,000, Change: 115,000 - 110,000 = 5,000
+        expect(netWorkingCapital[2]).toBeCloseTo(115000, 0);
+        expect(changeInNWC[2]).toBeCloseTo(5000, 0);
+
+        // Year 5 (index 5): 130,000, Previous: 125,000, Change: 5,000
+        expect(netWorkingCapital[5]).toBeCloseTo(130000, 0);
+        expect(changeInNWC[5]).toBeCloseTo(5000, 0);
 
         // Verify no NaN values
         changeInNWC.forEach((change) => {
@@ -1098,12 +1115,15 @@ describe('DCF Calculation Logic', () => {
 
         const { changeInNWC } = useModelStore.getState().calculatedFinancials;
 
-        // Base: 150,000, Year 1: 100,000, Change: -50,000 (decrease)
-        expect(changeInNWC[0]).toBeCloseTo(-50000, 0);
+        // Base year (index 0): 150,000
+        expect(changeInNWC[0]).toBeCloseTo(0, 0); // Base year has no change
+
+        // Year 1 (index 1): 100,000, Change: 100,000 - 150,000 = -50,000 (decrease)
+        expect(changeInNWC[1]).toBeCloseTo(-50000, 0);
 
         // Decrease in NWC should boost FCF
         // When NWC decreases, change is negative, and FCF = NI + DA - CAPEX - (negative) = higher
-        expect(changeInNWC[0]).toBeLessThan(0);
+        expect(changeInNWC[1]).toBeLessThan(0);
 
         // Verify no NaN values
         changeInNWC.forEach((change) => {
@@ -1162,8 +1182,8 @@ describe('DCF Calculation Logic', () => {
 
       const { freeCashFlow, enterpriseValue } = useModelStore.getState().calculatedFinancials;
 
-      // Should still calculate even with negative FCF
-      expect(freeCashFlow).toHaveLength(5);
+      // Should still calculate even with negative FCF (base year + 5 projection years)
+      expect(freeCashFlow).toHaveLength(6);
       expect(enterpriseValue).toBeDefined();
     });
   });
