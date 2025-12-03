@@ -1375,6 +1375,11 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     const growthRateOverrides: ManualOverrides = {};
 
     const totalPeriods = calculatedFinancials.revenue.length;
+    
+    // Guard against invalid array lengths during SSR/prerendering
+    if (totalPeriods === 0) {
+      return [];
+    }
     for (let i = 0; i < totalPeriods; i++) {
       if (i === 0) {
         revenueGrowthRates.push(0); // No growth for base year
