@@ -164,22 +164,52 @@ describe('Scenario Calculation Logic', () => {
         },
       });
 
+      // First, calculate base model to get actual EBITDA margins
+      useModelStore.setState({ model: baseModel });
+      useModelStore.getState().calculateFinancials();
+      const baseFinancials = useModelStore.getState().calculatedFinancials;
+      const baseMargins = baseFinancials.ebitdaMargin || [];
+      const avgBaseMargin = baseMargins.reduce((sum, m) => sum + m, 0) / baseMargins.length;
+
       const adjustments: VariableAdjustment[] = [
         {
           variableId: 'ebitda_margin',
           minValue: 25,
           maxValue: 35,
-          baseValue: 30,
+          baseValue: avgBaseMargin,
         },
       ];
 
       const minModel = applyVariableAdjustments(baseModel, adjustments, true);
       const maxModel = applyVariableAdjustments(baseModel, adjustments, false);
 
-      // EBITDA margin of 25% means OpEx should be 75% of revenue
-      // EBITDA margin of 35% means OpEx should be 65% of revenue
-      expect(minModel.opex?.consolidated?.percentOfRevenue).toBeCloseTo(75, 0);
-      expect(maxModel.opex?.consolidated?.percentOfRevenue).toBeCloseTo(65, 0);
+      // New behavior: uses individual percents to preserve year-over-year variation
+      // The adjustment amount is applied to each year's base margin
+      const minAdjustment = 25 - avgBaseMargin;
+      const maxAdjustment = 35 - avgBaseMargin;
+
+      expect(minModel.opex?.consolidated?.percentMethod).toBe('individual');
+      expect(minModel.opex?.consolidated?.individualPercents).toBeDefined();
+      expect(maxModel.opex?.consolidated?.percentMethod).toBe('individual');
+      expect(maxModel.opex?.consolidated?.individualPercents).toBeDefined();
+
+      // Verify the scenarios produce the expected margin adjustments
+      // Calculate the adjusted models to verify the margins
+      useModelStore.setState({ model: minModel });
+      useModelStore.getState().calculateFinancials();
+      const minFinancials = useModelStore.getState().calculatedFinancials;
+      const minMargins = minFinancials.ebitdaMargin || [];
+      const avgMinMargin = minMargins.reduce((sum, m) => sum + m, 0) / minMargins.length;
+
+      useModelStore.setState({ model: maxModel });
+      useModelStore.getState().calculateFinancials();
+      const maxFinancials = useModelStore.getState().calculatedFinancials;
+      const maxMargins = maxFinancials.ebitdaMargin || [];
+      const avgMaxMargin = maxMargins.reduce((sum, m) => sum + m, 0) / maxMargins.length;
+
+      // The average margins should be close to the target values
+      expect(avgMinMargin).toBeCloseTo(25, 0);
+      expect(avgMaxMargin).toBeCloseTo(35, 0);
     });
 
     // Create a test for WACC adjustment for zero debt. Should create a model, evaluate enterprise value for the min and max models.
@@ -268,6 +298,14 @@ describe('Scenario Calculation Logic', () => {
 
     it('should apply multiple adjustments correctly', () => {
       const baseModel = createTestModel();
+      
+      // Calculate base financials to get current EBITDA margins
+      useModelStore.setState({ model: baseModel });
+      useModelStore.getState().calculateFinancials();
+      const baseFinancials = useModelStore.getState().calculatedFinancials;
+      const baseMargins = baseFinancials.ebitdaMargin || [];
+      const avgBaseMargin = baseMargins.reduce((sum, m) => sum + m, 0) / baseMargins.length;
+      
       const adjustments: VariableAdjustment[] = [
         {
           variableId: 'revenue_growth',
@@ -279,18 +317,22 @@ describe('Scenario Calculation Logic', () => {
           variableId: 'ebitda_margin',
           minValue: 25,
           maxValue: 35,
-          baseValue: 30,
+          baseValue: avgBaseMargin,
         },
       ];
 
       const minModel = applyVariableAdjustments(baseModel, adjustments, true);
       const maxModel = applyVariableAdjustments(baseModel, adjustments, false);
 
+      // Revenue growth adjustment
       expect(minModel.revenue?.consolidated?.growthRate).toBe(5);
-      expect(minModel.opex?.consolidated?.percentOfRevenue).toBeCloseTo(75, 0);
-
       expect(maxModel.revenue?.consolidated?.growthRate).toBe(15);
-      expect(maxModel.opex?.consolidated?.percentOfRevenue).toBeCloseTo(65, 0);
+
+      // EBITDA margin adjustment now uses individual percents
+      expect(minModel.opex?.consolidated?.percentMethod).toBe('individual');
+      expect(minModel.opex?.consolidated?.individualPercents).toBeDefined();
+      expect(maxModel.opex?.consolidated?.percentMethod).toBe('individual');
+      expect(maxModel.opex?.consolidated?.individualPercents).toBeDefined();
     });
   });
 
@@ -448,6 +490,61 @@ describe('Scenario Calculation Logic', () => {
       expect(result.minValue).toBeGreaterThan(0);
       expect(result.maxValue).toBeGreaterThan(0);
       expect(result.maxValue).toBeGreaterThan(result.minValue);
+    });
+
+    it('should ensure base case EV falls within EBITDA margin scenario range', () => {
+      // Create a model with varying EBITDA margins year-over-year
+      const baseModel = createTestModel({
+        revenue: {
+          inputType: 'consolidated',
+          consolidated: {
+            inputMethod: 'growth',
+            growthMethod: 'uniform',
+            baseValue: 1000000,
+            growthRate: 10,
+          },
+        },
+        opex: {
+          inputType: 'consolidated',
+          consolidated: {
+            inputMethod: 'percentOfRevenue',
+            percentMethod: 'individual',
+            individualPercents: {
+              0: 65, // 35% EBITDA margin
+              1: 60, // 40% EBITDA margin
+              2: 55, // 45% EBITDA margin
+              3: 50, // 50% EBITDA margin
+              4: 45, // 55% EBITDA margin
+            },
+          },
+        },
+      });
+
+      // Calculate base enterprise value
+      useModelStore.setState({ model: baseModel });
+      useModelStore.getState().calculateFinancials();
+      const baseFinancials = useModelStore.getState().calculatedFinancials;
+      const baseEV = baseFinancials.enterpriseValue || 0;
+      const baseMargins = baseFinancials.ebitdaMargin || [];
+      const avgBaseMargin = baseMargins.reduce((sum, m) => sum + m, 0) / baseMargins.length;
+
+      // Create scenario adjustments: +/- 5% from average
+      const adjustments: VariableAdjustment[] = [
+        {
+          variableId: 'ebitda_margin',
+          minValue: avgBaseMargin - 5,
+          maxValue: avgBaseMargin + 5,
+          baseValue: avgBaseMargin,
+        },
+      ];
+
+      // Calculate scenario values
+      const { minValue, maxValue } = calculateScenarioValues(baseModel, adjustments);
+
+      // The key assertion: base case should fall within the scenario range
+      // With the new year-by-year adjustment approach, this should be true
+      expect(baseEV).toBeGreaterThanOrEqual(minValue);
+      expect(baseEV).toBeLessThanOrEqual(maxValue);
     });
   });
 });

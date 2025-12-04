@@ -53,16 +53,72 @@ export function applyVariableAdjustments(
         break;
 
       case 'ebitda_margin':
-        // Adjust OpEx to achieve target EBITDA margin
+        // Adjust OpEx to achieve target EBITDA margin adjustment
+        // Apply the adjustment to each year individually to preserve year-over-year variation
         if (model.opex?.consolidated && value !== undefined) {
-          const targetOpexPercent = Math.max(0, 100 - value);
-          // Ensure percent-of-revenue uniform so the margin change applies
-          model.opex.inputType = 'consolidated';
-          model.opex.consolidated.inputMethod = 'percentOfRevenue';
-          model.opex.consolidated.percentMethod = 'uniform';
-          model.opex.consolidated.percentOfRevenue = targetOpexPercent;
-          // Clear individual percents if present (no-op if undefined)
-          if (model.opex.consolidated.individualPercents) delete model.opex.consolidated.individualPercents;
+          // First, calculate the current model to get base EBITDA margins and other components
+          const tempStore = useModelStore.getState();
+          const originalModel = JSON.parse(JSON.stringify(tempStore.model)) as FinancialModel;
+
+          try {
+            // Set base model temporarily and calculate to get current margins
+            useModelStore.setState({ model: JSON.parse(JSON.stringify(baseModel)) });
+            tempStore.calculateFinancials();
+            const baseFinancials = useModelStore.getState().calculatedFinancials;
+
+            // Get base EBITDA margins and related percentages for each year
+            const baseMargins = baseFinancials.ebitdaMargin || [];
+            const revenue = baseFinancials.revenue || [];
+            const grossProfit = baseFinancials.grossProfit || [];
+            const otherIncome = baseFinancials.otherIncome || [];
+            const otherExpenses = baseFinancials.otherExpenses || [];
+
+            if (baseMargins.length > 0) {
+              // Calculate the average base margin to determine the adjustment amount
+              const avgBaseMargin = baseMargins.reduce((sum, m) => sum + (isNaN(m) ? 0 : m), 0) / baseMargins.length;
+
+              // The adjustment amount is the difference between the target value and average
+              const adjustmentAmount = value - avgBaseMargin;
+
+              // Apply the adjustment to each year's margin individually
+              const individualPercents: { [key: number]: number } = {};
+              for (let i = 0; i < baseMargins.length; i++) {
+                const baseMargin = isNaN(baseMargins[i]) ? 0 : baseMargins[i];
+                const adjustedMargin = Math.max(0, Math.min(100, baseMargin + adjustmentAmount));
+
+                // Calculate OpEx percentage needed to achieve adjusted EBITDA margin
+                // EBITDA = GrossProfit - OpEx + OtherIncome - OtherExpenses
+                // EBITDA_Margin = (GrossProfit - OpEx + OtherIncome - OtherExpenses) / Revenue * 100
+                // Solve for OpEx%:
+                // OpEx% = (GrossProfit + OtherIncome - OtherExpenses - (Revenue * EBITDA_Margin / 100)) / Revenue * 100
+                // OpEx% = GrossProfit% + OtherIncome% - OtherExpenses% - EBITDA_Margin
+
+                const rev = revenue[i] || 1; // Avoid division by zero
+                const grossProfitPercent = (grossProfit[i] / rev) * 100;
+                const otherIncomePercent = (otherIncome[i] / rev) * 100;
+                const otherExpensesPercent = (otherExpenses[i] / rev) * 100;
+
+                const opexPercent = Math.max(
+                  0,
+                  grossProfitPercent + otherIncomePercent - otherExpensesPercent - adjustedMargin,
+                );
+                individualPercents[i] = opexPercent;
+              }
+
+              // Set OpEx with individual percentages for each year
+              model.opex.inputType = 'consolidated';
+              model.opex.consolidated.inputMethod = 'percentOfRevenue';
+              model.opex.consolidated.percentMethod = 'individual';
+              model.opex.consolidated.individualPercents = individualPercents;
+              // Clear uniform percent if present
+              if (model.opex.consolidated.percentOfRevenue !== undefined) {
+                delete model.opex.consolidated.percentOfRevenue;
+              }
+            }
+          } finally {
+            // Restore original model state
+            useModelStore.setState({ model: originalModel });
+          }
         }
         break;
 
