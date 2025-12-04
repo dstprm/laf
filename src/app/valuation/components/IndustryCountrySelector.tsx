@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Building, Calculator, TrendingUp, ChevronDown, ChevronUp, Lock, HelpCircle } from 'lucide-react';
+import { Globe, Building, Calculator, TrendingUp, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import { betasStatic } from '../betasStatic';
 import { countryRiskPremiumStatic } from '../countryRiskPremiumStatic';
 import { useModelStore } from '../store/modelStore';
@@ -17,7 +17,7 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
   waccExpanded = true,
   readOnly = false,
 }) => {
-  const { model, updateRiskProfile, updateSelectedIndustry } = useModelStore();
+  const { model, updateRiskProfile, updateSelectedIndustry, calculateFinancials } = useModelStore();
 
   // Helper functions
   const formatPercent = (value: number): string => (value * 100).toFixed(2);
@@ -262,6 +262,9 @@ export const IndustryCountrySelector: React.FC<IndustryCountrySelectorProps> = (
         corporateTaxRate,
         waccPremium,
       });
+      // Trigger recalculation after updating risk profile
+      // This ensures valuation updates in Simple and Advanced modes
+      setTimeout(() => calculateFinancials(), 50);
     } else {
       console.log('[IndustryCountrySelector] Skipping store update (syncing from store)');
     }
